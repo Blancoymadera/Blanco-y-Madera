@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Catálogo Blanco & Madera</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -701,14 +701,12 @@
             const summaryLines = [
                 `Hola, ${clientName || 'Cliente'}!`,
                 '',
-                // \uD83D\uDECD\uFE0F es el código seguro para el emoji de bolsas de compra 🛍️
-                `\uD83D\uDECD\uFE0F Detalle de tu compra en Blanco & Madera el ${formattedDate}`,
+                '🛍️ Detalle de tu compra en Blanco & Madera el ' + formattedDate,
                 ''
             ];
 
             items.forEach((item) => {
-                // \u2022 es el código seguro para el punto •
-                summaryLines.push(` \u2022 ${item.nombre} x ${item.cantidad}: ${formatCurrency(item.subtotal)}`);
+                summaryLines.push(`• ${item.nombre} x ${item.cantidad}: ${formatCurrency(item.subtotal)}`);
             });
 
             summaryLines.push('');
@@ -719,11 +717,9 @@
                 summaryLines.push(`Descuento (${(discountRate * 100).toFixed(0)}%): -${formatCurrency(discountApplied)}`);
             }
 
-            // \uD83D\uDCB0 es el código seguro para el emoji de bolsa de dinero 💰
-            summaryLines.push(`\uD83D\uDCB0 TOTAL FINAL: ${formatCurrency(totalWithDiscount)}`);
+            summaryLines.push(`💰 TOTAL FINAL: ${formatCurrency(totalWithDiscount)}`);
             summaryLines.push('');
-            // \uD83E\uDEF6\uD83C\uDFFC es el código seguro para el emoji de manos corazón 🫶🏼
-            summaryLines.push('¡Muchas gracias por confiar en Blanco & Madera! \uD83E\uDEF6\uD83C\uDFFC');
+            summaryLines.push('¡Muchas gracias por confiar en Blanco & Madera! 🫶🏼');
 
             const whatsappText = encodeURIComponent(summaryLines.join('\n'));
             const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappText}`;
