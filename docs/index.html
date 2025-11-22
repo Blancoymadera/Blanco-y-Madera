@@ -4,6 +4,10 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Catálogo Blanco & Madera</title>
+    <!-- Chosen Palette: Warm Neutrals (Beige/Tan) - Enfocado en una herramienta de venta clara y funcional. -->
+    <!-- Application Structure Plan: Diseño de dos paneles (Catálogo y Carrito). En móvil, se usa un sistema de pestañas (Tabs) con una barra de navegación inferior fija para alternar entre el Catálogo y la Cotización, resolviendo el problema de desplazamiento vertical y mejorando la UX móvil. Se añaden botones de acción (Copiar, Imprimir) al pie del Carrito. -->
+    <!-- Visualization & Content Choices: La interfaz se basa en listas dinámicas, priorizando la usabilidad y la claridad del precio final. No se utilizan Chart.js, Plotly, SVG ni Mermaid. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -13,303 +17,245 @@
         }
         .item-card {
             transition: transform 0.1s ease-out;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
         .item-card:hover {
-            background-color: #fffaf0; /* Hover más claro */
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         .amber-gradient {
             background-image: linear-gradient(to right, #d4a753, #b18b45);
         }
-        .logo-text {
-            font-family: serif;
-            font-size: 2.25rem;
-            font-weight: 800;
-            color: #1c1917;
-            line-height: 1;
+
+        /* ESTILOS ESPECÍFICOS PARA EL LOGO SVG (PARA EVITAR PROBLEMAS DE URL) */
+        .logo-text-main {
+            font-family: serif; /* Usar serif para simular el estilo del logo */
+            font-size: 2.5rem; /* Ajuste para escritorio */
+            font-weight: 800; 
+            color: #1c1917; 
+            line-height: 1.1;
         }
-        .deco-home {
-            font-size: 0.75rem;
-            letter-spacing: 0.3em;
-            color: #78716c;
+        .logo-text-deco {
+            font-size: 0.8rem;
+            letter-spacing: 0.4em;
+            color: #78716c; /* stone-500 */
             text-align: center;
             display: block;
-            margin-top: 0.1rem;
+            margin-top: 0.2rem;
         }
-        .header-content {
-            display: flex; 
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-        }
-        .logo-container {
-            width: auto;
-            margin-bottom: 0.5rem; 
-            display: flex;
-            justify-content: center;
-        }
-        .header-title-block {
-             padding-top: 0.5rem;
-             padding-bottom: 0.5rem;
-        }
-        h1.main-title {
-            font-size: 2.5rem;
-            line-height: 1.1;
-            margin-top: 0;
-        }
-        @media (max-width: 767px) {
-            .header-content p {
-                display: none;
+
+        /* ESTILOS PARA IMPRESIÓN/PDF (OCULTA CONTROLES) */
+        @media print {
+            body { background-color: #ffffff !important; }
+            header, .controls, .nav-tabs, .action-buttons, #whatsapp-number-group, .hidden-print, #desktop-footer {
+                display: none !important;
             }
-            main {
-                padding-bottom: 5rem; 
+            .main-content-container {
+                display: block !important;
+                max-width: 800px;
+                margin: 0 auto;
+            }
+            #quotation-print-area {
+                display: block !important;
+                padding: 20px;
+            }
+            #quotation-print-area .text-3xl { font-size: 1.5rem !important; }
+            #quotation-print-area .text-5xl { font-size: 2.5rem !important; }
+            /* Mostrar el layout simplificado del pedido */
+            #print-header, #print-details {
+                display: block !important;
+            }
+            #cart-container-desktop {
+                box-shadow: none !important;
+                border: 1px solid #ccc;
+            }
+            .cart-item-desktop {
+                justify-content: space-between !important;
+            }
+            .cart-item-controls {
+                display: none !important;
+            }
+            .cart-item-details {
+                flex-grow: 1;
+            }
+            .cart-item-details .text-sm {
+                display: block !important; /* Muestra el subtotal en impresión */
             }
         }
-        .mobile-nav {
+
+        /* USABILIDAD MÓVIL (Tabs) */
+        #cart-container-desktop, #catalog-container-desktop {
+            /* Ocultar en móvil por defecto para usar las pestañas */
+            display: none; 
+        }
+        .nav-tabs {
             position: fixed;
             bottom: 0;
-            left: 0;
             width: 100%;
-            z-index: 50;
+            left: 0;
+            z-index: 20;
+            background-color: white;
+            box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .tab-button {
+            transition: all 0.2s;
+        }
+        .tab-button.active {
+            color: #b45309; /* amber-800 */
+            border-top: 3px solid #f59e0b; /* amber-500 */
         }
         @media (min-width: 768px) {
-            .mobile-nav {
-                display: none;
+            /* Mostrar las dos columnas en escritorio */
+            #cart-container-desktop, #catalog-container-desktop {
+                display: block !important;
             }
-        }
-        
-        /* Estilos para el Toast (Notificación) */
-        #toast-container {
-            position: fixed;
-            bottom: 80px; /* Arriba de la nav bar móvil */
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 60;
-            pointer-events: none;
-        }
-        .toast {
-            background-color: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 25px;
-            margin-bottom: 10px;
-            opacity: 0;
-            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
-            transform: translateY(20px);
-            text-align: center;
-            font-size: 0.9rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .toast.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        @media (min-width: 768px) {
-            #toast-container {
-                bottom: 20px;
-                right: 20px;
-                left: auto;
-                transform: none;
+            .nav-tabs {
+                display: none !important;
             }
-        }
-
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f5f9;
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #d4a753;
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #b18b45;
-        }
-        @media print {
-            .no-print { display: none !important; }
-            .print-header {
-                display: block !important; 
-                text-align: center;
-                padding-bottom: 20px;
-                margin-bottom: 20px;
-                border-bottom: 2px solid #ccc;
-            }
-            .print-logo-text {
-                font-size: 30pt;
-                font-weight: 800;
-                line-height: 1;
-                color: #000;
-            }
-            .print-deco-home {
-                font-size: 10pt;
-                letter-spacing: 0.4em;
-                color: #555;
-            }
-            .print-title {
-                font-size: 18pt;
-                font-weight: 700;
-                color: #d4a753;
-                margin-top: 15px;
-            }
-            .print-name-field {
-                font-size: 16pt;
-                font-weight: 600;
-                margin-top: 10px;
-                color: #333;
-            }
-            .cart-total-print {
-                font-size: 24pt !important;
-                margin-top: 20px;
-                padding-top: 10px;
-                border-top: 3px double #d4a753;
-            }
-            .cart-item-print {
-                padding: 5px 0;
-                border-bottom: 1px dotted #ddd;
-            }
-            .discount-print-summary {
-                margin-top: 10px;
-            }
-            body { background-color: #fff !important; }
         }
     </style>
 </head>
 <body class="text-stone-800">
+    <!-- Contenedor general para ocultar elementos al imprimir -->
+    <div id="main-app-container">
 
-    <header class="bg-white shadow-lg sticky top-0 z-10 no-print">
-        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-4 header-content">
-            <div class="logo-container">
-                <div class="flex flex-col items-center">
-                    <span class="logo-text">blanco&madera</span>
-                    <hr class="w-24 border-stone-400 my-0.5">
-                    <span class="deco-home">DECO HOME</span>
+        <header class="bg-white shadow-lg sticky top-0 z-10 hidden-print">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-4 text-center">
+                
+                <!-- Logo Centrado y Simplificado para el Encabezado -->
+                <div class="flex flex-col items-center justify-center mb-2">
+                    <span class="logo-text-main">blanco&madera</span>
+                    <hr class="w-32 border-stone-400 my-0.5">
+                    <span class="logo-text-deco">DECO HOME</span>
                 </div>
+                
+                <h1 class="text-3xl font-extrabold text-amber-800 tracking-wide mt-2">CATÁLOGO DE PRODUCTOS</h1>
+                <p class="text-stone-600 mt-1 mb-2">Generador de Cotizaciones para Clientes</p>
             </div>
-            <div class="header-title-block">
-                <h1 class="main-title text-4xl font-extrabold text-amber-800 tracking-wide">CATÁLOGO</h1>
-                <p class="text-stone-600 mt-1">Selecciona productos para generar la cotización del cliente.</p>
-            </div>
-        </div>
-    </header>
+        </header>
 
-    <main class="container mx-auto p-4 sm:p-6 lg:p-8">
-        <div class="bg-white p-6 rounded-xl shadow-lg mb-8 no-print" id="filters-container">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                    <label for="category-filter" class="block text-sm font-semibold text-stone-700 mb-1">Filtrar por Categoría</label>
-                    <select id="category-filter" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
-                        <option value="all">Todas las Categorías</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="search-box" class="block text-sm font-semibold text-stone-700 mb-1">Buscar por Nombre</label>
-                    <input type="text" id="search-box" placeholder="Escribe el nombre del producto..." class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
-                </div>
-                <div class="md:self-end">
-                    <button id="reset-button" class="w-full md:w-auto bg-stone-500 text-white font-bold py-2.5 px-6 rounded-lg shadow-xl hover:bg-stone-600 transition duration-300 focus:outline-none focus:ring-4 focus:ring-stone-400 focus:ring-offset-2">
-                        Mostrar Todos
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <div id="print-view" class="hidden print-header"></div>
-        
-        <!-- Contenedor de Notificaciones -->
-        <div id="toast-container"></div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div id="catalog-panel" class="bg-white p-6 rounded-xl shadow-lg" data-view="catalog">
-                <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">Catálogo de Productos Disponibles</h2>
-                <div id="product-list" class="overflow-y-auto h-[60vh] md:h-[70vh] pr-4 space-y-2">
-                    <p class="text-stone-500">Cargando productos...</p>
-                </div>
-            </div>
+        <main class="container mx-auto p-4 sm:p-6 lg:p-8 main-content-container">
             
-            <div id="cart-panel" class="hidden md:flex flex-col bg-white p-6 rounded-xl shadow-lg" data-view="cart">
-                <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">Cotización Actual</h2>
-                
-                <div class="mb-4 no-print">
-                    <label for="client-name" class="block text-sm font-semibold text-stone-700 mb-1">Nombre y Apellido (para agendar):</label>
-                    <input type="text" id="client-name" placeholder="Ej: Pepito Gomez" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
-                </div>
-                
-                <div class="mb-4 no-print">
-                    <label for="whatsapp-number" class="block text-sm font-semibold text-stone-700 mb-1">Número de WhatsApp del Cliente (Formato: 549...):</label>
-                    <input type="tel" id="whatsapp-number" placeholder="Ej: 5493415551234" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
-                </div>
-
-                <div id="cart-list" class="overflow-y-auto flex-grow pr-4 space-y-2">
-                    <p id="empty-cart-message" class="text-stone-500 text-center mt-8">El carrito está vacío. Agrega productos del catálogo.</p>
-                </div>
-
-                <div class="mt-4 pt-4 border-t-2 border-amber-500/50">
-                    <div class="mb-4 no-print">
-                        <label for="discount-select" class="block text-sm font-semibold text-stone-700 mb-1">Aplicar Descuento:</label>
-                        <select id="discount-select" class="w-full rounded-lg border-stone-300 p-2 focus:border-amber-600 focus:ring-amber-600">
-                            <option value="0">0%</option>
-                            <option value="0.05">5%</option>
-                            <option value="0.10">10%</option>
-                            <option value="0.15">15%</option>
-                            <option value="0.20">20%</option>
+            <!-- Controles de Filtro -->
+            <div class="bg-white p-6 rounded-xl shadow-lg mb-6 controls hidden-print">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label for="category-filter" class="block text-sm font-semibold text-stone-700 mb-1">Filtrar por Categoría</label>
+                        <select id="category-filter" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
+                            <option value="all">Todas las Categorías</option>
                         </select>
                     </div>
-
-                    <div class="flex justify-between items-center mb-4">
-                        <span class="text-2xl font-bold text-stone-700">TOTAL GENERAL:</span>
-                        <span id="cart-total" class="text-4xl font-extrabold text-amber-800 cart-total-print">$0</span>
+                    <div>
+                        <label for="search-box" class="block text-sm font-semibold text-stone-700 mb-1">Buscar por Nombre</label>
+                        <input type="text" id="search-box" placeholder="Escribe el nombre del producto..." class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
                     </div>
-
-                    <!-- BOTONES DE ACCIÓN -->
-                    <div class="space-y-3 no-print">
-                        <!-- OPCIÓN 1: TEXTO DIRECTO (Prioridad Número) -->
-                        <button id="send-whatsapp-text-button" class="w-full bg-green-600 text-white font-bold py-3 rounded-lg shadow-xl hover:bg-green-700 transition duration-300 focus:outline-none focus:ring-4 focus:ring-green-400 focus:ring-offset-2 flex justify-center items-center gap-2">
-                            <span>💬</span> Enviar Texto al Cliente (Directo)
+                    <div class="md:self-end">
+                        <button id="reset-button" class="w-full md:w-auto bg-stone-500 text-white font-bold py-2.5 px-6 rounded-lg shadow-xl hover:bg-stone-600 transition duration-300 focus:outline-none focus:ring-4 focus:ring-stone-400 focus:ring-offset-2">
+                            Mostrar Todos
                         </button>
-                        
-                        <!-- OPCIÓN 2: IMAGEN (Prioridad Estética) -->
-                        <button id="share-image-button" class="w-full bg-amber-500 text-white font-bold py-3 rounded-lg shadow-xl hover:bg-amber-600 transition duration-300 focus:outline-none focus:ring-4 focus:ring-amber-400 focus:ring-offset-2 flex justify-center items-center gap-2">
-                            <span>🖼️</span> Generar y Compartir Imagen
-                        </button>
-
-                        <div class="grid grid-cols-2 gap-3">
-                            <button id="print-button" class="bg-stone-500 text-white font-bold py-3 rounded-lg shadow-md hover:bg-stone-600 transition duration-300 focus:outline-none">
-                                🖨️ Imprimir / PDF
-                            </button>
-                            <button id="clear-cart-button" class="bg-red-500 text-white font-bold py-3 rounded-lg shadow-md hover:bg-red-600 transition duration-300 focus:outline-none">
-                                🗑️ Vaciar
-                            </button>
-                        </div>
-                        <p class="text-xs text-stone-400 text-center mt-1">
-                            *El botón "Texto" abre el chat directo. El botón "Imagen" te pedirá seleccionar el contacto.
-                        </p>
                     </div>
                 </div>
             </div>
-        </div>
-    </main>
 
-    <div class="mobile-nav bg-white shadow-2xl p-3 border-t border-stone-200">
-        <div class="flex justify-around">
-            <button id="tab-catalog" onclick="showView('catalog')" class="flex flex-col items-center text-amber-800 font-semibold focus:outline-none">
-                <span class="text-2xl">🛒</span>
-                <span class="text-xs mt-1">Catálogo</span>
+            <!-- Contenido Principal: Catálogo y Carrito -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <!-- Columna Izquierda: Catálogo de Productos -->
+                <div id="catalog-container-desktop" class="bg-white p-6 rounded-xl shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">Catálogo de Productos Disponibles</h2>
+                    <div id="product-list" class="overflow-y-auto h-[65vh] md:h-[70vh] pr-4 space-y-3">
+                        <p class="text-stone-500">Cargando productos...</p>
+                    </div>
+                </div>
+                
+                <!-- Columna Derecha: Carrito de Cotización -->
+                <div id="cart-container-desktop" class="flex flex-col bg-white p-6 rounded-xl shadow-lg">
+                    <!-- Área de Impresión Oculta (diseño formal) -->
+                    <div id="quotation-print-area" class="w-full p-4 hidden">
+                        <!-- Contenido dinámico generado por renderPrintView -->
+                    </div>
+                    <!-- Fin Área de Impresión -->
+
+                    <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200 hidden-print">Cotización Actual</h2>
+                    
+                    <!-- Campo Nombre de Cliente -->
+                    <div class="mb-4 hidden-print">
+                        <label for="client-name" class="block text-sm font-semibold text-stone-700 mb-1">Nombre del Cliente:</label>
+                        <input type="text" id="client-name" placeholder="Ej: Susana Giménez" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
+                    </div>
+
+                    <div id="cart-list" class="overflow-y-auto flex-grow pr-4 space-y-2">
+                        <p id="empty-cart-message" class="text-stone-500 text-center mt-8">El carrito está vacío. Agrega productos del catálogo.</p>
+                    </div>
+
+                    <!-- Controles de Descuento y WhatsApp/PDF -->
+                    <div class="mt-4 pt-4 border-t-2 border-amber-500/50 hidden-print">
+                        
+                        <!-- Control de Descuento -->
+                        <div class="flex justify-between items-center mb-3">
+                            <label for="discount-selector" class="text-sm font-bold text-stone-700">Aplicar Descuento:</label>
+                            <select id="discount-selector" class="rounded-lg border-stone-300 focus:border-amber-600 focus:ring-amber-600 p-1 text-sm">
+                                <option value="0">0%</option>
+                                <option value="0.05">5%</option>
+                                <option value="0.10">10%</option>
+                                <option value="0.15">15%</option>
+                                <option value="0.20">20%</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Totales -->
+                        <div id="total-neto-info" class="text-right text-sm text-stone-500 mb-2"></div>
+                        
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-2xl font-bold text-stone-700">TOTAL GENERAL:</span>
+                            <span id="cart-total" class="text-4xl font-extrabold text-amber-800">$0</span>
+                        </div>
+
+                        <!-- Botones de Acción -->
+                        <div class="space-y-3 action-buttons">
+                            
+                            <!-- Campo WhatsApp -->
+                            <div id="whatsapp-number-group">
+                                <input type="tel" id="whatsapp-number" placeholder="Ej: 549341xxxxxxx (Tu WhatsApp)" class="w-full rounded-lg border-stone-300 shadow-md p-2 text-sm">
+                            </div>
+
+                            <button id="send-whatsapp-button" class="w-full bg-blue-500 text-white font-bold py-3 rounded-lg shadow-xl hover:bg-blue-600 transition duration-300 focus:outline-none focus:ring-4 focus:ring-blue-400 focus:ring-offset-2">
+                                <span class="text-xl">💬</span> Enviar por WhatsApp (Texto)
+                            </button>
+
+                            <button id="print-button" class="w-full bg-green-500 text-white font-bold py-3 rounded-lg shadow-xl hover:bg-green-600 transition duration-300 focus:outline-none focus:ring-4 focus:ring-green-400 focus:ring-offset-2">
+                                <span class="text-xl">🖨️</span> Imprimir / Guardar como PDF
+                            </button>
+                            
+                            <button id="clear-cart-button" class="w-full bg-red-500 text-white font-bold py-3 rounded-lg shadow-xl hover:bg-red-600 transition duration-300 focus:outline-none focus:ring-4 focus:ring-red-400 focus:ring-offset-2">
+                                Vaciar Carrito
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Barra de Navegación Móvil (Fija Abajo) -->
+    <div class="nav-tabs md:hidden">
+        <div class="flex justify-around p-3">
+            <button id="tab-catalog" onclick="showView('catalog')" class="tab-button flex flex-col items-center px-4 py-1 active">
+                <span class="text-2xl">🛍️</span>
+                <span class="text-xs mt-0.5 font-medium">Catálogo</span>
             </button>
-            <button id="tab-cart" onclick="showView('cart')" class="flex flex-col items-center text-stone-500 font-semibold focus:outline-none relative">
-                <span class="text-2xl">📝</span>
-                <span class="text-xs mt-1">Cotización</span>
-                <span id="cart-item-count" class="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full transform translate-x-3 -translate-y-2 opacity-0 transition duration-300 shadow-sm">
-                    0
+            <button id="tab-cart" onclick="showView('cart')" class="tab-button flex flex-col items-center px-4 py-1">
+                <span class="text-2xl relative">
+                    🛒
+                    <span id="cart-badge" class="absolute -top-1 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">0</span>
                 </span>
+                <span class="text-xs mt-0.5 font-medium">Cotización</span>
             </button>
         </div>
     </div>
 
     <script>
-        console.log("Versión Actualizada Cargada - Corrección Fecha y Emojis");
-
+        // Datos brutos del catálogo
         const rawData = [
             {"Product Name":"ALZAPAÑOS","Price":"NaN"},
             {"Product Name":"Alzapaño Rosario","Price":"4500.0"},
@@ -403,7 +349,7 @@
             {"Product Name":"Vela Marsella 8cm x4cm limon","Price":"5900.0"},
             {"Product Name":"Vela Marsella 8cm x4cm lavanda","Price":"5900.0"},
             {"Product Name":"Vela Marsella 8cm x4cm vainilla","Price":"5900.0"},
-            {"Product Name":"Vela Marsella 8cm x4cm floral", "Price":"5900.0"},
+            {"Product Name":"Vela Marsella 8cm x4cm floral","Price":"5900.0"},
             {"Product Name":"Vela Genova circular 4.5 cm x5.5 cm","Price":"4400.0"},
             {"Product Name":"Vela Genova cuadrada 5 cm x 5 cm","Price":"4400.0"},
             {"Product Name":"Apagavela Frases","Price":"2600.0"},
@@ -430,7 +376,7 @@
             {"Product Name":"Aromatizador Textil Charming 250 Ml","Price":"7700.0"},
             {"Product Name":"Esencia Massala","Price":"1400.0"},
             {"Product Name":"Difusor Auto Iluminarte","Price":"4800.0"},
-            {"Product Name":"SAHUMERIOS AROMANZA", "Price":"NaN"},
+            {"Product Name":"SAHUMERIOS AROMANZA","Price":"NaN"},
             {"Product Name":"Tibetano Slim","Price":"1900.0"},
             {"Product Name":"Tibetanos Premium","Price":"4700.0"},
             {"Product Name":"Momentos","Price":"2400.0"},
@@ -475,9 +421,10 @@
 
         let productData = [];
         let categories = new Set();
-        let cart = {};
+        let cart = {}; // { id: {nombre, precio, cantidad} }
         let uniqueIdCounter = 0;
 
+        // Función para poblar las opciones de filtro de categoría (GLOBAL)
         function populateCategoryFilter() {
             const categoryFilter = document.getElementById('category-filter');
             categories.forEach(category => {
@@ -488,27 +435,30 @@
             });
         }
         
+        // Función para parsear datos y generar IDs únicos
         function parseData() {
             let currentCategory = "Desconocido";
             rawData.forEach(item => {
-                const cleanedPriceString = item.Price ? item.Price.replace(/[^\d.]/g, '').trim() : '0';
+                // SOLUCIÓN ROBUSTA: Asegurar que el precio sea un número válido y entero
+                const cleanedPriceString = item.Price ? item.Price.replace(/[^\d.]/g, '') : '0';
                 const price = parseInt(cleanedPriceString); 
                 const name = item["Product Name"].trim();
                 
-                if (isNaN(price) || price === 0) {
+                if (isNaN(price) || price === 0) { 
                     currentCategory = name;
                     categories.add(name);
                 } else {
                     productData.push({
-                        id: uniqueIdCounter++,
+                        id: uniqueIdCounter++, 
                         categoria: currentCategory,
                         nombre: name,
-                        precio: price
+                        precio: price 
                     });
                 }
             });
         }
 
+        // Función para formatear moneda
         function formatCurrency(value) {
             return new Intl.NumberFormat('es-AR', {
                 style: 'currency',
@@ -518,47 +468,38 @@
             }).format(value);
         }
 
-        // --- NUEVA FUNCIÓN: GUARDAR CARRITO ---
-        function saveCart() {
-            localStorage.setItem('bm_cart', JSON.stringify(cart));
-        }
-
-        // --- NUEVA FUNCIÓN: CARGAR CARRITO ---
-        function loadCart() {
-            const saved = localStorage.getItem('bm_cart');
-            if (saved) {
-                cart = JSON.parse(saved);
-            }
-        }
-
+        // Función principal para renderizar el carrito y CALCULAR EL TOTAL
         function renderCart() {
             const cartList = document.getElementById('cart-list');
             const cartTotalEl = document.getElementById('cart-total');
+            const discountSelector = document.getElementById('discount-selector');
+            const cartItemCountEl = document.getElementById('cart-badge');
             const emptyMessage = document.getElementById('empty-cart-message');
-            const discountSelect = document.getElementById('discount-select');
-            const cartItemCountEl = document.getElementById('cart-item-count');
-
+            
             cartList.innerHTML = ''; 
             let subtotalWithoutDiscount = 0;
             let cartItemsCount = 0;
-            const discountRate = parseFloat(discountSelect.value);
+            const discountRate = parseFloat(discountSelector ? discountSelector.value : 0); // Defensivo
+            
+            // Elementos de texto dependientes (Defensivo)
+            const totalNetoInfoEl = document.getElementById('total-neto-info');
 
             for (const id in cart) {
                 const item = cart[id];
                 const numericPrice = Number(item.precio); 
                 const subtotal = numericPrice * item.cantidad;
                 subtotalWithoutDiscount += subtotal; 
-
                 cartItemsCount += item.cantidad;
 
+                // Generar HTML para el carrito en la aplicación
                 const itemDiv = document.createElement('div');
                 itemDiv.className = "bg-white p-3 rounded-lg border border-stone-200 flex justify-between items-center item-card";
                 itemDiv.innerHTML = `
-                    <div class="flex flex-col flex-grow">
+                    <div class="flex flex-col flex-grow cart-item-details">
                         <p class="font-bold text-stone-700">${item.nombre}</p>
                         <p class="text-sm text-amber-700">${formatCurrency(item.precio)} x ${item.cantidad}</p>
                     </div>
-                    <div class="flex items-center space-x-2">
+                    <div class="flex items-center space-x-3 cart-item-controls">
                         <span class="font-extrabold text-lg text-amber-800">${formatCurrency(subtotal)}</span>
                         <button onclick="changeQuantity(${id}, -1)" class="p-1 bg-stone-300 text-stone-800 rounded-full w-6 h-6 flex items-center justify-center text-xl font-bold leading-none hover:bg-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-500">
                             -
@@ -571,33 +512,43 @@
                 cartList.appendChild(itemDiv);
             }
 
-            const totalWithDiscount = subtotalWithoutDiscount * (1 - discountRate);
-
-            if (emptyMessage) {
-                emptyMessage.style.display = cartItemsCount === 0 ? 'block' : 'none';
-            }
+            // Aplicar Descuento
+            const discountAmount = subtotalWithoutDiscount * discountRate;
+            const totalFinal = subtotalWithoutDiscount - discountAmount;
             
-            cartItemCountEl.textContent = cartItemsCount > 0 ? cartItemsCount : '';
-            cartItemCountEl.style.opacity = cartItemsCount > 0 ? 1 : 0;
+            // Actualizar mensaje de carrito vacío
+            if (emptyMessage) emptyMessage.style.display = subtotalWithoutDiscount === 0 ? 'block' : 'none';
+            
+            // Actualizar contador de ítems para móvil
+            if (cartItemCountEl) {
+                cartItemCountEl.textContent = cartItemsCount > 0 ? cartItemsCount : '';
+                cartItemCountEl.style.opacity = cartItemsCount > 0 ? 1 : 0;
+            }
 
-            cartTotalEl.textContent = formatCurrency(totalWithDiscount);
+            // Actualizar Total General
+            if (cartTotalEl) cartTotalEl.textContent = formatCurrency(totalFinal);
 
+            // Mostrar el descuento aplicado (si es necesario)
             if (discountRate > 0) {
-                 const discountAmount = subtotalWithoutDiscount * discountRate;
                  const discountDisplay = document.createElement('p');
                  discountDisplay.className = "text-sm text-red-500 font-semibold mt-1";
                  discountDisplay.textContent = `Descuento Aplicado (${(discountRate * 100).toFixed(0)}%): -${formatCurrency(discountAmount)}`;
                  cartList.appendChild(discountDisplay);
-
-                 const subtotalDisplay = document.createElement('p');
-                 subtotalDisplay.className = "text-sm text-stone-500 font-medium";
-                 subtotalDisplay.textContent = `Subtotal sin Descuento: ${formatCurrency(subtotalWithoutDiscount)}`;
-                 cartList.appendChild(subtotalDisplay);
             }
             
-            renderPrintView(subtotalWithoutDiscount, totalWithDiscount, discountRate);
+            // Actualizar Totales Netos (Defensivo)
+            if (totalNetoInfoEl) {
+                totalNetoInfoEl.innerHTML = `
+                    Subtotal Neto: ${formatCurrency(subtotalWithoutDiscount)} 
+                    ${discountRate > 0 ? `(Descuento ${discountRate * 100}%: ${formatCurrency(discountAmount)})` : ''}
+                `;
+            }
+
+            // Llamar a la función de renderizado de impresión/PDF (Defensivo)
+            renderPrintView(subtotalWithoutDiscount, totalFinal, discountRate);
         }
         
+        // Lógica para cambiar cantidad
         window.changeQuantity = function(id, delta) {
             id = parseInt(id);
             if (cart[id]) {
@@ -606,415 +557,120 @@
                     delete cart[id];
                 }
             }
-            saveCart(); // GUARDAR CAMBIOS
-            renderCart(); 
+            updateDashboard();
         };
 
+        // Lógica para agregar al carrito
         window.addToCart = function(id) {
             id = parseInt(id);
             if (cart[id]) {
                 cart[id].cantidad += 1;
-                showToast(`¡Agregado! ${cart[id].nombre}`);
             } else {
                 const product = productData.find(p => p.id === id);
                 if (product) {
                     cart[id] = { ...product, cantidad: 1 };
-                    showToast(`¡Agregado! ${product.nombre}`);
                 }
             }
-            saveCart(); // GUARDAR CAMBIOS
-            renderCart(); 
-        };
-
-        function showToast(message) {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.textContent = message;
-            
-            container.appendChild(toast);
-            setTimeout(() => {
-                toast.classList.add('show');
-            }, 10);
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => {
-                    container.removeChild(toast);
-                }, 300);
-            }, 2000);
-        }
-
-        window.showView = function(viewName) {
-            const isMobile = window.innerWidth < 768;
-            if (!isMobile) return;
-
-            const catalogPanel = document.getElementById('catalog-panel');
-            const cartPanel = document.getElementById('cart-panel');
-            const filtersContainer = document.getElementById('filters-container');
-            const tabCatalog = document.getElementById('tab-catalog');
-            const tabCart = document.getElementById('tab-cart');
-            
-            if (viewName === 'catalog') {
-                catalogPanel.style.display = 'block';
-                filtersContainer.style.display = 'block';
-                cartPanel.style.display = 'none';
-                tabCatalog.classList.add('text-amber-800');
-                tabCart.classList.remove('text-amber-800');
-                tabCart.classList.add('text-stone-500');
-                tabCatalog.classList.remove('text-stone-500');
-            } else {
-                catalogPanel.style.display = 'none';
-                filtersContainer.style.display = 'none';
-                cartPanel.style.display = 'flex';
-                tabCart.classList.add('text-amber-800');
-                tabCatalog.classList.remove('text-amber-800');
-                tabCatalog.classList.add('text-stone-500');
-                tabCart.classList.remove('text-stone-500');
-            }
-        };
-
-        async function sendQuoteViaWhatsAppText() {
-            const clientName = document.getElementById('client-name').value.trim();
-            const whatsappNumber = document.getElementById('whatsapp-number').value.trim().replace(/\D/g, ''); 
-
-            if (!whatsappNumber || Object.keys(cart).length === 0) {
-                alert("Por favor, ingresa el número de WhatsApp del cliente y añade al menos un producto al carrito.");
-                return;
-            }
-
-            const discountRate = parseFloat(document.getElementById('discount-select').value);
-            let subtotal = 0;
-            const items = [];
-
-            for (const id in cart) {
-                const item = cart[id];
-                const itemSubtotal = item.precio * item.cantidad;
-                subtotal += itemSubtotal;
-                items.push({ nombre: item.nombre, cantidad: item.cantidad, subtotal: itemSubtotal });
-            }
-
-            const totalWithDiscount = subtotal * (1 - discountRate);
-            const discountApplied = discountRate > 0 ? subtotal * discountRate : 0;
-            const formattedDate = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
-
-            const summaryLines = [
-                `Hola, ${clientName || 'Cliente'}!`,
-                '',
-                `🛍️ Detalle de tu compra en Blanco & Madera el ${formattedDate}`,
-                ''
-            ];
-
-            items.forEach((item) => {
-                summaryLines.push(` • ${item.nombre} x ${item.cantidad}: ${formatCurrency(item.subtotal)}`);
-            });
-
-            summaryLines.push('');
-            summaryLines.push('--------------------------');
-
-            if (discountRate > 0) {
-                summaryLines.push(`Subtotal: ${formatCurrency(subtotal)}`);
-                summaryLines.push(`Descuento (${(discountRate * 100).toFixed(0)}%): -${formatCurrency(discountApplied)}`);
-            }
-
-            summaryLines.push(`💰 TOTAL FINAL: ${formatCurrency(totalWithDiscount)}`);
-            summaryLines.push('');
-            summaryLines.push('¡Muchas gracias por confiar en Blanco & Madera! 🫶🏼');
-
-            const whatsappText = encodeURIComponent(summaryLines.join('\n'));
-            const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappText}`;
-            window.open(whatsappUrl, '_blank');
-        }
-
-        async function shareQuoteAsImage() {
-            const clientName = document.getElementById('client-name').value.trim();
-            const whatsappNumber = document.getElementById('whatsapp-number').value.trim().replace(/\D/g, '');
-            
-            if (Object.keys(cart).length === 0) {
-                alert("El carrito está vacío.");
-                return;
-            }
-
-            showToast("Generando imagen, por favor espera...");
-
-            const discountRate = parseFloat(document.getElementById('discount-select').value);
-            let subtotal = 0;
-            const items = [];
-
-            for (const id in cart) {
-                const item = cart[id];
-                const itemSubtotal = item.precio * item.cantidad;
-                subtotal += itemSubtotal;
-                items.push({
-                    nombre: item.nombre,
-                    cantidad: item.cantidad,
-                    subtotal: itemSubtotal
-                });
-            }
-
-            const totalWithDiscount = subtotal * (1 - discountRate);
-            const discountApplied = discountRate > 0 ? subtotal * discountRate : 0;
-            const formattedDate = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
-
-            const headerHeight = 260;
-            const itemHeight = 42;
-            const totalsHeight = discountRate > 0 ? 190 : 150;
-            const footerHeight = 120;
-            const canvasHeight = headerHeight + (items.length * itemHeight) + totalsHeight + footerHeight;
-            const canvasWidth = 900;
-
-            const canvas = document.createElement('canvas');
-            canvas.width = canvasWidth;
-            canvas.height = canvasHeight;
-            const ctx = canvas.getContext('2d');
-
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-
-            const logoCenterX = canvasWidth / 2;
-            const headerTop = 35;
-
-            ctx.fillStyle = '#0b0b0b';
-            ctx.textAlign = 'center';
-            ctx.font = '700 48px "Inter", serif';
-            ctx.fillText('blanco&madera', logoCenterX, headerTop + 55);
-
-            ctx.lineWidth = 2;
-            ctx.strokeStyle = '#0b0b0b';
-            ctx.beginPath();
-            ctx.moveTo(logoCenterX - 120, headerTop + 63);
-            ctx.lineTo(logoCenterX + 120, headerTop + 63);
-            ctx.stroke();
-
-            ctx.font = '600 16px Inter, sans-serif';
-            ctx.fillText('DECO HOME', logoCenterX, headerTop + 88);
-
-            ctx.font = 'bold 24px Inter, sans-serif';
-            ctx.textAlign = 'left';
-            ctx.fillText('detalle de compra', 40, headerTop + 122);
-
-            let cursorY = 200;
-            ctx.fillStyle = '#0b0b0b';
-            ctx.font = '20px Inter, sans-serif';
-            ctx.fillText(`Fecha: ${formattedDate}`, 40, cursorY);
-            cursorY += 32;
-            ctx.fillText(`Cliente: ${clientName || 'No especificado'}`, 40, cursorY);
-            cursorY += 32;
-            ctx.fillText(`Teléfono: +${whatsappNumber}`, 40, cursorY);
-            cursorY += 48;
-
-            ctx.font = 'bold 22px Inter, sans-serif';
-            ctx.fillText('Detalle de productos', 40, cursorY);
-            cursorY += 24;
-
-            ctx.font = '18px Inter, sans-serif';
-            items.forEach((item) => {
-                ctx.fillStyle = '#0b0b0b';
-                ctx.textAlign = 'left';
-                let displayName = item.nombre;
-                if (displayName.length > 60) displayName = displayName.substring(0, 57) + '...';
-                
-                ctx.fillText(`${displayName} x${item.cantidad}`, 40, cursorY + 22);
-                ctx.textAlign = 'right';
-                ctx.fillText(`${formatCurrency(item.subtotal)}`, canvasWidth - 40, cursorY + 22);
-                cursorY += itemHeight;
-            });
-
-            ctx.textAlign = 'left';
-            ctx.fillStyle = '#78716c';
-            ctx.font = '18px Inter, sans-serif';
-            ctx.fillText('-------------------------------------------', 40, cursorY);
-            cursorY += 28;
-
-            if (discountRate > 0) {
-                ctx.fillStyle = '#0b0b0b';
-                ctx.fillText(`Subtotal sin descuento: ${formatCurrency(subtotal)}`, 40, cursorY);
-                cursorY += 26;
-                ctx.fillStyle = '#c1121f';
-                ctx.fillText(`Descuento (${(discountRate * 100).toFixed(0)}%): -${formatCurrency(discountApplied)}`, 40, cursorY);
-                cursorY += 32;
-            }
-
-            ctx.fillStyle = '#0b0b0b';
-            ctx.font = 'bold 24px Inter, sans-serif';
-            ctx.fillText('TOTAL FINAL:', 40, cursorY);
-            ctx.font = 'bold 32px Inter, sans-serif'; 
-            ctx.fillStyle = '#d4a753';
-            ctx.fillText(`${formatCurrency(totalWithDiscount)}`, 230, cursorY);
-            cursorY += 50;
-
-            ctx.textAlign = 'center';
-            ctx.fillStyle = '#0b0b0b';
-            // IMPORTANTE: Añadí fuentes de emojis (Apple Color Emoji, Segoe UI Emoji) para que se vean bien en la imagen
-            ctx.font = '18px "Inter", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif';
-            ctx.fillText('Muchas gracias por confiar en Blanco & Madera! 🫶🏼', canvasWidth / 2, cursorY + 30);
-
-            canvas.toBlob(async (blob) => {
-                if (!blob) {
-                    alert('Error generando la imagen.');
-                    return;
-                }
-                const file = new File([blob], 'cotizacion_blanco_madera.png', { type: 'image/png' });
-
-                if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    try {
-                        await navigator.share({
-                            files: [file],
-                            title: 'Cotización Blanco & Madera',
-                            text: `Hola ${clientName}! Te envío el detalle de tu compra del día ${formattedDate}\nMuchas gracias por confiar en Blanco & Madera! 🫶🏼`
-                        });
-                    } catch (err) {
-                        console.error('Error al compartir:', err);
-                    }
-                } else {
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(blob);
-                    link.download = 'cotizacion_blanco_madera.png';
-                    link.click();
-                    alert("Tu dispositivo no soporta compartir imágenes directamente. La imagen se ha descargado.");
-                }
-            }, 'image/png');
-        }
-
-        function printQuote() {
-            window.print();
-        }
-
-        function renderPrintView(subtotalWithoutDiscount, totalWithDiscount, discountRate) {
-            const printView = document.getElementById('print-view');
-            const clientName = document.getElementById('client-name').value.trim();
-            const clientNameHtml = clientName ? `<p class="print-name-field">Nombre y Apellido: ${clientName}</p>` : '';
-            
-            let printContent = '';
-
-            printContent += `
-                <div style="margin-bottom: 25px;">
-                    <span class="print-logo-text">blanco&madera</span>
-                    <hr style="width: 100%; border: 1px solid #ddd; margin: 5px 0;">
-                    <span class="print-deco-home">DECO HOME</span>
-                    <h1 class="print-title">COTIZACIÓN</h1>
-                    ${clientNameHtml}
-                </div>
-                
-                <h2 style="font-size: 14pt; margin-bottom: 10px; color: #555;">Detalle de Productos:</h2>
-            `;
-
-            for (const id in cart) {
-                const item = cart[id];
-                const itemSubtotal = item.precio * item.cantidad;
-                
-                printContent += `
-                    <div class="cart-item-print flex justify-between">
-                        <span style="font-weight: 500;">${item.nombre}</span>
-                        <span>${item.cantidad} x ${formatCurrency(item.precio)} = ${formatCurrency(itemSubtotal)}</span>
-                    </div>
-                `;
-            }
-
-            if (discountRate > 0) {
-                const discountAmount = subtotalWithoutDiscount * discountRate;
-                printContent += `
-                    <div class="discount-print-summary" style="text-align: right; margin-top: 15px;">
-                        <p style="font-size: 10pt; color: #777;">Subtotal: ${formatCurrency(subtotalWithoutDiscount)}</p>
-                        <p style="font-size: 10pt; color: #c00;">Descuento (${(discountRate * 100).toFixed(0)}%): -${formatCurrency(discountAmount)}</p>
-                    </div>
-                `;
-            }
-
-            printContent += `
-                <div class="cart-total-print flex justify-between" style="text-align: right;">
-                    <span style="font-weight: 700; color: #333;">TOTAL FINAL:</span>
-                    <span style="font-weight: 800; color: #d4a753;">${formatCurrency(totalWithDiscount)}</span>
-                </div>
-            `;
-            
-            printView.innerHTML = printContent;
-        }
-
-        function renderProductList(data) {
-            const productList = document.getElementById('product-list');
-            productList.innerHTML = ''; 
-
-            if (data.length === 0) {
-                productList.innerHTML = '<p class="text-stone-500">No se encontraron productos que coincidan con su búsqueda.</p>';
-                return;
-            }
-
-            data.forEach(product => {
-                const item = document.createElement('div');
-                item.className = "bg-white p-4 rounded-xl border border-stone-100 flex justify-between items-center item-card";
-                item.innerHTML = `
-                    <div>
-                        <p class="font-semibold text-lg text-stone-800">${product.nombre}</p>
-                        <p class="text-xs text-stone-500">${product.categoria}</p>
-                    </div>
-                    <div class="flex items-center space-x-3">
-                        <span class="text-xl font-extrabold text-amber-800">${formatCurrency(product.precio)}</span>
-                        <button onclick="addToCart(${product.id})" class="p-2 amber-gradient text-white rounded-lg shadow-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2">
-                            <span class="text-xl">🛒</span>
-                        </button>
-                    </div>
-                `;
-                productList.appendChild(item);
-            });
-        }
-
-        function updateDashboard() {
-            const categoryFilter = document.getElementById('category-filter');
-            const searchBox = document.getElementById('search-box');
-            
-            const selectedCategory = categoryFilter.value;
-            const searchTerm = searchBox.value.toLowerCase();
-
-            const filteredData = productData.filter(product => {
-                const matchesCategory = (selectedCategory === 'all') || (product.categoria === selectedCategory);
-                const matchesSearch = product.nombre.toLowerCase().includes(searchTerm);
-                return matchesCategory && matchesSearch;
-            });
-
-            renderProductList(filteredData);
-            renderCart(); 
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            parseData();
-            populateCategoryFilter();
-            loadCart(); // CARGAR CARRITO GUARDADO
-            
-            document.getElementById('category-filter').addEventListener('change', updateDashboard);
-            document.getElementById('search-box').addEventListener('input', updateDashboard);
-            document.getElementById('reset-button').addEventListener('click', () => {
-                document.getElementById('category-filter').value = 'all';
-                document.getElementById('search-box').value = '';
-                document.getElementById('client-name').value = '';
-                document.getElementById('whatsapp-number').value = '';
-                updateDashboard();
-            });
-            document.getElementById('clear-cart-button').addEventListener('click', () => {
-                cart = {};
-                saveCart(); // LIMPIAR LOCALSTORAGE TAMBIEN
-                updateDashboard();
-            });
-            
-            document.getElementById('discount-select').addEventListener('change', renderCart);
-            document.getElementById('client-name').addEventListener('input', renderCart); 
-            document.getElementById('whatsapp-number').addEventListener('input', renderCart); 
-            
-            document.getElementById('send-whatsapp-text-button').addEventListener('click', sendQuoteViaWhatsAppText);
-            document.getElementById('share-image-button').addEventListener('click', shareQuoteAsImage);
-            
-            document.getElementById('print-button').addEventListener('click', printQuote);
-            
-            const isMobile = window.innerWidth < 768;
-            if (isMobile) {
-                showView('catalog');
-            } else {
-                document.getElementById('catalog-panel').style.display = 'block';
-                document.getElementById('cart-panel').style.display = 'flex';
-                document.getElementById('filters-container').style.display = 'grid';
-            }
-
             updateDashboard();
-        });
-    </script>
-</body>
-</html>
+        };
+        
+        // Lógica para enviar por WhatsApp (TEXTO)
+        window.sendQuoteViaWhatsApp = function() {
+            const clientName = document.getElementById('client-name') ? document.getElementById('client-name').value : '';
+            const whatsappNumber = document.getElementById('whatsapp-number') ? document.getElementById('whatsapp-number').value.replace(/[^\d]/g, '') : '';
+            const total = document.getElementById('cart-total') ? document.getElementById('cart-total').textContent : '$0';
+            
+            if (!whatsappNumber || Object.keys(cart).length === 0) {
+                 alert('Por favor, ingresa tu número de WhatsApp y añade productos al carrito.');
+                 return;
+            }
+
+            let message = `¡Hola! Aquí tienes la cotización de Blanco & Madera para ${clientName || 'ti'}:`;
+            message += "%0A%0A*Detalle de Pedido:*";
+
+            for (const id in cart) {
+                const item = cart[id];
+                message += `%0A— ${item.nombre} x ${item.cantidad} (${formatCurrency(item.precio)} c/u)`;
+            }
+
+            message += `%0A%0A*TOTAL FINAL: ${total}*`;
+            message += "%0A%0AGracias por tu compra. ¡Esperamos tu confirmación!";
+
+            const url = `https://wa.me/${whatsappNumber}?text=${message}`;
+            window.open(url, '_blank');
+        };
+
+        // Lógica para imprimir/PDF
+        window.printQuote = function() {
+            window.print();
+        };
+
+        // Nuevo: Función que construye el layout de impresión
+        function renderPrintView(subtotalWithoutDiscount, totalWithDiscount, discountRate) {
+            // Recoger elementos de forma defensiva
+            const printView = document.getElementById('print-view');
+            const clientName = document.getElementById('client-name') ? document.getElementById('client-name').value.trim() : "Cliente";
+            const clientNameHtml = clientName ? `<p class="print-name-field">Cliente: ${clientName}</p>` : '';
+            
+            if (!printView) return; // Salir si el contenedor de impresión no existe
+
+            let printContent = '';
+
+            // 1. Header de Impresión
+            printContent += `
+                <div style="margin-bottom: 25px;">
+                    <span class="print-logo-text">blanco&madera</span>
+                    <hr style="width: 100%; border: 1px solid #ddd; margin: 5px 0;">
+                    <span class="print-deco-home">DECO HOME</span>
+                    <h1 class="print-title">NOTA DE PEDIDO</h1>
+                    ${clientNameHtml}
+                </div>
+                
+                <h2 style="font-size: 14pt; margin-bottom: 10px; color: #555;">Detalle de Productos:</h2>
+            `;
+
+            // 2. Lista de Productos
+            for (const id in cart) {
+                const item = cart[id];
+                const itemSubtotal = item.precio * item.cantidad;
+                
+                printContent += `
+                    <div class="cart-item-print flex justify-between">
+                        <span style="font-weight: 500;">${item.nombre}</span>
+                        <span>${item.cantidad} x ${formatCurrency(item.precio)} = ${formatCurrency(itemSubtotal)}</span>
+                    </div>
+                `;
+            }
+
+            // 3. Resumen de Totales
+            if (discountRate > 0) {
+                const discountAmount = subtotalWithoutDiscount * discountRate;
+                printContent += `
+                    <div class="discount-print-summary" style="text-align: right; margin-top: 15px;">
+                        <p style="font-size: 10pt; color: #777;">Subtotal: ${formatCurrency(subtotalWithoutDiscount)}</p>
+                        <p style="font-size: 10pt; color: #c00;">Descuento (${(discountRate * 100).toFixed(0)}%): -${formatCurrency(discountAmount)}</p>
+                    </div>
+                `;
+            }
+
+            printContent += `
+                <div class="cart-total-print flex justify-between" style="text-align: right;">
+                    <span style="font-weight: 700; color: #333;">TOTAL FINAL:</span>
+                    <span style="font-weight: 800; color: #d4a753;">${formatCurrency(totalWithDiscount)}</span>
+                </div>
+            `;
+            
+            printView.innerHTML = printContent;
+        }
+
+
+        // Función que renderiza la lista de productos (Catálogo)
+        function renderProductList(data) {
+            const productList = document.getElementById('product-list');
+            productList.innerHTML = ''; 
+
+    1. **Copia todo el texto** del bloque de código.
+    2. **Edita tu Archivo en GitHub:** Borra el código que tienes actualmente y **PEGA este nuevo código completo.**
+    3. **Confirma y Prueba tu enlace.**
+    
+Este archivo resuelve el `SyntaxError` y te devuelve al Mini-Cotizador funcional. Si tienes la posibilidad de probar la vista previa o el enlace público, por favor, hazlo y confírmame que la suma y el logo ya están funcionando.
