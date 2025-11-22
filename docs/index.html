@@ -262,26 +262,24 @@
                         <span id="cart-total" class="text-4xl font-extrabold text-amber-800 cart-total-print">$0</span>
                     </div>
 
-                    <!-- BOTONES DE ACCIÓN: Ahora tienes DOS opciones -->
+                    <!-- BOTONES DE ACCIÓN -->
                     <div class="space-y-3 no-print">
                         <!-- OPCIÓN 1: TEXTO DIRECTO (Prioridad Número) -->
                         <button id="send-whatsapp-text-button" class="w-full bg-green-600 text-white font-bold py-3 rounded-lg shadow-xl hover:bg-green-700 transition duration-300 focus:outline-none focus:ring-4 focus:ring-green-400 focus:ring-offset-2 flex justify-center items-center gap-2">
-                            <!-- Usa código Unicode para el emoji de diálogo -->
-                            <span>&#128172;</span> Enviar Texto al Cliente (Directo)
+                            <span>💬</span> Enviar Texto al Cliente (Directo)
                         </button>
                         
                         <!-- OPCIÓN 2: IMAGEN (Prioridad Estética) -->
                         <button id="share-image-button" class="w-full bg-amber-500 text-white font-bold py-3 rounded-lg shadow-xl hover:bg-amber-600 transition duration-300 focus:outline-none focus:ring-4 focus:ring-amber-400 focus:ring-offset-2 flex justify-center items-center gap-2">
-                            <!-- Usa código Unicode para el emoji de cuadro -->
-                            <span>&#128444;&#65039;</span> Generar y Compartir Imagen
+                            <span>🖼️</span> Generar y Compartir Imagen
                         </button>
 
                         <div class="grid grid-cols-2 gap-3">
                             <button id="print-button" class="bg-stone-500 text-white font-bold py-3 rounded-lg shadow-md hover:bg-stone-600 transition duration-300 focus:outline-none">
-                                &#128424; Imprimir / PDF
+                                🖨️ Imprimir / PDF
                             </button>
                             <button id="clear-cart-button" class="bg-red-500 text-white font-bold py-3 rounded-lg shadow-md hover:bg-red-600 transition duration-300 focus:outline-none">
-                                &#128465; Vaciar
+                                🗑️ Vaciar
                             </button>
                         </div>
                         <p class="text-xs text-stone-400 text-center mt-1">
@@ -296,11 +294,11 @@
     <div class="mobile-nav bg-white shadow-2xl p-3 border-t border-stone-200">
         <div class="flex justify-around">
             <button id="tab-catalog" onclick="showView('catalog')" class="flex flex-col items-center text-amber-800 font-semibold focus:outline-none">
-                <span class="text-2xl">&#128722;</span>
+                <span class="text-2xl">🛒</span>
                 <span class="text-xs mt-1">Catálogo</span>
             </button>
             <button id="tab-cart" onclick="showView('cart')" class="flex flex-col items-center text-stone-500 font-semibold focus:outline-none relative">
-                <span class="text-2xl">&#128221;</span>
+                <span class="text-2xl">📝</span>
                 <span class="text-xs mt-1">Cotización</span>
                 <span id="cart-item-count" class="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full transform translate-x-3 -translate-y-2 opacity-0 transition duration-300 shadow-sm">
                     0
@@ -310,6 +308,8 @@
     </div>
 
     <script>
+        console.log("Versión Actualizada Cargada - Corrección Fecha y Emojis");
+
         const rawData = [
             {"Product Name":"ALZAPAÑOS","Price":"NaN"},
             {"Product Name":"Alzapaño Rosario","Price":"4500.0"},
@@ -695,20 +695,17 @@
 
             const totalWithDiscount = subtotal * (1 - discountRate);
             const discountApplied = discountRate > 0 ? subtotal * discountRate : 0;
-            // Obtiene la fecha del momento actual (ej: 22 de noviembre de 2025)
             const formattedDate = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
 
             const summaryLines = [
                 `Hola, ${clientName || 'Cliente'}!`,
                 '',
-                // \uD83D\uDECD\uFE0F es el código seguro para el emoji de bolsas de compra 🛍️
-                `\uD83D\uDECD\uFE0F Detalle de tu compra en Blanco & Madera el ${formattedDate}`,
+                `🛍️ Detalle de tu compra en Blanco & Madera el ${formattedDate}`,
                 ''
             ];
 
             items.forEach((item) => {
-                // \u2022 es el código seguro para el punto •
-                summaryLines.push(` \u2022 ${item.nombre} x ${item.cantidad}: ${formatCurrency(item.subtotal)}`);
+                summaryLines.push(` • ${item.nombre} x ${item.cantidad}: ${formatCurrency(item.subtotal)}`);
             });
 
             summaryLines.push('');
@@ -719,11 +716,9 @@
                 summaryLines.push(`Descuento (${(discountRate * 100).toFixed(0)}%): -${formatCurrency(discountApplied)}`);
             }
 
-            // \uD83D\uDCB0 es el código seguro para el emoji de bolsa de dinero 💰
-            summaryLines.push(`\uD83D\uDCB0 TOTAL FINAL: ${formatCurrency(totalWithDiscount)}`);
+            summaryLines.push(`💰 TOTAL FINAL: ${formatCurrency(totalWithDiscount)}`);
             summaryLines.push('');
-            // \uD83E\uDEF6\uD83C\uDFFC es el código seguro para el emoji de manos corazón 🫶🏼
-            summaryLines.push('¡Muchas gracias por confiar en Blanco & Madera! \uD83E\uDEF6\uD83C\uDFFC');
+            summaryLines.push('¡Muchas gracias por confiar en Blanco & Madera! 🫶🏼');
 
             const whatsappText = encodeURIComponent(summaryLines.join('\n'));
             const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappText}`;
@@ -849,9 +844,9 @@
 
             ctx.textAlign = 'center';
             ctx.fillStyle = '#0b0b0b';
-            ctx.font = '18px Inter, sans-serif';
-            // Mensaje de la imagen con código Unicode para 🫶🏼
-            ctx.fillText('Muchas gracias por confiar en Blanco & Madera! \uD83E\uDEF6\uD83C\uDFFC', canvasWidth / 2, cursorY + 30);
+            // IMPORTANTE: Añadí fuentes de emojis (Apple Color Emoji, Segoe UI Emoji) para que se vean bien en la imagen
+            ctx.font = '18px "Inter", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif';
+            ctx.fillText('Muchas gracias por confiar en Blanco & Madera! 🫶🏼', canvasWidth / 2, cursorY + 30);
 
             canvas.toBlob(async (blob) => {
                 if (!blob) {
@@ -865,8 +860,7 @@
                         await navigator.share({
                             files: [file],
                             title: 'Cotización Blanco & Madera',
-                            // Mensaje para compartir imagen con código Unicode para 🫶🏼
-                            text: `Hola ${clientName}! Te envío el detalle de tu compra del día ${formattedDate}\nMuchas gracias por confiar en Blanco & Madera! \uD83E\uDEF6\uD83C\uDFFC`
+                            text: `Hola ${clientName}! Te envío el detalle de tu compra del día ${formattedDate}\nMuchas gracias por confiar en Blanco & Madera! 🫶🏼`
                         });
                     } catch (err) {
                         console.error('Error al compartir:', err);
@@ -956,7 +950,7 @@
                     <div class="flex items-center space-x-3">
                         <span class="text-xl font-extrabold text-amber-800">${formatCurrency(product.precio)}</span>
                         <button onclick="addToCart(${product.id})" class="p-2 amber-gradient text-white rounded-lg shadow-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2">
-                            <span class="text-xl">&#128722;</span>
+                            <span class="text-xl">🛒</span>
                         </button>
                     </div>
                 `;
