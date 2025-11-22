@@ -724,7 +724,8 @@
             const summaryLines = [
                 `Hola, ${clientName || 'Cliente'}!`,
                 '',
-                `🛍️ Detalle de tu compra en Blanco & Madera el ${formattedDate}`,
+                // \uD83D\uDECD\uFE0F es el código seguro para el emoji de bolsas de compra 🛍️
+                '\uD83D\uDECD\uFE0F Detalle de tu compra en Blanco & Madera el ${formattedDate}',
                 ''
             ];
 
@@ -745,7 +746,7 @@
             summaryLines.push(`\uD83D\uDCB0 TOTAL FINAL: ${formatCurrency(totalWithDiscount)}`);
             summaryLines.push('');
             // \uD83E\uDEF6\uD83C\uDFFC es el código seguro para el emoji de manos corazón 🫶🏼
-            summaryLines.push('¡Muchas gracias por confiar en Blanco & Madera!\uD83E\uDEF6\uD83C\uDFFC');
+            summaryLines.push('¡Muchas gracias por confiar en Blanco & Madera! \uD83E\uDEF6\uD83C\uDFFC');
 
             const whatsappText = encodeURIComponent(summaryLines.join('\n'));
             const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappText}`;
@@ -897,7 +898,7 @@
             ctx.fillStyle = '#0b0b0b';
             ctx.font = '20px Inter, sans-serif';
             // Mensaje de la imagen con código Unicode para 🫶🏼
-            ctx.fillText(`¡Muchas gracias por confiar en Blanco & Madera! \uD83E\uDEF6\uD83C\uDFFC`, canvasWidth / 2, cursorY + 30);
+            ctx.fillText('¡Muchas gracias por confiar en Blanco & Madera! \uD83E\uDEF6\uD83C\uDFFC', canvasWidth / 2, cursorY + 30);
 
             // Convertir a imagen y compartir
             canvas.toBlob(async (blob) => {
