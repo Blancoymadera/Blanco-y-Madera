@@ -491,10 +491,13 @@
         function parseData() {
             let currentCategory = "Desconocido";
             rawData.forEach(item => {
+                // Limpiar la cadena de precio para asegurar que sea numérica (eliminar posibles caracteres no deseados antes de parsear)
                 const cleanedPriceString = item.Price ? item.Price.replace(/[^\d.]/g, '').trim() : '0';
+                // Intentamos parsear el precio como un entero (asumiendo que no hay decimales)
                 const price = parseInt(cleanedPriceString); 
                 const name = item["Product Name"].trim();
                 
+                // Si el precio es NaN o 0, asumimos que es un separador/categoría
                 if (isNaN(price) || price === 0) {
                     currentCategory = name;
                     categories.add(name);
@@ -510,6 +513,7 @@
         }
 
         function formatCurrency(value) {
+            // Formatea el valor como moneda argentina sin decimales
             return new Intl.NumberFormat('es-AR', {
                 style: 'currency',
                 currency: 'ARS',
@@ -518,17 +522,23 @@
             }).format(value);
         }
 
-        // --- NUEVA FUNCIÓN: GUARDAR CARRITO ---
+        // --- FUNCIONES DE ALMACENAMIENTO LOCAL (localStorage) ---
         function saveCart() {
             localStorage.setItem('bm_cart', JSON.stringify(cart));
+            localStorage.setItem('bm_client_name', document.getElementById('client-name').value.trim());
+            localStorage.setItem('bm_whatsapp_number', document.getElementById('whatsapp-number').value.trim());
+            localStorage.setItem('bm_discount', document.getElementById('discount-select').value);
         }
 
-        // --- NUEVA FUNCIÓN: CARGAR CARRITO ---
         function loadCart() {
-            const saved = localStorage.getItem('bm_cart');
-            if (saved) {
-                cart = JSON.parse(saved);
+            const savedCart = localStorage.getItem('bm_cart');
+            if (savedCart) {
+                cart = JSON.parse(savedCart);
             }
+            // Cargar datos del cliente y descuento
+            document.getElementById('client-name').value = localStorage.getItem('bm_client_name') || '';
+            document.getElementById('whatsapp-number').value = localStorage.getItem('bm_whatsapp_number') || '';
+            document.getElementById('discount-select').value = localStorage.getItem('bm_discount') || '0';
         }
 
         function renderCart() {
@@ -577,24 +587,34 @@
                 emptyMessage.style.display = cartItemsCount === 0 ? 'block' : 'none';
             }
             
+            // Actualizar contador de items en la navegación móvil
             cartItemCountEl.textContent = cartItemsCount > 0 ? cartItemsCount : '';
             cartItemCountEl.style.opacity = cartItemsCount > 0 ? 1 : 0;
 
+            // Actualizar total general
             cartTotalEl.textContent = formatCurrency(totalWithDiscount);
 
+            // Mostrar detalles de descuento si aplica
+            const discountInfoDiv = document.createElement('div');
+            discountInfoDiv.className = "mt-2 space-y-1";
+            
             if (discountRate > 0) {
                  const discountAmount = subtotalWithoutDiscount * discountRate;
                  const discountDisplay = document.createElement('p');
-                 discountDisplay.className = "text-sm text-red-500 font-semibold mt-1";
+                 discountDisplay.className = "text-sm text-red-500 font-semibold";
                  discountDisplay.textContent = `Descuento Aplicado (${(discountRate * 100).toFixed(0)}%): -${formatCurrency(discountAmount)}`;
-                 cartList.appendChild(discountDisplay);
+                 discountInfoDiv.appendChild(discountDisplay);
 
                  const subtotalDisplay = document.createElement('p');
                  subtotalDisplay.className = "text-sm text-stone-500 font-medium";
                  subtotalDisplay.textContent = `Subtotal sin Descuento: ${formatCurrency(subtotalWithoutDiscount)}`;
-                 cartList.appendChild(subtotalDisplay);
+                 discountInfoDiv.appendChild(subtotalDisplay);
             }
-            
+
+            if (cartItemsCount > 0) {
+                 cartList.appendChild(discountInfoDiv);
+            }
+
             renderPrintView(subtotalWithoutDiscount, totalWithDiscount, discountRate);
         }
         
@@ -614,7 +634,7 @@
             id = parseInt(id);
             if (cart[id]) {
                 cart[id].cantidad += 1;
-                showToast(`¡Agregado! ${cart[id].nombre}`);
+                showToast(`¡Agregado! ${cart[id].nombre} (x${cart[id].cantidad})`);
             } else {
                 const product = productData.find(p => p.id === id);
                 if (product) {
@@ -656,7 +676,7 @@
             
             if (viewName === 'catalog') {
                 catalogPanel.style.display = 'block';
-                filtersContainer.style.display = 'block';
+                filtersContainer.style.display = 'grid'; // Revertir a display grid para filtros
                 cartPanel.style.display = 'none';
                 tabCatalog.classList.add('text-amber-800');
                 tabCart.classList.remove('text-amber-800');
@@ -665,20 +685,22 @@
             } else {
                 catalogPanel.style.display = 'none';
                 filtersContainer.style.display = 'none';
-                cartPanel.style.display = 'flex';
+                cartPanel.style.display = 'flex'; // Revertir a display flex para carrito (ya que es flex-col)
                 tabCart.classList.add('text-amber-800');
                 tabCatalog.classList.remove('text-amber-800');
                 tabCatalog.classList.add('text-stone-500');
                 tabCart.classList.remove('text-stone-500');
             }
         };
-
+        
+        // --- FUNCIÓN PARA ENVIAR POR WHATSAPP (TEXTO) ---
         async function sendQuoteViaWhatsAppText() {
             const clientName = document.getElementById('client-name').value.trim();
+            // Limpiar el número, aceptando solo dígitos
             const whatsappNumber = document.getElementById('whatsapp-number').value.trim().replace(/\D/g, ''); 
 
             if (!whatsappNumber || Object.keys(cart).length === 0) {
-                alert("Por favor, ingresa el número de WhatsApp del cliente y añade al menos un producto al carrito.");
+                showToast("⚠️ Ingresa el número de WhatsApp y añade productos al carrito.");
                 return;
             }
 
@@ -698,11 +720,11 @@
             // Obtiene la fecha del momento actual (ej: 22 de noviembre de 2025)
             const formattedDate = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
 
+            // Construcción del mensaje de texto para WhatsApp
             const summaryLines = [
                 `Hola, ${clientName || 'Cliente'}!`,
                 '',
-                // \uD83D\uDECD\uFE0F es el código seguro para el emoji de bolsas de compra 🛍️
-                `\uD83D\uDECD\uFE0F Detalle de tu compra en Blanco & Madera el ${formattedDate}`,
+                `🛍️ Detalle de tu compra en Blanco & Madera el ${formattedDate}`,
                 ''
             ];
 
@@ -723,19 +745,21 @@
             summaryLines.push(`\uD83D\uDCB0 TOTAL FINAL: ${formatCurrency(totalWithDiscount)}`);
             summaryLines.push('');
             // \uD83E\uDEF6\uD83C\uDFFC es el código seguro para el emoji de manos corazón 🫶🏼
-            summaryLines.push('¡Muchas gracias por confiar en Blanco & Madera! \uD83E\uDEF6\uD83C\uDFFC');
+            summaryLines.push('¡Muchas gracias por confiar en Blanco & Madera!\uD83E\uDEF6\uD83C\uDFFC');
 
             const whatsappText = encodeURIComponent(summaryLines.join('\n'));
             const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappText}`;
             window.open(whatsappUrl, '_blank');
         }
-
+        
+        // --- FUNCIÓN PARA COMPARTIR POR WHATSAPP (IMAGEN) ---
+        // Requiere la librería html2canvas o un método manual para generar la imagen (aquí se usa Canvas manual)
         async function shareQuoteAsImage() {
             const clientName = document.getElementById('client-name').value.trim();
             const whatsappNumber = document.getElementById('whatsapp-number').value.trim().replace(/\D/g, '');
             
             if (Object.keys(cart).length === 0) {
-                alert("El carrito está vacío.");
+                showToast("⚠️ El carrito está vacío. Añade productos.");
                 return;
             }
 
@@ -760,6 +784,7 @@
             const discountApplied = discountRate > 0 ? subtotal * discountRate : 0;
             const formattedDate = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
 
+            // Cálculo dinámico de la altura del canvas
             const headerHeight = 260;
             const itemHeight = 42;
             const totalsHeight = discountRate > 0 ? 190 : 150;
@@ -772,31 +797,37 @@
             canvas.height = canvasHeight;
             const ctx = canvas.getContext('2d');
 
+            // 1. Fondo Blanco
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
+            // 2. Logo y Título
             const logoCenterX = canvasWidth / 2;
             const headerTop = 35;
 
-            ctx.fillStyle = '#0b0b0b';
+            ctx.fillStyle = '#1c1917'; // color de texto
             ctx.textAlign = 'center';
-            ctx.font = '700 48px "Inter", serif';
+            ctx.font = '800 48px serif';
             ctx.fillText('blanco&madera', logoCenterX, headerTop + 55);
 
             ctx.lineWidth = 2;
-            ctx.strokeStyle = '#0b0b0b';
+            ctx.strokeStyle = '#78716c'; // color de línea
             ctx.beginPath();
             ctx.moveTo(logoCenterX - 120, headerTop + 63);
             ctx.lineTo(logoCenterX + 120, headerTop + 63);
             ctx.stroke();
 
             ctx.font = '600 16px Inter, sans-serif';
+            ctx.fillStyle = '#78716c';
             ctx.fillText('DECO HOME', logoCenterX, headerTop + 88);
 
-            ctx.font = 'bold 24px Inter, sans-serif';
+            // Título de Cotización
+            ctx.font = '800 32px Inter, sans-serif';
+            ctx.fillStyle = '#b18b45'; // Color ámbar oscuro
             ctx.textAlign = 'left';
-            ctx.fillText('detalle de compra', 40, headerTop + 122);
+            ctx.fillText('COTIZACIÓN', 40, headerTop + 140);
 
+            // 3. Datos del Cliente
             let cursorY = 200;
             ctx.fillStyle = '#0b0b0b';
             ctx.font = '20px Inter, sans-serif';
@@ -807,7 +838,9 @@
             ctx.fillText(`Teléfono: +${whatsappNumber}`, 40, cursorY);
             cursorY += 48;
 
+            // 4. Detalle de Productos
             ctx.font = 'bold 22px Inter, sans-serif';
+            ctx.fillStyle = '#1c1917';
             ctx.fillText('Detalle de productos', 40, cursorY);
             cursorY += 24;
 
@@ -819,47 +852,63 @@
                 if (displayName.length > 60) displayName = displayName.substring(0, 57) + '...';
                 
                 ctx.fillText(`${displayName} x${item.cantidad}`, 40, cursorY + 22);
+                
                 ctx.textAlign = 'right';
                 ctx.fillText(`${formatCurrency(item.subtotal)}`, canvasWidth - 40, cursorY + 22);
                 cursorY += itemHeight;
             });
 
+            // 5. Separador
             ctx.textAlign = 'left';
             ctx.fillStyle = '#78716c';
             ctx.font = '18px Inter, sans-serif';
-            ctx.fillText('-------------------------------------------', 40, cursorY);
+            ctx.fillText('-------------------------------------------------------------------------------------------------------------------', 40, cursorY);
             cursorY += 28;
 
+            // 6. Totales y Descuento
             if (discountRate > 0) {
                 ctx.fillStyle = '#0b0b0b';
-                ctx.fillText(`Subtotal sin descuento: ${formatCurrency(subtotal)}`, 40, cursorY);
+                ctx.fillText(`Subtotal sin descuento:`, 40, cursorY);
+                ctx.textAlign = 'right';
+                ctx.fillText(`${formatCurrency(subtotal)}`, canvasWidth - 40, cursorY);
                 cursorY += 26;
-                ctx.fillStyle = '#c1121f';
-                ctx.fillText(`Descuento (${(discountRate * 100).toFixed(0)}%): -${formatCurrency(discountApplied)}`, 40, cursorY);
+                
+                ctx.fillStyle = '#c1121f'; // Rojo para el descuento
+                ctx.textAlign = 'left';
+                ctx.fillText(`Descuento (${(discountRate * 100).toFixed(0)}%):`, 40, cursorY);
+                ctx.textAlign = 'right';
+                ctx.fillText(`-${formatCurrency(discountApplied)}`, canvasWidth - 40, cursorY);
                 cursorY += 32;
             }
 
-            ctx.fillStyle = '#0b0b0b';
+            ctx.fillStyle = '#1c1917';
             ctx.font = 'bold 24px Inter, sans-serif';
+            ctx.textAlign = 'left';
             ctx.fillText('TOTAL FINAL:', 40, cursorY);
-            ctx.font = 'bold 32px Inter, sans-serif'; 
-            ctx.fillStyle = '#d4a753';
-            ctx.fillText(`${formatCurrency(totalWithDiscount)}`, 230, cursorY);
+            
+            ctx.font = 'bold 36px Inter, sans-serif'; 
+            ctx.fillStyle = '#d4a753'; // Ámbar principal
+            ctx.textAlign = 'right';
+            ctx.fillText(`${formatCurrency(totalWithDiscount)}`, canvasWidth - 40, cursorY + 5);
             cursorY += 50;
 
+            // 7. Footer
             ctx.textAlign = 'center';
             ctx.fillStyle = '#0b0b0b';
-            ctx.font = '18px Inter, sans-serif';
+            ctx.font = '20px Inter, sans-serif';
             // Mensaje de la imagen con código Unicode para 🫶🏼
-            ctx.fillText('Muchas gracias por confiar en Blanco & Madera! \uD83E\uDEF6\uD83C\uDFFC', canvasWidth / 2, cursorY + 30);
+            ctx.fillText(`¡Muchas gracias por confiar en Blanco & Madera! \uD83E\uDEF6\uD83C\uDFFC`, canvasWidth / 2, cursorY + 30);
 
+            // Convertir a imagen y compartir
             canvas.toBlob(async (blob) => {
                 if (!blob) {
-                    alert('Error generando la imagen.');
+                    showToast('Error generando la imagen.');
                     return;
                 }
+                // Crear un objeto File
                 const file = new File([blob], 'cotizacion_blanco_madera.png', { type: 'image/png' });
 
+                // Intentar usar la API nativa de compartir
                 if (navigator.canShare && navigator.canShare({ files: [file] })) {
                     try {
                         await navigator.share({
@@ -869,14 +918,21 @@
                             text: `Hola ${clientName}! Te envío el detalle de tu compra del día ${formattedDate}\nMuchas gracias por confiar en Blanco & Madera! \uD83E\uDEF6\uD83C\uDFFC`
                         });
                     } catch (err) {
-                        console.error('Error al compartir:', err);
+                        console.error('Error al compartir (falló share nativo):', err);
+                        showToast("Error al compartir. La imagen se ha descargado.");
+                        // Fallback a descarga si share falla
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(blob);
+                        link.download = 'cotizacion_blanco_madera.png';
+                        link.click();
                     }
                 } else {
+                    // Fallback a descarga si no se soporta la API nativa
                     const link = document.createElement('a');
                     link.href = URL.createObjectURL(blob);
                     link.download = 'cotizacion_blanco_madera.png';
                     link.click();
-                    alert("Tu dispositivo no soporta compartir imágenes directamente. La imagen se ha descargado.");
+                    showToast("Tu dispositivo no soporta compartir imágenes. La imagen se ha descargado.");
                 }
             }, 'image/png');
         }
@@ -979,13 +1035,23 @@
 
             renderProductList(filteredData);
             renderCart(); 
+            // Guardar filtros y estado cada vez que se actualiza el dashboard
+            saveClientInfoAndDiscount();
+        }
+        
+        // Guardar la información del cliente y el descuento
+        function saveClientInfoAndDiscount() {
+            localStorage.setItem('bm_client_name', document.getElementById('client-name').value.trim());
+            localStorage.setItem('bm_whatsapp_number', document.getElementById('whatsapp-number').value.trim());
+            localStorage.setItem('bm_discount', document.getElementById('discount-select').value);
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             parseData();
             populateCategoryFilter();
-            loadCart(); // CARGAR CARRITO GUARDADO
+            loadCart(); // CARGAR CARRITO Y DATOS GUARDADOS
             
+            // Event Listeners para filtros
             document.getElementById('category-filter').addEventListener('change', updateDashboard);
             document.getElementById('search-box').addEventListener('input', updateDashboard);
             document.getElementById('reset-button').addEventListener('click', () => {
@@ -993,23 +1059,39 @@
                 document.getElementById('search-box').value = '';
                 document.getElementById('client-name').value = '';
                 document.getElementById('whatsapp-number').value = '';
+                document.getElementById('discount-select').value = '0'; // Resetear descuento
+                saveCart(); // Guardar carrito vacío y campos reseteados
                 updateDashboard();
             });
+            
+            // Event Listeners para carrito y cotización
             document.getElementById('clear-cart-button').addEventListener('click', () => {
                 cart = {};
                 saveCart(); // LIMPIAR LOCALSTORAGE TAMBIEN
                 updateDashboard();
             });
             
-            document.getElementById('discount-select').addEventListener('change', renderCart);
-            document.getElementById('client-name').addEventListener('input', renderCart); 
-            document.getElementById('whatsapp-number').addEventListener('input', renderCart); 
+            document.getElementById('discount-select').addEventListener('change', () => {
+                saveClientInfoAndDiscount(); // Guardar descuento al cambiar
+                renderCart();
+            });
             
+            // Al cambiar nombre o WhatsApp, guardar en localStorage y actualizar vista de impresión
+            document.getElementById('client-name').addEventListener('input', () => {
+                saveClientInfoAndDiscount();
+                renderCart();
+            }); 
+            document.getElementById('whatsapp-number').addEventListener('input', () => {
+                saveClientInfoAndDiscount();
+                renderCart();
+            }); 
+            
+            // Event Listeners para acciones de compartir/imprimir
             document.getElementById('send-whatsapp-text-button').addEventListener('click', sendQuoteViaWhatsAppText);
             document.getElementById('share-image-button').addEventListener('click', shareQuoteAsImage);
-            
             document.getElementById('print-button').addEventListener('click', printQuote);
             
+            // Lógica de vista inicial para móvil/escritorio
             const isMobile = window.innerWidth < 768;
             if (isMobile) {
                 showView('catalog');
@@ -1019,6 +1101,7 @@
                 document.getElementById('filters-container').style.display = 'grid';
             }
 
+            // Renderizado inicial
             updateDashboard();
         });
     </script>
