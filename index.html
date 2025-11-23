@@ -967,10 +967,12 @@
             const discountApplied = discountRate > 0 ? subtotal * discountRate : 0;
             const formattedDate = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
 
+            // CAMBIO 1: Eliminar emojis
+            // CAMBIO 2: Detalle más directo "Te envío el detalle..."
             const summaryLines = [
                 `Hola, ${clientName || 'Cliente'}!`,
                 '',
-                `🛍️ Detalle de tu compra en Blanco & Madera el ${formattedDate}`,
+                `Te envío el detalle de tu compra en Blanco & Madera el ${formattedDate}`,
                 ''
             ];
 
@@ -986,9 +988,9 @@
                 summaryLines.push(`Descuento (${(discountRate * 100).toFixed(0)}%): -${formatCurrency(discountApplied)}`);
             }
 
-            summaryLines.push(`💰 TOTAL FINAL: ${formatCurrency(totalWithDiscount)}`);
+            summaryLines.push(`TOTAL FINAL: ${formatCurrency(totalWithDiscount)}`); // Sin emoji 💰
             summaryLines.push('');
-            summaryLines.push('¡Muchas gracias por confiar en Blanco & Madera! 🫶🏼');
+            summaryLines.push('¡Muchas gracias por confiar en Blanco & Madera!'); // Sin emoji 🫶🏼
 
             // Si hay número, abre WhatsApp, sino solo confirma la operación local
             if (whatsappNumber) {
@@ -1116,7 +1118,7 @@
 
             ctx.textAlign = 'center';
             ctx.fillStyle = '#0b0b0b';
-            // Usando fuente del sistema para emojis en canvas
+            // Mantenemos el emoji en la imagen por estética, pero cambiamos el texto
             ctx.font = '18px "Inter", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif';
             ctx.fillText('Muchas gracias por confiar en Blanco & Madera! 🫶🏼', canvasWidth / 2, cursorY + 30);
 
@@ -1132,7 +1134,8 @@
                         await navigator.share({
                             files: [file],
                             title: 'Cotización Blanco & Madera',
-                            text: `Hola ${clientName}! Te envío el detalle de tu compra del día ${formattedDate}\nMuchas gracias por confiar en Blanco & Madera! 🫶🏼`
+                            // CAMBIO 2: Texto de compartir directo y sin emojis
+                            text: `Hola ${clientName}! Te envío el detalle de tu compra en Blanco & Madera el día ${formattedDate}`
                         });
                     } catch (err) {
                         console.error('Error al compartir:', err);
