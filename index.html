@@ -570,6 +570,14 @@
             {"Product Name":"CUENCO MINI CRUDO","Price":"5900", "Stock": "1"},
             {"Product Name":"PORTA MACETA LUREX","Price":"10200", "Stock": "1"},
             {"Product Name":"PORTA MACETA MINI CRUDO","Price":"7800", "Stock": "1"},
+            // NUEVOS PRODUCTOS
+            {"Product Name":"Flor seca carqueja","Price":"4300", "Stock": "1"},
+            {"Product Name":"Flor seca eucaliptus","Price":"4300", "Stock": "2"},
+            {"Product Name":"Alfombra marrón","Price":"17600", "Stock": "1"},
+            {"Product Name":"Velas cortas rojas","Price":"100", "Stock": "10"},
+            {"Product Name":"Velas de noche x6","Price":"3000", "Stock": "5"},
+            {"Product Name":"Velas de noche x12","Price":"3200", "Stock": "2"},
+            {"Product Name":"Cesto con tapa crudo","Price":"36300", "Stock": "1"},
         ];
 
         // --- FUNCIONES DE BASE DE DATOS ---
@@ -599,6 +607,7 @@
                         currentCategory = name; // Es un título de categoría
                     } else {
                         // Es un producto real
+                        // Creamos un ID basado en el índice para que sea único la primera vez
                         const id = `prod_${uniqueIdCounter++}`;
                         const docRef = doc(db, "products", id);
                         batch.set(docRef, {
@@ -614,7 +623,6 @@
                 await batch.commit();
                 statusElement.textContent = "Productos subidos. Sincronizando... 🔄";
                 console.log("¡Productos subidos a la nube! Iniciando escucha...");
-                // No cerramos el loading hasta que el listener de onSnapshot dispare la primera vez
             } else {
                 statusElement.textContent = "Conectado a stock centralizado 🟢";
                 statusElement.classList.add('text-green-600');
@@ -634,6 +642,9 @@
                 
                 querySnapshot.forEach((doc) => {
                     const data = doc.data();
+                    // Firebase usa el doc.id si no pasamos un campo 'id' explícito.
+                    // Aseguramos que el producto tenga un ID para el carrito.
+                    if (!data.id) data.id = doc.id; 
                     productData.push(data);
                     categories.add(data.categoria);
                 });
@@ -647,7 +658,7 @@
                 document.getElementById('connection-status').classList.add('text-green-600');
             }, (error) => {
                 console.error("Error al suscribirse a la DB:", error);
-                document.getElementById('connection-status').textContent = "ERROR de Sincronización 🔴";
+                document.getElementById('connection-status').textContent = "ERROR: Conexión a Firebase fallida 🔴";
                 loadingElement.innerHTML = `<div class="text-red-600 font-bold">¡ERROR! Revisa tu clave de Firebase.</div>`;
             });
         }
@@ -690,7 +701,6 @@
                     await sendQuoteViaWhatsAppText();
                     cart = {};
                     saveCart(); // Limpiar localstorage
-                    // El updateDashboard ocurrirá automáticamente gracias a onSnapshot
                     showToast("✅ Venta registrada en la nube.");
                 } catch (e) {
                     console.error("Error al actualizar el stock:", e);
@@ -701,21 +711,25 @@
         
         // 4. Función de reinicio de emergencia (Borra todo el stock en la nube y local)
         window.resetLocalData = async function() {
-            if (!confirm("⚠️ ADVERTENCIA: Esta acción BORRARÁ TODOS los datos de stock de la base de datos de Firebase y de este dispositivo. ¿Estás absolutamente seguro?")) {
+            if (!confirm("⚠️ ADVERTENCIA: Esta acción BORRARÁ TODOS los productos de la base de datos de Firebase y subirá los productos del código actual. ¿Estás absolutamente seguro?")) {
                 return;
             }
 
-            // 1. Borrar datos locales (carrito y stock local)
+            // 1. Borrar datos locales (carrito)
             localStorage.removeItem(STORAGE_KEY_CART);
             
             // 2. Borrar todos los documentos de la colección 'products' en Firebase
             try {
+                const statusElement = document.getElementById('connection-status');
+                statusElement.textContent = "Borrando datos antiguos en la nube... 🗑️";
+                
                 const querySnapshot = await getDocs(collection(db, "products"));
                 const batch = writeBatch(db);
                 querySnapshot.docs.forEach((doc) => {
                     batch.delete(doc.ref);
                 });
                 await batch.commit();
+                
                 showToast("Base de datos de Firebase borrada. Recargando para inicializar...");
                 // Forzar la recarga para que initDatabaseIfNeeded suba los datos nuevos
                 window.location.reload(true);
