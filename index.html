@@ -233,19 +233,37 @@
         <div id="toast-container"></div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div id="catalog-panel" class="bg-white p-6 rounded-xl shadow-lg relative min-h-[400px]" data-view="catalog">
-                <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">Catálogo de Productos Disponibles</h2>
-                
-                <!-- Overlay de Carga -->
-                <div id="catalog-loading" class="loading-overlay">
-                    <div class="text-amber-600 font-bold animate-pulse">Cargando productos de la nube...</div>
+            
+            <!-- PANEL IZQUIERDO: CATÁLOGO Y REPORTES -->
+            <div class="space-y-6">
+                <div id="catalog-panel" class="bg-white p-6 rounded-xl shadow-lg relative min-h-[400px]" data-view="catalog">
+                    <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">Catálogo de Productos Disponibles</h2>
+                    
+                    <!-- Overlay de Carga -->
+                    <div id="catalog-loading" class="loading-overlay">
+                        <div class="text-amber-600 font-bold animate-pulse">Cargando productos de la nube...</div>
+                    </div>
+                    
+                    <div id="product-list" class="overflow-y-auto h-[60vh] md:h-[70vh] pr-4 space-y-2">
+                        <p class="text-stone-500">Conectando...</p>
+                    </div>
                 </div>
-                
-                <div id="product-list" class="overflow-y-auto h-[60vh] md:h-[70vh] pr-4 space-y-2">
-                    <p class="text-stone-500">Conectando...</p>
+
+                <!-- PANEL DE REPORTES (Nuevo) -->
+                <div class="bg-white p-6 rounded-xl shadow-lg no-print">
+                    <h2 class="text-xl font-semibold mb-4 text-stone-700 border-b pb-2 border-stone-200">📊 Reportes y Gestión</h2>
+                    <div class="flex flex-col space-y-3">
+                        <button id="download-sales-report-button" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-blue-700 transition duration-300 focus:outline-none focus:ring-4 focus:ring-blue-400 focus:ring-offset-2">
+                            ⬇️ Descargar Historial de Ventas (CSV)
+                        </button>
+                        <p class="text-sm text-stone-500">
+                            Esto descarga un archivo que puedes abrir en Excel o Google Sheets con todas tus ventas registradas.
+                        </p>
+                    </div>
                 </div>
             </div>
             
+            <!-- PANEL DERECHO: COTIZACIÓN (CARRITO) -->
             <div id="cart-panel" class="hidden md:flex flex-col bg-white p-6 rounded-xl shadow-lg" data-view="cart">
                 <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">Cotización Actual</h2>
                 
@@ -334,7 +352,7 @@
     <script type="module">
         // --- CONFIGURACIÓN DE FIREBASE ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc, onSnapshot, setDoc, writeBatch, deleteDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, onSnapshot, setDoc, addDoc, writeBatch, deleteDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
         // 🔥🔥🔥 CONFIGURACIÓN COPIADA DE TU CONSOLA DE FIREBASE 🔥🔥🔥
         const firebaseConfig = {
@@ -595,7 +613,7 @@
                 
                 const batch = writeBatch(db);
                 let currentCategory = "Varios";
-                let uniqueIdCounter = 0; // Usar un contador local para la inicialización
+                let uniqueIdCounter = 0; 
 
                 rawData.forEach((item) => {
                     const cleanedPrice = item.Price ? item.Price.replace(/[^\d.]/g, '').trim() : '0';
@@ -604,10 +622,8 @@
                     const stock = item.Stock ? parseInt(item.Stock) : 10;
 
                     if (isNaN(price) || price === 0) {
-                        currentCategory = name; // Es un título de categoría
+                        currentCategory = name; 
                     } else {
-                        // Es un producto real
-                        // Creamos un ID basado en el índice para que sea único la primera vez
                         const id = `prod_${uniqueIdCounter++}`;
                         const docRef = doc(db, "products", id);
                         batch.set(docRef, {
@@ -626,7 +642,7 @@
             } else {
                 statusElement.textContent = "Conectado a stock centralizado 🟢";
                 statusElement.classList.add('text-green-600');
-                loadingElement.style.display = 'none'; // Si no hay que subir, ocultar inmediatamente
+                loadingElement.style.display = 'none'; 
                 console.log("Conectado a base de datos existente.");
             }
         }
@@ -642,8 +658,6 @@
                 
                 querySnapshot.forEach((doc) => {
                     const data = doc.data();
-                    // Firebase usa el doc.id si no pasamos un campo 'id' explícito.
-                    // Aseguramos que el producto tenga un ID para el carrito.
                     if (!data.id) data.id = doc.id; 
                     productData.push(data);
                     categories.add(data.categoria);
@@ -652,7 +666,7 @@
                 // Actualizar vista
                 populateCategoryFilter();
                 updateDashboard();
-                loadingElement.style.display = 'none'; // Ocultar después de la primera carga
+                loadingElement.style.display = 'none'; 
                 document.getElementById('connection-status').textContent = "Sincronizado y Listo 🟢";
                 document.getElementById('connection-status').classList.remove('text-stone-400');
                 document.getElementById('connection-status').classList.add('text-green-600');
@@ -662,6 +676,33 @@
                 loadingElement.innerHTML = `<div class="text-red-600 font-bold">¡ERROR! Revisa tu clave de Firebase.</div>`;
             });
         }
+        
+        // --- FUNCIÓN DE REGISTRO DE VENTA ---
+        async function recordSale(clientName, whatsappNumber, total, discountRate, items) {
+            const formattedDate = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+            
+            try {
+                await addDoc(collection(db, "ventas"), {
+                    timestamp: new Date(),
+                    fecha_venta: formattedDate,
+                    cliente_nombre: clientName || 'No especificado',
+                    cliente_whatsapp: whatsappNumber || 'No especificado',
+                    total_final: total,
+                    descuento_aplicado: discountRate,
+                    items: items.map(item => ({
+                        nombre: item.nombre,
+                        cantidad: item.cantidad,
+                        precio_unitario: item.precio,
+                        subtotal: item.subtotal
+                    }))
+                });
+                console.log("Venta registrada en la colección 'ventas'.");
+            } catch (e) {
+                console.error("Error registrando la venta en Firestore:", e);
+                showToast("⚠️ Error al guardar el registro de venta.");
+            }
+        }
+
 
         // 3. Confirmar Venta en la Nube
         async function confirmSaleAndDeductStock() {
@@ -674,13 +715,21 @@
                 return;
             }
 
+            const clientName = document.getElementById('client-name').value.trim();
+            const whatsappNumber = document.getElementById('whatsapp-number').value.trim().replace(/\D/g, ''); 
+            const discountRate = parseFloat(document.getElementById('discount-select').value);
+            let subtotal = 0;
+            const itemsToRecord = [];
+            
             const batch = writeBatch(db);
             let error = false;
 
-            // Preparar las actualizaciones
+            // Preparar actualizaciones y calcular totales para el registro
             for (const id in cart) {
                 const item = cart[id];
-                // Buscar stock actual en memoria (que viene de firebase) para validar
+                const itemSubtotal = item.precio * item.cantidad;
+                subtotal += itemSubtotal;
+                
                 const productInDb = productData.find(p => p.id === id);
                 
                 if (productInDb) {
@@ -692,19 +741,30 @@
                     }
                     const docRef = doc(db, "products", id);
                     batch.update(docRef, { stock: newStock });
+
+                    itemsToRecord.push({ ...item, subtotal: itemSubtotal });
                 }
             }
 
+            const totalWithDiscount = subtotal * (1 - discountRate);
+
             if (!error) {
                 try {
+                    // Ejecutar el descuento de stock
                     await batch.commit();
+                    
+                    // Registrar la venta después de confirmar el descuento
+                    await recordSale(clientName, whatsappNumber, totalWithDiscount, discountRate, itemsToRecord);
+                    
+                    // Enviar mensaje de WhatsApp
                     await sendQuoteViaWhatsAppText();
+                    
                     cart = {};
                     saveCart(); // Limpiar localstorage
                     showToast("✅ Venta registrada en la nube.");
                 } catch (e) {
-                    console.error("Error al actualizar el stock:", e);
-                    alert("Hubo un error al actualizar el stock en Firebase. Revisa tu conexión y permisos.");
+                    console.error("Error al completar la transacción:", e);
+                    alert("Hubo un error al actualizar el stock/registrar la venta. Revisa tu conexión y permisos.");
                 }
             }
         }
@@ -736,6 +796,50 @@
             } catch(e) {
                 console.error("Error al borrar datos de Firebase:", e);
                 alert("Hubo un error al borrar los datos de Firebase. Revisa tus permisos o conexión.");
+            }
+        }
+        
+        // --- FUNCIÓN DE DESCARGA DE REPORTE (CSV) ---
+        async function downloadSalesReport() {
+            showToast("Preparando descarga del historial...");
+            try {
+                const salesSnapshot = await getDocs(collection(db, "ventas"));
+                let csvContent = "data:text/csv;charset=utf-8,";
+                
+                const header = ["ID Venta", "Fecha Venta", "Nombre Cliente", "WhatsApp", "Total Final", "Descuento", "Detalle Productos"];
+                csvContent += header.join(";") + "\n";
+                
+                salesSnapshot.forEach((doc) => {
+                    const sale = doc.data();
+                    let itemsDetail = sale.items.map(i => 
+                        `${i.nombre} (x${i.cantidad}, $${i.precio_unitario})`
+                    ).join(" | ");
+
+                    const row = [
+                        doc.id,
+                        sale.fecha_venta,
+                        `"${sale.cliente_nombre}"`, // Entre comillas para evitar problemas con comas
+                        sale.cliente_whatsapp,
+                        sale.total_final,
+                        (sale.descuento_aplicado * 100) + '%',
+                        `"${itemsDetail}"`
+                    ];
+                    csvContent += row.join(";") + "\n";
+                });
+
+                // Crear un enlace temporal para la descarga
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", `Reporte_Ventas_BlancoMadera_${new Date().toLocaleDateString('es-AR')}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showToast("Descarga completada.");
+                
+            } catch (e) {
+                console.error("Error generando CSV:", e);
+                showToast("⚠️ Falló la descarga. Asegúrate de que las reglas de Firebase permitan la lectura.");
             }
         }
 
@@ -967,8 +1071,7 @@
             const discountApplied = discountRate > 0 ? subtotal * discountRate : 0;
             const formattedDate = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
 
-            // CAMBIO 1: Eliminar emojis
-            // CAMBIO 2: Detalle más directo "Te envío el detalle..."
+            // Mensaje sin emojis y detalle directo
             const summaryLines = [
                 `Hola, ${clientName || 'Cliente'}!`,
                 '',
@@ -988,11 +1091,11 @@
                 summaryLines.push(`Descuento (${(discountRate * 100).toFixed(0)}%): -${formatCurrency(discountApplied)}`);
             }
 
-            summaryLines.push(`TOTAL FINAL: ${formatCurrency(totalWithDiscount)}`); // Sin emoji 💰
+            summaryLines.push(`TOTAL FINAL: ${formatCurrency(totalWithDiscount)}`); 
             summaryLines.push('');
-            summaryLines.push('¡Muchas gracias por confiar en Blanco & Madera!'); // Sin emoji 🫶🏼
+            summaryLines.push('¡Muchas gracias por confiar en Blanco & Madera!'); 
 
-            // Si hay número, abre WhatsApp, sino solo confirma la operación local
+            // Si hay número, abre WhatsApp
             if (whatsappNumber) {
                 const whatsappText = encodeURIComponent(summaryLines.join('\n'));
                 const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappText}`;
@@ -1118,7 +1221,7 @@
 
             ctx.textAlign = 'center';
             ctx.fillStyle = '#0b0b0b';
-            // Mantenemos el emoji en la imagen por estética, pero cambiamos el texto
+            // Mensaje de agradecimiento con emoji en la imagen
             ctx.font = '18px "Inter", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif';
             ctx.fillText('Muchas gracias por confiar en Blanco & Madera! 🫶🏼', canvasWidth / 2, cursorY + 30);
 
@@ -1134,7 +1237,7 @@
                         await navigator.share({
                             files: [file],
                             title: 'Cotización Blanco & Madera',
-                            // CAMBIO 2: Texto de compartir directo y sin emojis
+                            // Mensaje de compartir sin emojis
                             text: `Hola ${clientName}! Te envío el detalle de tu compra en Blanco & Madera el día ${formattedDate}`
                         });
                     } catch (err) {
@@ -1297,6 +1400,7 @@
             document.getElementById('share-image-button').addEventListener('click', shareQuoteAsImage);
             
             document.getElementById('print-button').addEventListener('click', printQuote);
+            document.getElementById('download-sales-report-button').addEventListener('click', downloadSalesReport); // Botón de Reporte
             
             const isMobile = window.innerWidth < 768;
             if (isMobile) {
