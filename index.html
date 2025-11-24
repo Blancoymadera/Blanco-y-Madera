@@ -284,11 +284,11 @@
                 <div class="mt-4 pt-4 border-t-2 border-amber-500/50">
                     <!-- Mensaje de Descuento Automático -->
                     <div id="discount-message-area" class="mb-3 text-center text-sm font-semibold text-red-600">
-                        <!-- Aquí se mostrará el descuento automático si aplica -->
+                        <!-- Esta área ya no se usa, pero se mantiene para evitar errores de HTML -->
                     </div>
                     
                     <div class="mb-4 no-print">
-                        <label for="discount-select" class="block text-sm font-semibold text-stone-700 mb-1">Descuento Manual (Override):</label>
+                        <label for="discount-select" class="block text-sm font-semibold text-stone-700 mb-1">Descuento Manual:</label>
                         <select id="discount-select" class="w-full rounded-lg border-stone-300 p-2 focus:border-amber-600 focus:ring-amber-600">
                             <option value="0">0%</option>
                             <option value="0.05">5%</option>
@@ -303,26 +303,33 @@
                         <span id="cart-total" class="text-4xl font-extrabold text-amber-800 cart-total-print">$0</span>
                     </div>
 
-                    <!-- BOTONES DE ACCIÓN -->
+                    <!-- BOTONES DE ACCIÓN MEJORADOS -->
                     <div class="space-y-3 no-print">
-                        <button id="confirm-sale-button" class="w-full bg-amber-700 text-white font-bold py-3 rounded-lg shadow-xl hover:bg-amber-800 transition duration-300 focus:outline-none focus:ring-4 focus:ring-amber-600 focus:ring-offset-2 flex justify-center items-center gap-2 mb-2">
-                            ✅ Confirmar Venta y Descontar Stock
+                        
+                        <!-- Botón: GESTIÓN INTERNA (Descuenta Stock y Registra Venta) -->
+                        <button id="confirm-sale-button" class="w-full bg-red-700 text-white font-bold py-3 rounded-lg shadow-xl hover:bg-red-800 transition duration-300 focus:outline-none focus:ring-4 focus:ring-red-600 focus:ring-offset-2 flex justify-center items-center gap-2 mb-2">
+                            ❌ Registrar Venta y Descontar Stock
                         </button>
+                        <p class="text-xs text-red-500 text-center mt-1">
+                            * Solo presionar si la venta fue confirmada y quieres dar de baja el stock.
+                        </p>
 
-                        <div class="grid grid-cols-2 gap-3">
-                            <button id="share-image-button" class="bg-amber-500 text-white font-bold py-2 rounded-lg shadow-md hover:bg-amber-600 transition duration-300 focus:outline-none flex justify-center items-center gap-1 text-sm">
-                                🖼️ Solo Imagen
-                            </button>
+                        <div class="grid grid-cols-2 gap-3 mt-4">
+                            <!-- Botón que abre WhatsApp directo (solo texto) -->
                             <button id="send-whatsapp-text-button" class="bg-green-600 text-white font-bold py-2 rounded-lg shadow-md hover:bg-green-700 transition duration-300 focus:outline-none flex justify-center items-center gap-1 text-sm">
-                                💬 Solo Texto
+                                💬 Enviar Cotización (Texto)
+                            </button>
+                            <!-- Botón que DESCARGA la imagen y abre el chat directo -->
+                            <button id="share-image-button" class="bg-amber-500 text-white font-bold py-2 rounded-lg shadow-md hover:bg-amber-600 transition duration-300 focus:outline-none flex justify-center items-center gap-1 text-sm">
+                                🖼️ Descargar Imagen y Chatear
                             </button>
                         </div>
 
                         <div class="grid grid-cols-2 gap-3 mt-2">
                             <button id="print-button" class="bg-stone-500 text-white font-bold py-2 rounded-lg shadow-md hover:bg-stone-600 transition duration-300 focus:outline-none text-sm">
-                                🖨️ PDF
+                                🖨️ Imprimir / PDF
                             </button>
-                            <button id="clear-cart-button" class="bg-red-500 text-white font-bold py-2 rounded-lg shadow-md hover:bg-red-600 transition duration-300 focus:outline-none text-sm">
+                            <button id="clear-cart-button" class="bg-red-500/50 text-white font-bold py-2 rounded-lg shadow-md hover:bg-red-600/50 transition duration-300 focus:outline-none text-sm">
                                 🗑️ Vaciar
                             </button>
                         </div>
@@ -712,17 +719,21 @@
         // 3. Confirmar Venta en la Nube
         async function confirmSaleAndDeductStock() {
             if (Object.keys(cart).length === 0) {
-                alert("El carrito está vacío.");
+                alert("El carrito está vacío. Debes agregar productos antes de registrar una venta.");
                 return;
             }
 
-            if (!confirm("¿Confirmar venta? Esto descontará stock para TODOS los usuarios.")) {
+            // Usamos un modal de confirmación más claro
+            if (!confirm("⚠️ CONFIRMAR BAJA DE STOCK: ¿Estás seguro de que la venta ha sido cobrada y deseas descontar el stock de estos productos?")) {
                 return;
             }
 
             const clientName = document.getElementById('client-name').value.trim();
             const whatsappNumber = document.getElementById('whatsapp-number').value.trim().replace(/\D/g, ''); 
-            const discountRate = getApplicableDiscountRate(calculateSubtotalWithoutDiscount()); // Usar descuento calculado
+            
+            // Usamos SOLO el descuento manual del select
+            const discountRate = parseFloat(document.getElementById('discount-select').value); 
+
             let subtotal = 0;
             const itemsToRecord = [];
             
@@ -755,18 +766,16 @@
 
             if (!error) {
                 try {
-                    // Ejecutar el descuento de stock
+                    // 1. Ejecutar el descuento de stock
                     await batch.commit();
                     
-                    // Registrar la venta después de confirmar el descuento
+                    // 2. Registrar la venta
                     await recordSale(clientName, whatsappNumber, totalWithDiscount, discountRate, itemsToRecord);
                     
-                    // Enviar mensaje de WhatsApp
-                    await sendQuoteViaWhatsAppText();
-                    
+                    // 3. Limpiar y notificar
                     cart = {};
                     saveCart(); // Limpiar localstorage
-                    showToast("✅ Venta registrada en la nube.");
+                    showToast("✅ Venta registrada y stock descontado.");
                 } catch (e) {
                     console.error("Error al completar la transacción:", e);
                     alert("Hubo un error al actualizar el stock/registrar la venta. Revisa tu conexión y permisos.");
@@ -848,15 +857,8 @@
             }
         }
         
-        // --- LÓGICA DE DESCUENTO AUTOMÁTICO (NUEVO) ---
+        // --- LÓGICA DE DESCUENTO ---
         
-        // Definir los umbrales de descuento (Se puede cambiar fácilmente)
-        const DISCOUNT_THRESHOLDS = [
-            { threshold: 100000, rate: 0.15, message: "¡15% OFF! 🎉" }, // $100.000 o más
-            { threshold: 50000, rate: 0.10, message: "¡10% OFF! ✨" },  // $50.000 o más
-            { threshold: 20000, rate: 0.05, message: "¡5% OFF! 🎁" }   // $20.000 o más
-        ];
-
         function calculateSubtotalWithoutDiscount() {
             let subtotal = 0;
             for (const id in cart) {
@@ -867,17 +869,10 @@
         }
 
         function getApplicableDiscountRate(subtotal) {
-            let applicableRate = 0;
-            
-            // Ordenamos los umbrales de mayor a menor para aplicar el más alto
-            const sortedThresholds = DISCOUNT_THRESHOLDS.sort((a, b) => b.threshold - a.threshold);
-
-            for (const threshold of sortedThresholds) {
-                if (subtotal >= threshold.threshold) {
-                    return threshold.rate;
-                }
-            }
-            return 0; // Si no alcanza ningún umbral
+            // DEBIDO A LA PETICIÓN DEL USUARIO, ELIMINAMOS LA LÓGICA DE DESCUENTO AUTOMÁTICO.
+            // AHORA ESTA FUNCIÓN SOLO DEVUELVE EL VALOR DEL DESCUENTO MANUAL SELECCIONADO.
+            const discountSelect = document.getElementById('discount-select');
+            return parseFloat(discountSelect.value);
         }
 
         // --- FUNCIONES UTILITARIAS (Resto del código) ---
@@ -936,29 +931,17 @@
             // 1. Calcular subtotal de todos los productos
             subtotalWithoutDiscount = calculateSubtotalWithoutDiscount();
 
-            // 2. Determinar descuento automático
-            const autoDiscountRate = getApplicableDiscountRate(subtotalWithoutDiscount);
-            
-            // 3. Usar descuento manual O el automático (el manual tiene prioridad)
+            // 2. Determinar descuento manual aplicado
             let finalDiscountRate = parseFloat(discountSelect.value);
-            let discountSource = 'manual';
 
-            if (finalDiscountRate === 0 && autoDiscountRate > 0) {
-                finalDiscountRate = autoDiscountRate;
-                discountSource = 'auto';
-            }
-
-            // 4. Renderizar mensaje de descuento
-            if (discountSource === 'auto' && finalDiscountRate > 0) {
-                const messageObj = DISCOUNT_THRESHOLDS.find(t => t.rate === finalDiscountRate);
-                discountMessageArea.innerHTML = `<span class="bg-amber-100 px-3 py-1 rounded-lg text-amber-800">🎉 Oferta Aplicada: ${messageObj.message}</span>`;
-            } else if (discountSource === 'manual' && finalDiscountRate > 0) {
-                discountMessageArea.innerHTML = `<span class="bg-red-100 px-3 py-1 rounded-lg text-red-800">Descuento Manual (${(finalDiscountRate * 100).toFixed(0)}%) Aplicado</span>`;
+            // 3. Renderizar mensaje de descuento (solo si es manual)
+            if (finalDiscountRate > 0) {
+                 discountMessageArea.innerHTML = `<span class="bg-red-100 px-3 py-1 rounded-lg text-red-800">Descuento Manual (${(finalDiscountRate * 100).toFixed(0)}%) Aplicado</span>`;
             } else {
                 discountMessageArea.innerHTML = '';
             }
 
-            // 5. Renderizar lista de ítems
+            // 4. Renderizar lista de ítems
             for (const id in cart) {
                 const item = cart[id];
                 const numericPrice = Number(item.precio); 
@@ -1169,13 +1152,19 @@
 
         async function shareQuoteAsImage() {
             const clientName = document.getElementById('client-name').value.trim();
+            const whatsappNumber = document.getElementById('whatsapp-number').value.trim().replace(/\D/g, ''); 
             
             if (Object.keys(cart).length === 0) {
                 alert("El carrito está vacío.");
                 return;
             }
+            if (!whatsappNumber) {
+                 alert("Por favor, ingresa el número de WhatsApp del cliente para chatear directamente.");
+                 return;
+            }
 
-            showToast("Generando imagen, por favor espera...");
+
+            showToast("Generando imagen y abriendo chat...");
 
             const subtotalWithoutDiscount = calculateSubtotalWithoutDiscount();
             const finalDiscountRate = getApplicableDiscountRate(subtotalWithoutDiscount); 
@@ -1210,31 +1199,26 @@
             canvas.height = canvasHeight;
             const ctx = canvas.getContext('2d');
 
+            // [LÓGICA DEL CANVAS... (misma lógica de dibujo)]
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-
             const logoCenterX = canvasWidth / 2;
             const headerTop = 35;
-
             ctx.fillStyle = '#0b0b0b';
             ctx.textAlign = 'center';
             ctx.font = '700 48px "Inter", serif';
             ctx.fillText('blanco&madera', logoCenterX, headerTop + 55);
-
             ctx.lineWidth = 2;
             ctx.strokeStyle = '#0b0b0b';
             ctx.beginPath();
             ctx.moveTo(logoCenterX - 120, headerTop + 63);
             ctx.lineTo(logoCenterX + 120, headerTop + 63);
             ctx.stroke();
-
             ctx.font = '600 16px Inter, sans-serif';
             ctx.fillText('DECO HOME', logoCenterX, headerTop + 88);
-
             ctx.font = 'bold 24px Inter, sans-serif';
             ctx.textAlign = 'left';
             ctx.fillText('detalle de compra', 40, headerTop + 122);
-
             let cursorY = 200;
             ctx.fillStyle = '#0b0b0b';
             ctx.font = '20px Inter, sans-serif';
@@ -1242,32 +1226,26 @@
             cursorY += 32;
             ctx.fillText(`Cliente: ${clientName || 'No especificado'}`, 40, cursorY);
             cursorY += 32;
-            // Ajuste de espacio:
             cursorY += 16; 
-
             ctx.font = 'bold 22px Inter, sans-serif';
             ctx.fillText('Detalle de productos', 40, cursorY);
             cursorY += 24;
-
             ctx.font = '18px Inter, sans-serif';
             items.forEach((item) => {
                 ctx.fillStyle = '#0b0b0b';
                 ctx.textAlign = 'left';
                 let displayName = item.nombre;
                 if (displayName.length > 60) displayName = displayName.substring(0, 57) + '...';
-                
                 ctx.fillText(`${displayName} x${item.cantidad}`, 40, cursorY + 22);
                 ctx.textAlign = 'right';
                 ctx.fillText(`${formatCurrency(item.subtotal)}`, canvasWidth - 40, cursorY + 22);
                 cursorY += itemHeight;
             });
-
             ctx.textAlign = 'left';
             ctx.fillStyle = '#78716c';
             ctx.font = '18px Inter, sans-serif';
             ctx.fillText('-------------------------------------------', 40, cursorY);
             cursorY += 28;
-
             if (finalDiscountRate > 0) {
                 ctx.fillStyle = '#0b0b0b';
                 ctx.fillText(`Subtotal sin descuento: ${formatCurrency(subtotal)}`, 40, cursorY);
@@ -1276,7 +1254,6 @@
                 ctx.fillText(`Descuento (${(finalDiscountRate * 100).toFixed(0)}%): -${formatCurrency(discountApplied)}`, 40, cursorY);
                 cursorY += 32;
             }
-
             ctx.fillStyle = '#0b0b0b';
             ctx.font = 'bold 24px Inter, sans-serif';
             ctx.fillText('TOTAL FINAL:', 40, cursorY);
@@ -1284,38 +1261,35 @@
             ctx.fillStyle = '#d4a753';
             ctx.fillText(`${formatCurrency(totalWithDiscount)}`, 230, cursorY);
             cursorY += 50;
-
             ctx.textAlign = 'center';
             ctx.fillStyle = '#0b0b0b';
-            // Mensaje de agradecimiento con emoji en la imagen
             ctx.font = '18px "Inter", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif';
             ctx.fillText('Muchas gracias por confiar en Blanco & Madera! 🫶🏼', canvasWidth / 2, cursorY + 30);
+            // [FIN LÓGICA DEL CANVAS]
 
-            canvas.toBlob(async (blob) => {
+            // --- LÓGICA DE DESCARGA Y CHAT DIRECTO ---
+            canvas.toBlob((blob) => {
                 if (!blob) {
                     alert('Error generando la imagen.');
                     return;
                 }
-                const file = new File([blob], 'cotizacion_blanco_madera.png', { type: 'image/png' });
+                
+                // 1. Crear enlace de DESCARGA (Fuerza la descarga del archivo)
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'cotizacion_blanco_madera.png';
+                link.click();
+                
+                // 2. Abrir WhatsApp DIRECTO después de la descarga
+                const textMessage = `Hola ${clientName || 'Cliente'}, te envío la imagen de tu cotización. Adjúntala a este chat.`;
+                const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(textMessage)}`;
+                
+                // Usamos un pequeño retraso para permitir que la descarga se inicie
+                setTimeout(() => {
+                    window.open(whatsappUrl, '_blank');
+                    showToast("Imagen descargada. Abre el chat y adjúntala.");
+                }, 500); 
 
-                if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    try {
-                        await navigator.share({
-                            files: [file],
-                            title: 'Cotización Blanco & Madera',
-                            // Mensaje de compartir sin emojis
-                            text: `Hola ${clientName}! Te envío el detalle de tu compra en Blanco & Madera el día ${formattedDate}`
-                        });
-                    } catch (err) {
-                        console.error('Error al compartir:', err);
-                    }
-                } else {
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(blob);
-                    link.download = 'cotizacion_blanco_madera.png';
-                    link.click();
-                    alert("Tu dispositivo no soporta compartir imágenes directamente. La imagen se ha descargado.");
-                }
             }, 'image/png');
         }
 
