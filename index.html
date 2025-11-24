@@ -189,6 +189,7 @@
 </head>
 <body class="text-stone-800">
 
+    <!-- HEADER FIJO -->
     <header class="bg-white shadow-lg sticky top-0 z-10 no-print">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-4 header-content">
             <div class="logo-container">
@@ -207,6 +208,7 @@
     </header>
 
     <main class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <!-- CONTENIDO QUE SE DESPLAZA -->
         <div class="bg-white p-6 rounded-xl shadow-lg mb-8 no-print" id="filters-container">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
@@ -319,9 +321,9 @@
                             <button id="send-whatsapp-text-button" class="bg-green-600 text-white font-bold py-2 rounded-lg shadow-md hover:bg-green-700 transition duration-300 focus:outline-none flex justify-center items-center gap-1 text-sm">
                                 💬 Enviar Cotización (Texto)
                             </button>
-                            <!-- Botón que DESCARGA la imagen y abre el chat directo -->
+                            <!-- Botón que Comparte la imagen de forma nativa -->
                             <button id="share-image-button" class="bg-amber-500 text-white font-bold py-2 rounded-lg shadow-md hover:bg-amber-600 transition duration-300 focus:outline-none flex justify-center items-center gap-1 text-sm">
-                                🖼️ Descargar Imagen y Chatear
+                                🖼️ Compartir (Imagen)
                             </button>
                         </div>
 
@@ -869,7 +871,6 @@
         }
 
         function getApplicableDiscountRate(subtotal) {
-            // DEBIDO A LA PETICIÓN DEL USUARIO, ELIMINAMOS LA LÓGICA DE DESCUENTO AUTOMÁTICO.
             // AHORA ESTA FUNCIÓN SOLO DEVUELVE EL VALOR DEL DESCUENTO MANUAL SELECCIONADO.
             const discountSelect = document.getElementById('discount-select');
             return parseFloat(discountSelect.value);
@@ -1001,7 +1002,7 @@
             
             renderPrintView(subtotalWithoutDiscount, totalWithDiscount, finalDiscountRate);
         }
-        
+
         window.changeQuantity = function(id, delta) {
             
             // Chequeo de stock
@@ -1142,7 +1143,7 @@
             summaryLines.push('');
             summaryLines.push('¡Muchas gracias por confiar en Blanco & Madera!'); 
 
-            // Si hay número, abre WhatsApp
+            // Abre WhatsApp con el número ingresado
             if (whatsappNumber) {
                 const whatsappText = encodeURIComponent(summaryLines.join('\n'));
                 const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappText}`;
@@ -1158,13 +1159,8 @@
                 alert("El carrito está vacío.");
                 return;
             }
-            if (!whatsappNumber) {
-                 alert("Por favor, ingresa el número de WhatsApp del cliente para chatear directamente.");
-                 return;
-            }
 
-
-            showToast("Generando imagen y abriendo chat...");
+            showToast("Generando imagen para compartir...");
 
             const subtotalWithoutDiscount = calculateSubtotalWithoutDiscount();
             const finalDiscountRate = getApplicableDiscountRate(subtotalWithoutDiscount); 
@@ -1199,7 +1195,7 @@
             canvas.height = canvasHeight;
             const ctx = canvas.getContext('2d');
 
-            // [LÓGICA DEL CANVAS... (misma lógica de dibujo)]
+            // [LÓGICA DEL CANVAS: DIBUJO DE LA IMAGEN]
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, canvasWidth, canvasHeight);
             const logoCenterX = canvasWidth / 2;
@@ -1267,29 +1263,33 @@
             ctx.fillText('Muchas gracias por confiar en Blanco & Madera! 🫶🏼', canvasWidth / 2, cursorY + 30);
             // [FIN LÓGICA DEL CANVAS]
 
-            // --- LÓGICA DE DESCARGA Y CHAT DIRECTO ---
-            canvas.toBlob((blob) => {
+            // --- LÓGICA DE COMPARTIR NATIVA (COMPORTAMIENTO DESEADO) ---
+            canvas.toBlob(async (blob) => {
                 if (!blob) {
                     alert('Error generando la imagen.');
                     return;
                 }
-                
-                // 1. Crear enlace de DESCARGA (Fuerza la descarga del archivo)
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = 'cotizacion_blanco_madera.png';
-                link.click();
-                
-                // 2. Abrir WhatsApp DIRECTO después de la descarga
-                const textMessage = `Hola ${clientName || 'Cliente'}, te envío la imagen de tu cotización. Adjúntala a este chat.`;
-                const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(textMessage)}`;
-                
-                // Usamos un pequeño retraso para permitir que la descarga se inicie
-                setTimeout(() => {
-                    window.open(whatsappUrl, '_blank');
-                    showToast("Imagen descargada. Abre el chat y adjúntala.");
-                }, 500); 
+                const file = new File([blob], 'cotizacion_blanco_madera.png', { type: 'image/png' });
 
+                // USAR EL MÉTODO NATIVO QUE ABRE EL MENÚ COMPARTIR (SIN FORZAR EL NÚMERO)
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    try {
+                        await navigator.share({
+                            files: [file],
+                            title: 'Cotización Blanco & Madera',
+                            text: `Hola ${clientName}! Te envío el detalle de tu compra en Blanco & Madera el día ${formattedDate}`
+                        });
+                    } catch (err) {
+                        console.error('Error al compartir:', err);
+                    }
+                } else {
+                    // FALLBACK: Sigue descargando si el navegador no lo soporta
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = 'cotizacion_blanco_madera.png';
+                    link.click();
+                    showToast("Tu dispositivo no soporta compartir nativamente. La imagen se ha descargado.");
+                }
             }, 'image/png');
         }
 
@@ -1360,7 +1360,7 @@
                 const isOutOfStock = product.stock <= 0;
                 const opacityClass = isOutOfStock ? 'opacity-60' : '';
                 
-                // --- LÓGICA DEL SEMÁFORO DE STOCK MODIFICADA ---
+                // --- LÓGICA DEL SEMÁFORO DE STOCK ---
                 const stock = product.stock;
                 let stockBadgeClass;
                 let stockMessage;
