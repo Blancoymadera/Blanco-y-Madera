@@ -236,8 +236,10 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             
-            <!-- PANEL IZQUIERDO: CATÁLOGO Y REPORTES -->
+            <!-- PANEL IZQUIERDO: CATÁLOGO, PENDIENTES Y REPORTES -->
             <div class="space-y-6">
+                
+                <!-- CATÁLOGO -->
                 <div id="catalog-panel" class="bg-white p-6 rounded-xl shadow-lg relative min-h-[400px]" data-view="catalog">
                     <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">Catálogo de Productos Disponibles</h2>
                     
@@ -251,7 +253,15 @@
                     </div>
                 </div>
 
-                <!-- PANEL DE REPORTES (Nuevo) -->
+                <!-- PEDIDOS PENDIENTES (NUEVO) -->
+                <div class="bg-white p-6 rounded-xl shadow-lg no-print">
+                    <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">⏳ Pedidos Pendientes</h2>
+                    <div id="pending-list" class="space-y-2 max-h-60 overflow-y-auto">
+                        <p id="pending-loading" class="text-stone-500">Cargando pedidos guardados...</p>
+                    </div>
+                </div>
+                
+                <!-- PANEL DE REPORTES -->
                 <div class="bg-white p-6 rounded-xl shadow-lg no-print">
                     <h2 class="text-xl font-semibold mb-4 text-stone-700 border-b pb-2 border-stone-200">📊 Reportes y Gestión</h2>
                     <div class="flex flex-col space-y-3">
@@ -307,6 +317,11 @@
 
                     <!-- BOTONES DE ACCIÓN MEJORADOS -->
                     <div class="space-y-3 no-print">
+                        
+                        <!-- Botón: GUARDAR PEDIDO PENDIENTE -->
+                        <button id="save-pending-button" class="w-full bg-stone-700 text-white font-bold py-3 rounded-lg shadow-xl hover:bg-stone-800 transition duration-300 focus:outline-none focus:ring-4 focus:ring-stone-600 focus:ring-offset-2 flex justify-center items-center gap-2 mb-2">
+                            💾 Guardar Pedido Pendiente
+                        </button>
                         
                         <!-- Botón: GESTIÓN INTERNA (Descuenta Stock y Registra Venta) -->
                         <button id="confirm-sale-button" class="w-full bg-red-700 text-white font-bold py-3 rounded-lg shadow-xl hover:bg-red-800 transition duration-300 focus:outline-none focus:ring-4 focus:ring-red-600 focus:ring-offset-2 flex justify-center items-center gap-2 mb-2">
@@ -387,6 +402,9 @@
         let cart = {}; // Se llenará desde LocalStorage
         let categories = new Set();
         const STORAGE_KEY_CART = 'bm_cart';
+        
+        // Almacena pedidos pendientes para su visualización
+        let pendingOrders = []; 
 
         // DATOS MAESTROS (Se usan SOLAMENTE para la subida inicial a Firebase)
         const rawData = [
@@ -575,7 +593,7 @@
             {"Product Name":"Bandeja Noche De Paz","Price":"4200", "Stock": "2"},
             {"Product Name":"Bandeja Felices Fiestas","Price":"4200", "Stock": "4"},
             {"Product Name":"Pino Alaska","Price":"8000", "Stock": "4"},
-            {"Product Name":"Posa vela Navidad","Price":"2900", "Stock": "24"}, // MODIFICADO: De 4 a 24
+            {"Product Name":"Posa vela Navidad","Price":"2900", "Stock": "24"}, 
             {"Product Name":"Servilletero Star","Price":"6800", "Stock": "6"},
             {"Product Name":"Puertero Gabriel","Price":"3600", "Stock": "6"},
             {"Product Name":"Corona Paris","Price":"8200", "Stock": "1"},
@@ -609,7 +627,6 @@
             {"Product Name":"Velas de noche x6","Price":"3000", "Stock": "5"},
             {"Product Name":"Velas de noche x12","Price":"3200", "Stock": "2"},
             {"Product Name":"Cesto con tapa crudo","Price":"36300", "Stock": "1"},
-            // PRODUCTO AGREGADO: Florero
             {"Product Name":"Florero","Price":"20000", "Stock": "2"},
         ];
 
@@ -690,6 +707,157 @@
                 document.getElementById('connection-status').textContent = "ERROR: Conexión a Firebase fallida 🔴";
                 loadingElement.innerHTML = `<div class="text-red-600 font-bold">¡ERROR! Revisa tu clave de Firebase.</div>`;
             });
+        }
+        
+        // --- ESCUCHAR PEDIDOS PENDIENTES ---
+        function subscribeToPendingOrders() {
+            const q = collection(db, "pedidos_pendientes");
+            const pendingListEl = document.getElementById('pending-list');
+            
+            onSnapshot(q, (querySnapshot) => {
+                pendingOrders = [];
+                pendingListEl.innerHTML = '';
+                
+                if (querySnapshot.empty) {
+                    pendingListEl.innerHTML = '<p class="text-stone-500 text-sm p-2">No hay pedidos pendientes guardados.</p>';
+                    return;
+                }
+
+                querySnapshot.forEach((doc) => {
+                    const order = doc.data();
+                    order.docId = doc.id;
+                    pendingOrders.push(order);
+
+                    const totalItems = order.items.reduce((sum, item) => sum + item.cantidad, 0);
+                    
+                    const orderDiv = document.createElement('div');
+                    orderDiv.className = 'bg-stone-50 p-3 rounded-lg border border-stone-200 flex justify-between items-center';
+                    orderDiv.innerHTML = `
+                        <div class="flex-grow">
+                            <p class="font-bold text-stone-700">${order.cliente_nombre || 'Cliente sin nombre'}</p>
+                            <p class="text-xs text-stone-500">${order.fecha_guardado}</p>
+                            <p class="text-sm text-amber-700">${totalItems} ítems | ${formatCurrency(order.total_final)}</p>
+                        </div>
+                        <div class="space-x-2">
+                            <button onclick="loadPendingOrder('${order.docId}')" class="bg-amber-500 text-white p-2 rounded-lg text-xs hover:bg-amber-600">
+                                Cargar
+                            </button>
+                            <button onclick="deletePendingOrder('${order.docId}')" class="bg-red-400 text-white p-2 rounded-lg text-xs hover:bg-red-500">
+                                🗑️
+                            </button>
+                        </div>
+                    `;
+                    pendingListEl.appendChild(orderDiv);
+                });
+            }, (error) => {
+                console.error("Error al suscribirse a pedidos pendientes:", error);
+                pendingListEl.innerHTML = '<p class="text-red-500 text-sm p-2">Error al cargar pedidos.</p>';
+            });
+        }
+        
+        // --- FUNCIÓN PARA CARGAR PEDIDO PENDIENTE ---
+        window.loadPendingOrder = function(docId) {
+            const order = pendingOrders.find(o => o.docId === docId);
+            if (!order) {
+                showToast("Error: Pedido no encontrado.");
+                return;
+            }
+
+            if (!confirm(`¿Seguro que quieres cargar el pedido de ${order.cliente_nombre}? Esto borrará el carrito actual.`)) {
+                return;
+            }
+
+            // Cargar datos al carrito (simulando addToCart, pero directo)
+            cart = {};
+            order.items.forEach(item => {
+                const id = productData.find(p => p.nombre === item.nombre)?.id;
+                if (id) {
+                    cart[id] = {
+                        id: id,
+                        nombre: item.nombre,
+                        precio: item.precio_unitario,
+                        cantidad: item.cantidad
+                    };
+                }
+            });
+
+            // Cargar datos de cliente
+            document.getElementById('client-name').value = order.cliente_nombre || '';
+            document.getElementById('whatsapp-number').value = order.cliente_whatsapp || '';
+            
+            // Eliminar el pedido de la nube
+            deletePendingOrder(docId, false); // No confirmar doble
+            
+            saveCart();
+            renderCart();
+            showToast(`Pedido de ${order.cliente_nombre} cargado.`);
+        }
+
+        // --- FUNCIÓN PARA ELIMINAR PEDIDO PENDIENTE ---
+        window.deletePendingOrder = async function(docId, shouldConfirm = true) {
+             if (shouldConfirm && !confirm("¿Eliminar este pedido pendiente?")) {
+                return;
+            }
+
+            try {
+                await deleteDoc(doc(db, "pedidos_pendientes", docId));
+                showToast("Pedido pendiente eliminado.");
+            } catch (e) {
+                console.error("Error eliminando pedido pendiente:", e);
+                showToast("⚠️ Falló la eliminación.");
+            }
+        }
+
+        // --- FUNCIÓN PARA GUARDAR PEDIDO PENDIENTE ---
+        window.savePendingOrder = async function() {
+            if (Object.keys(cart).length === 0) {
+                alert("El carrito está vacío. Agrega productos para guardar un pedido.");
+                return;
+            }
+
+            const clientName = document.getElementById('client-name').value.trim();
+            const whatsappNumber = document.getElementById('whatsapp-number').value.trim().replace(/\D/g, ''); 
+            const finalDiscountRate = getApplicableDiscountRate();
+            
+            const subtotalWithoutDiscount = calculateSubtotalWithoutDiscount();
+            const totalWithDiscount = subtotalWithoutDiscount * (1 - finalDiscountRate);
+
+            if (!clientName) {
+                alert("Por favor, ingresa el Nombre y Apellido del cliente antes de guardar.");
+                return;
+            }
+
+            const itemsToSave = [];
+            for (const id in cart) {
+                const item = cart[id];
+                itemsToSave.push({
+                    nombre: item.nombre,
+                    cantidad: item.cantidad,
+                    precio_unitario: Number(item.precio),
+                });
+            }
+
+            try {
+                await addDoc(collection(db, "pedidos_pendientes"), {
+                    timestamp: new Date(),
+                    fecha_guardado: new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+                    cliente_nombre: clientName,
+                    cliente_whatsapp: whatsappNumber,
+                    total_final: totalWithDiscount,
+                    descuento_aplicado: finalDiscountRate,
+                    items: itemsToSave,
+                });
+                
+                // Limpiar carrito después de guardar
+                cart = {};
+                saveCart();
+                updateDashboard();
+                showToast(`Pedido de ${clientName} guardado correctamente.`);
+
+            } catch (e) {
+                console.error("Error guardando pedido pendiente:", e);
+                showToast("⚠️ Falló al guardar el pedido en la nube.");
+            }
         }
         
         // --- FUNCIÓN DE REGISTRO DE VENTA ---
@@ -820,6 +988,7 @@
         async function downloadSalesReport() {
             showToast("Preparando descarga del historial...");
             try {
+                // Lee de la colección de ventas
                 const salesSnapshot = await getDocs(collection(db, "ventas"));
                 let csvContent = "data:text/csv;charset=utf-8,";
                 
@@ -835,7 +1004,7 @@
                     const row = [
                         doc.id,
                         sale.fecha_venta,
-                        `"${sale.cliente_nombre}"`, // Entre comillas para evitar problemas con comas
+                        `"${sale.cliente_nombre}"`, 
                         sale.cliente_whatsapp,
                         sale.total_final,
                         (sale.descuento_aplicado * 100) + '%',
@@ -871,13 +1040,13 @@
             return subtotal;
         }
 
-        function getApplicableDiscountRate(subtotal) {
+        function getApplicableDiscountRate() {
             // AHORA ESTA FUNCIÓN SOLO DEVUELVE EL VALOR DEL DESCUENTO MANUAL SELECCIONADO.
             const discountSelect = document.getElementById('discount-select');
             return parseFloat(discountSelect.value);
         }
 
-        // --- FUNCIONES UTILITARIAS (Resto del código) ---
+        // --- FUNCIONES UTILITARIAS ---
 
         function populateCategoryFilter() {
             const categoryFilter = document.getElementById('category-filter');
@@ -930,20 +1099,15 @@
             let subtotalWithoutDiscount = 0;
             let cartItemsCount = 0;
             
-            // 1. Calcular subtotal de todos los productos
             subtotalWithoutDiscount = calculateSubtotalWithoutDiscount();
+            let finalDiscountRate = getApplicableDiscountRate(subtotalWithoutDiscount);
 
-            // 2. Determinar descuento manual aplicado
-            let finalDiscountRate = parseFloat(discountSelect.value);
-
-            // 3. Renderizar mensaje de descuento (solo si es manual)
             if (finalDiscountRate > 0) {
                  discountMessageArea.innerHTML = `<span class="bg-red-100 px-3 py-1 rounded-lg text-red-800">Descuento Manual (${(finalDiscountRate * 100).toFixed(0)}%) Aplicado</span>`;
             } else {
                 discountMessageArea.innerHTML = '';
             }
 
-            // 4. Renderizar lista de ítems
             for (const id in cart) {
                 const item = cart[id];
                 const numericPrice = Number(item.precio); 
@@ -1430,8 +1594,10 @@
             try {
                 // 1. Inicializar y subir datos si es necesario
                 await initDatabaseIfNeeded();
-                // 2. Conectarse a la sincronización en tiempo real
+                // 2. Conectarse a la sincronización en tiempo real (Stock y Ventas)
                 subscribeToProducts(); 
+                // 3. Conectarse a pedidos pendientes
+                subscribeToPendingOrders();
             } catch (e) {
                 console.error("Error al conectar Firebase:", e);
                 document.getElementById('connection-status').textContent = "ERROR: Conexión a Firebase fallida 🔴";
@@ -1466,6 +1632,7 @@
             
             document.getElementById('print-button').addEventListener('click', printQuote);
             document.getElementById('download-sales-report-button').addEventListener('click', downloadSalesReport); // Botón de Reporte
+            document.getElementById('save-pending-button').addEventListener('click', savePendingOrder); // Botón Guardar Pendiente
             
             const isMobile = window.innerWidth < 768;
             if (isMobile) {
