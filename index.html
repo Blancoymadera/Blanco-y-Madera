@@ -189,9 +189,9 @@
 </head>
 <body class="text-stone-800">
 
-    <!-- HEADER FIJO -->
+    <!-- HEADER FIJO (SOLO LOGO) -->
     <header class="bg-white shadow-lg sticky top-0 z-10 no-print">
-        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-4 header-content">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-2 header-content">
             <div class="logo-container">
                 <div class="flex flex-col items-center">
                     <span class="logo-text">blanco&madera</span>
@@ -199,16 +199,20 @@
                     <span class="deco-home">DECO HOME</span>
                 </div>
             </div>
-            <div class="header-title-block">
-                <h1 class="main-title text-4xl font-extrabold text-amber-800 tracking-wide">CATÁLOGO</h1>
-                <p class="text-stone-600 mt-1">Selecciona productos para generar la cotización del cliente.</p>
-                <div id="connection-status" class="text-xs text-stone-400 mt-1">Conectando a la nube...</div>
-            </div>
+            <!-- NOTA: El título y la conexión a la nube están ahora DENTRO de MAIN (se desplazan) -->
         </div>
     </header>
 
-    <main class="container mx-auto p-4 sm:p-6 lg:p-8">
+    <main class="container mx-auto p-4 sm:p-6 lg:p-8 pt-0"> 
         <!-- CONTENIDO QUE SE DESPLAZA -->
+        
+        <!-- BLOQUE DE TÍTULO Y ESTADO (Desplazable) -->
+        <div class="header-title-block bg-white pb-2 text-center">
+            <h1 class="main-title text-4xl font-extrabold text-amber-800 tracking-wide">CATÁLOGO</h1>
+            <p class="text-stone-600 mt-1">Selecciona productos para generar la cotización del cliente.</p>
+            <div id="connection-status" class="text-xs text-stone-400 mt-1">Conectando a la nube...</div>
+        </div>
+        
         <div class="bg-white p-6 rounded-xl shadow-lg mb-8 no-print" id="filters-container">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
@@ -288,6 +292,18 @@
                     <label for="whatsapp-number" class="block text-sm font-semibold text-stone-700 mb-1">Número de WhatsApp del Cliente (Formato: 549...):</label>
                     <input type="tel" id="whatsapp-number" placeholder="Ej: 5493415551234" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
                 </div>
+                
+                <!-- NUEVO: MÉTODO DE PAGO -->
+                <div class="mb-4 no-print">
+                    <label for="payment-method" class="block text-sm font-semibold text-stone-700 mb-1">Método de Pago:</label>
+                    <select id="payment-method" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
+                        <option value="Efectivo">Efectivo</option>
+                        <option value="Transferencia">Transferencia</option>
+                        <option value="Tarjeta">Tarjeta</option>
+                        <option value="Otro">Otro/No especificado</option>
+                    </select>
+                </div>
+                <!------------------------->
 
                 <div id="cart-list" class="overflow-y-auto flex-grow pr-4 space-y-2">
                     <p id="empty-cart-message" class="text-stone-500 text-center mt-8">El carrito está vacío. Agrega productos del catálogo.</p>
@@ -775,7 +791,8 @@
                     cart[id] = {
                         id: id,
                         nombre: item.nombre,
-                        precio: item.precio_unitario,
+                        // Usar el precio unitario guardado en el pedido
+                        precio: item.precio_unitario, 
                         cantidad: item.cantidad
                     };
                 }
@@ -784,6 +801,8 @@
             // Cargar datos de cliente
             document.getElementById('client-name').value = order.cliente_nombre || '';
             document.getElementById('whatsapp-number').value = order.cliente_whatsapp || '';
+            document.getElementById('discount-select').value = order.descuento_aplicado || '0'; 
+            document.getElementById('payment-method').value = order.metodo_pago || 'Otro'; 
             
             // Eliminar el pedido de la nube
             deletePendingOrder(docId, false); // No confirmar doble
@@ -818,6 +837,7 @@
             const clientName = document.getElementById('client-name').value.trim();
             const whatsappNumber = document.getElementById('whatsapp-number').value.trim().replace(/\D/g, ''); 
             const finalDiscountRate = getApplicableDiscountRate();
+            const paymentMethod = document.getElementById('payment-method').value;
             
             const subtotalWithoutDiscount = calculateSubtotalWithoutDiscount();
             const totalWithDiscount = subtotalWithoutDiscount * (1 - finalDiscountRate);
@@ -845,6 +865,7 @@
                     cliente_whatsapp: whatsappNumber,
                     total_final: totalWithDiscount,
                     descuento_aplicado: finalDiscountRate,
+                    metodo_pago: paymentMethod, // NUEVO CAMPO
                     items: itemsToSave,
                 });
                 
@@ -861,7 +882,7 @@
         }
         
         // --- FUNCIÓN DE REGISTRO DE VENTA ---
-        async function recordSale(clientName, whatsappNumber, total, discountRate, items) {
+        async function recordSale(clientName, whatsappNumber, total, discountRate, paymentMethod, items) {
             const formattedDate = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
             
             try {
@@ -870,6 +891,7 @@
                     fecha_venta: formattedDate,
                     cliente_nombre: clientName || 'No especificado',
                     cliente_whatsapp: whatsappNumber || 'No especificado',
+                    metodo_pago: paymentMethod, // NUEVO CAMPO
                     total_final: total,
                     descuento_aplicado: discountRate,
                     items: items.map(item => ({
@@ -901,6 +923,7 @@
 
             const clientName = document.getElementById('client-name').value.trim();
             const whatsappNumber = document.getElementById('whatsapp-number').value.trim().replace(/\D/g, ''); 
+            const paymentMethod = document.getElementById('payment-method').value; // Leer el método de pago
             
             // Usamos SOLO el descuento manual del select
             const discountRate = parseFloat(document.getElementById('discount-select').value); 
@@ -941,7 +964,7 @@
                     await batch.commit();
                     
                     // 2. Registrar la venta
-                    await recordSale(clientName, whatsappNumber, totalWithDiscount, discountRate, itemsToRecord);
+                    await recordSale(clientName, whatsappNumber, totalWithDiscount, discountRate, paymentMethod, itemsToRecord);
                     
                     // 3. Limpiar y notificar
                     cart = {};
@@ -992,7 +1015,8 @@
                 const salesSnapshot = await getDocs(collection(db, "ventas"));
                 let csvContent = "data:text/csv;charset=utf-8,";
                 
-                const header = ["ID Venta", "Fecha Venta", "Nombre Cliente", "WhatsApp", "Total Final", "Descuento", "Detalle Productos"];
+                // Ajuste del orden de la cabecera
+                const header = ["ID Venta", "Fecha Venta", "Nombre Cliente", "WhatsApp", "Método Pago", "Total Final", "Descuento", "Detalle Productos"];
                 csvContent += header.join(";") + "\n";
                 
                 salesSnapshot.forEach((doc) => {
@@ -1006,6 +1030,8 @@
                         sale.fecha_venta,
                         `"${sale.cliente_nombre}"`, 
                         sale.cliente_whatsapp,
+                        // Insertamos el método de pago aquí
+                        sale.metodo_pago || 'N/A', 
                         sale.total_final,
                         (sale.descuento_aplicado * 100) + '%',
                         `"${itemsDetail}"`
@@ -1621,6 +1647,7 @@
             
             // Re-renderizar carrito al cambiar el descuento manual 
             document.getElementById('discount-select').addEventListener('change', renderCart); 
+            document.getElementById('payment-method').addEventListener('change', renderCart); // NUEVO LISTENER
             
             document.getElementById('client-name').addEventListener('input', renderCart); 
             document.getElementById('whatsapp-number').addEventListener('input', renderCart); 
