@@ -9,7 +9,7 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #fefce8; /* Fondo suave (Amber 50) */
+            background: radial-gradient(circle at 20% 20%, #fff7ed 0, #fefce8 45%, #fff 100%);
         }
         .item-card {
             transition: transform 0.1s ease-out;
@@ -207,48 +207,98 @@
         <!-- CONTENIDO QUE SE DESPLAZA -->
         
         <!-- BLOQUE DE TÍTULO Y ESTADO (Desplazable) -->
-        <div class="header-title-block bg-white pb-2 text-center">
-            <h1 class="main-title text-4xl font-extrabold text-amber-800 tracking-wide">CATÁLOGO</h1>
-            <p class="text-stone-600 mt-1">Selecciona productos para generar la cotización del cliente.</p>
-            <div id="connection-status" class="text-xs text-stone-400 mt-1">Conectando a la nube...</div>
-        </div>
-        
-        <div class="bg-white p-6 rounded-xl shadow-lg mb-8 no-print" id="filters-container">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                    <label for="category-filter" class="block text-sm font-semibold text-stone-700 mb-1">Filtrar por Categoría</label>
-                    <select id="category-filter" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
-                        <option value="all">Todas las Categorías</option>
-                    </select>
+        <div class="header-title-block bg-white p-6 rounded-2xl shadow-md mb-4">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div class="text-left">
+                    <p class="text-xs uppercase tracking-[0.3em] text-stone-400">Blanco & Madera</p>
+                    <h1 class="main-title text-4xl font-extrabold text-amber-800 tracking-wide">Catálogo y combos</h1>
+                    <p class="text-stone-600 mt-1">Buscar, combinar y cotizar en el mismo recorrido.</p>
                 </div>
-                <div>
-                    <label for="search-box" class="block text-sm font-semibold text-stone-700 mb-1">Buscar por Nombre</label>
-                    <input type="text" id="search-box" placeholder="Escribe el nombre del producto..." class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
-                </div>
-                <div class="md:self-end">
-                    <button id="reset-button" class="w-full md:w-auto bg-stone-500 text-white font-bold py-2.5 px-6 rounded-lg shadow-xl hover:bg-stone-600 transition duration-300 focus:outline-none focus:ring-4 focus:ring-stone-400 focus:ring-offset-2">
-                        Mostrar Todos
-                    </button>
+                <div class="flex flex-wrap gap-3 justify-center md:justify-end">
+                    <div id="connection-status" class="flex items-center gap-2 px-3 py-2 rounded-full bg-stone-100 text-xs text-stone-500 shadow-inner">
+                        Conectando a la nube...
+                    </div>
+                    <div class="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 text-amber-800 text-sm shadow">
+                        <span class="text-lg">🧺</span>
+                        <div class="leading-tight">
+                            <span class="block font-semibold">Catálogo arriba</span>
+                            <span class="block text-[11px] text-amber-700">Combos y carrito optimizados</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-
-        <div id="print-view" class="hidden print-header"></div>
         
+        <div id="print-view" class="hidden print-header"></div>
+
         <!-- Contenedor de Notificaciones -->
         <div id="toast-container"></div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
-            <!-- PANEL IZQUIERDO: CATÁLOGO, PENDIENTES Y REPORTES -->
-            <div class="space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+
+            <!-- PANEL IZQUIERDO: CATÁLOGO, COMBOS Y UTILIDADES -->
+            <div class="lg:col-span-2 space-y-6">
+
+                <!-- BUSCADOR Y FILTROS -->
+                <div class="bg-white p-5 rounded-xl shadow-lg no-print space-y-4" id="filters-container">
+                    <div class="flex flex-col gap-3">
+                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                            <div>
+                                <h2 class="text-xl font-semibold text-amber-800">Explorar productos</h2>
+                                <p class="text-sm text-stone-500">Catálogo y buscador juntos para elegir rápido.</p>
+                            </div>
+                            <div class="flex items-center gap-2 text-xs text-stone-500 bg-stone-50 px-3 py-2 rounded-lg shadow-inner">
+                                <span class="text-lg">🧭</span> Navega, agrega y arma combos debajo
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label for="category-filter" class="block text-sm font-semibold text-stone-700 mb-1">Filtrar por Categoría</label>
+                                <select id="category-filter" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
+                                    <option value="all">Todas las Categorías</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="search-box" class="block text-sm font-semibold text-stone-700 mb-1">Buscar por Nombre</label>
+                                <input type="text" id="search-box" placeholder="Escribe el nombre del producto..." class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
+                            </div>
+                            <div class="md:self-end">
+                                <button id="reset-button" class="w-full md:w-auto bg-stone-600 text-white font-bold py-2.5 px-6 rounded-lg shadow-xl hover:bg-stone-700 transition duration-300 focus:outline-none focus:ring-4 focus:ring-stone-400 focus:ring-offset-2">
+                                    Mostrar Todos
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CATÁLOGO -->
+                <div id="catalog-panel" class="bg-white p-6 rounded-xl shadow-lg relative min-h-[400px] border border-amber-100" data-view="catalog">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+                        <div>
+                            <h2 class="text-xl font-semibold text-amber-800">Catálogo de Productos Disponibles</h2>
+                            <p class="text-sm text-stone-500">Productos y buscador están arriba para decidir primero.</p>
+                        </div>
+                        <div class="flex items-center gap-2 text-xs text-stone-500 bg-stone-50 px-3 py-2 rounded-lg shadow-inner">
+                            <span class="text-lg">⬇️</span> Combos y gestión debajo
+                        </div>
+                    </div>
+
+                    <!-- Overlay de Carga -->
+                    <div id="catalog-loading" class="loading-overlay">
+                        <div class="text-amber-600 font-bold animate-pulse">Cargando productos de la nube...</div>
+                    </div>
+
+                    <div id="product-list" class="overflow-y-auto h-[55vh] md:h-[60vh] pr-4 space-y-2">
+                        <p class="text-stone-500">Conectando...</p>
+                    </div>
+                </div>
 
                 <!-- COMBOS DESTACADOS -->
                 <div id="combo-panel" class="bg-white p-6 rounded-xl shadow-lg" data-view="combos">
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
                         <div>
                             <h2 class="text-xl font-semibold text-amber-800">Combos y Packs</h2>
-                            <p class="text-sm text-stone-500">Administra combos, revisa sus productos y agrégalos al carrito.</p>
+                            <p class="text-sm text-stone-500">Arma conjuntos rápidos con los productos que ya filtraste arriba.</p>
                         </div>
                         <button id="clear-combo-form" class="bg-stone-200 text-stone-700 px-4 py-2 rounded-lg shadow hover:bg-stone-300 text-sm">
                             Limpiar formulario
@@ -300,49 +350,37 @@
                         <p id="combo-form-status" class="text-xs text-red-600 mt-2"></p>
                     </div>
                 </div>
-                
-                <!-- CATÁLOGO -->
-                <div id="catalog-panel" class="bg-white p-6 rounded-xl shadow-lg relative min-h-[400px]" data-view="catalog">
-                    <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">Catálogo de Productos Disponibles</h2>
-                    
-                    <!-- Overlay de Carga -->
-                    <div id="catalog-loading" class="loading-overlay">
-                        <div class="text-amber-600 font-bold animate-pulse">Cargando productos de la nube...</div>
-                    </div>
-                    
-                    <div id="product-list" class="overflow-y-auto h-[60vh] md:h-[70vh] pr-4 space-y-2">
-                        <p class="text-stone-500">Conectando...</p>
-                    </div>
-                </div>
 
-                <!-- PEDIDOS PENDIENTES (NUEVO) -->
-                <div class="bg-white p-6 rounded-xl shadow-lg no-print">
-                    <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">⏳ Pedidos Pendientes</h2>
-                    <div id="pending-list" class="space-y-2 max-h-60 overflow-y-auto">
-                        <p id="pending-loading" class="text-stone-500">Cargando pedidos guardados...</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- PEDIDOS PENDIENTES (NUEVO) -->
+                    <div class="bg-white p-6 rounded-xl shadow-lg no-print">
+                        <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">⏳ Pedidos Pendientes</h2>
+                        <div id="pending-list" class="space-y-2 max-h-60 overflow-y-auto">
+                            <p id="pending-loading" class="text-stone-500">Cargando pedidos guardados...</p>
+                        </div>
                     </div>
-                </div>
-                
-                <!-- PANEL DE REPORTES -->
-                <div class="bg-white p-6 rounded-xl shadow-lg no-print">
-                    <h2 class="text-xl font-semibold mb-4 text-stone-700 border-b pb-2 border-stone-200">📊 Reportes y Gestión</h2>
-                    <div class="flex flex-col space-y-3">
-                        <button id="download-sales-report-button" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-blue-700 transition duration-300 focus:outline-none focus:ring-4 focus:ring-blue-400 focus:ring-offset-2 mb-3">
-                            ⬇️ Descargar Historial de Ventas (CSV)
-                        </button>
-                        
-                        <!-- NOTA: El botón de Venta Manual ha sido ELIMINADO de aquí -->
-                        <p class="text-xs text-stone-500 text-center mt-1">
-                            * El historial de ventas y reportes está listo para descargar.
-                        </p>
-                        
+
+                    <!-- PANEL DE REPORTES -->
+                    <div class="bg-white p-6 rounded-xl shadow-lg no-print">
+                        <h2 class="text-xl font-semibold mb-4 text-stone-700 border-b pb-2 border-stone-200">📊 Reportes y Gestión</h2>
+                        <div class="flex flex-col space-y-3">
+                            <button id="download-sales-report-button" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-blue-700 transition duration-300 focus:outline-none focus:ring-4 focus:ring-blue-400 focus:ring-offset-2 mb-3">
+                                ⬇️ Descargar Historial de Ventas (CSV)
+                            </button>
+
+                            <!-- NOTA: El botón de Venta Manual ha sido ELIMINADO de aquí -->
+                            <p class="text-xs text-stone-500 text-center mt-1">
+                                * El historial de ventas y reportes está listo para descargar.
+                            </p>
+
+                        </div>
                     </div>
                 </div>
             </div>
-            
+
             <!-- PANEL DERECHO: COTIZACIÓN (CARRITO) -->
             <!-- CORRECCIÓN: Se elimina 'hidden' para que se muestre en todas las pantallas. -->
-            <div id="cart-panel" class="md:flex flex-col bg-white p-6 rounded-xl shadow-lg" data-view="cart">
+            <div id="cart-panel" class="md:flex flex-col bg-white p-6 rounded-xl shadow-lg lg:sticky lg:top-6 lg:max-h-[80vh] overflow-hidden border border-amber-100" data-view="cart">
                 <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">Cotización Actual</h2>
                 
                 <div class="mb-4 no-print">
@@ -367,7 +405,7 @@
                 </div>
                 <!------------------------->
 
-                <div id="cart-list" class="overflow-y-auto flex-grow pr-4 space-y-2">
+                <div id="cart-list" class="overflow-y-auto flex-grow pr-4 space-y-2 max-h-[40vh] lg:max-h-[48vh]">
                     <p id="empty-cart-message" class="text-stone-500 text-center mt-8">El carrito está vacío. Agrega productos del catálogo.</p>
                 </div>
 
