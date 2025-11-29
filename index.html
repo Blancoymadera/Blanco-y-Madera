@@ -269,12 +269,18 @@
                 <div class="bg-white p-6 rounded-xl shadow-lg no-print">
                     <h2 class="text-xl font-semibold mb-4 text-stone-700 border-b pb-2 border-stone-200">📊 Reportes y Gestión</h2>
                     <div class="flex flex-col space-y-3">
-                        <button id="download-sales-report-button" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-blue-700 transition duration-300 focus:outline-none focus:ring-4 focus:ring-blue-400 focus:ring-offset-2">
+                        <button id="download-sales-report-button" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-blue-700 transition duration-300 focus:outline-none focus:ring-4 focus:ring-blue-400 focus:ring-offset-2 mb-3">
                             ⬇️ Descargar Historial de Ventas (CSV)
                         </button>
-                        <p class="text-sm text-stone-500">
-                            Esto descarga un archivo que puedes abrir en Excel o Google Sheets con todas tus ventas registradas.
+                        
+                        <!-- NUEVO BOTÓN PARA REGISTRAR VENTA MANUAL -->
+                        <button id="add-manual-sale-button" class="w-full bg-red-500 text-white font-bold py-3 rounded-lg shadow-md hover:bg-red-600 transition duration-300 focus:outline-none focus:ring-4 focus:ring-red-400 focus:ring-offset-2">
+                             ➕ Registrar Venta Manual (SIN Descontar Stock)
+                        </button>
+                        <p class="text-xs text-red-500 text-center mt-1">
+                            * Presiona el botón de arriba para registrar una venta manual SIN DESCONTAR STOCK
                         </p>
+                        
                     </div>
                 </div>
             </div>
@@ -423,6 +429,7 @@
         let pendingOrders = []; 
 
         // DATOS MAESTROS (Se usan SOLAMENTE para la subida inicial a Firebase)
+        // **IMPORTANTE**: Este listado solo se usa si la base de datos está VACÍA al iniciar (función initDatabaseIfNeeded).
         const rawData = [
             // ALZAPAÑOS
             {"Product Name":"ALZAPAÑOS","Price":"NaN", "Stock": "10"},
@@ -553,7 +560,6 @@
             {"Product Name":"Envase Suecia","Price":"6600", "Stock": "2"},
             {"Product Name":"Envase Soleil","Price":"6300", "Stock": "2"},
             {"Product Name":"Envase Esperanza","Price":"5100", "Stock": "4"},
-            {"Product Name":"Hornito cerámica","Price":"4000", "Stock": "1"},
             // CESTERIA
             {"Product Name":"CESTERIA","Price":"NaN", "Stock": "10"},
             {"Product Name":"Panera De Junco N°1","Price":"14200", "Stock": "2"},
@@ -575,7 +581,6 @@
             {"Product Name":"Aromatizador Textil Charming","Price":"8000", "Stock": "3"},
             {"Product Name":"Esencia Massala","Price":"1700", "Stock": "4"},
             {"Product Name":"Difusor Auto Iluminarte","Price":"5100", "Stock": "2"},
-            {"Product Name":"Difusor Real Essenze 300 ml","Price":"12000", "Stock": "2"},
             // SAHUMERIOS AROM.
             {"Product Name":"SAHUMERIOS AROM.","Price":"NaN", "Stock": "10"},
             {"Product Name":"Tibetano Slim","Price":"2200", "Stock": "4"},
@@ -637,10 +642,7 @@
             {"Product Name":"CUENCO MINI CRUDO","Price":"5900", "Stock": "1"},
             {"Product Name":"PORTA MACETA LUREX","Price":"10200", "Stock": "1"},
             {"Product Name":"PORTA MACETA MINI CRUDO","Price":"7800", "Stock": "1"},
-            {"Product Name":"Calendario de adviento","Price":"22000", "Stock": "4"},
-            {"Product Name":"Tarjetones","Price":"300", "Stock": "50"},
-            {"Product Name":"Tarjetitas","Price":"150", "Stock": "26"},
-            // NUEVOS PRODUCTOS
+            // NUEVOS PRODUCTOS - STOCK BASE
             {"Product Name":"Flor seca carqueja","Price":"4300", "Stock": "1"},
             {"Product Name":"Flor seca eucaliptus","Price":"4300", "Stock": "2"},
             {"Product Name":"Alfombra marrón","Price":"17600", "Stock": "1"},
@@ -649,6 +651,11 @@
             {"Product Name":"Velas de noche x12","Price":"3200", "Stock": "2"},
             {"Product Name":"Cesto con tapa crudo","Price":"36300", "Stock": "1"},
             {"Product Name":"Florero","Price":"20000", "Stock": "2"},
+            {"Product Name":"Hornito cerámica","Price":"4000", "Stock": "1"},
+            {"Product Name":"Difusor Real Essenze 300 ml","Price":"12000", "Stock": "2"},
+            {"Product Name":"Calendario de adviento","Price":"22000", "Stock": "4"},
+            {"Product Name":"Tarjetones","Price":"300", "Stock": "50"},
+            {"Product Name":"Tarjetitas","Price":"150", "Stock": "26"},
         ];
 
         // --- FUNCIONES DE BASE DE DATOS ---
@@ -660,6 +667,7 @@
             const statusElement = document.getElementById('connection-status');
             const loadingElement = document.getElementById('catalog-loading');
             
+            // Si la base de datos está VACÍA, cargamos los productos desde rawData.
             if (snapshot.empty) {
                 statusElement.textContent = "Base de datos vacía. Subiendo productos...";
                 console.log("Base de datos vacía. Subiendo productos...");
@@ -674,6 +682,7 @@
                     const name = item["Product Name"].trim();
                     const stock = item.Stock ? parseInt(item.Stock) : 10;
 
+                    // Si el precio es NaN o 0, asumimos que es un encabezado de categoría
                     if (isNaN(price) || price === 0) {
                         currentCategory = name; 
                     } else {
@@ -686,6 +695,7 @@
                             precio: price,
                             stock: stock
                         });
+                        categories.add(currentCategory);
                     }
                 });
 
@@ -726,167 +736,72 @@
             }, (error) => {
                 console.error("Error al suscribirse a la DB:", error);
                 document.getElementById('connection-status').textContent = "ERROR: Conexión a Firebase fallida 🔴";
-                loadingElement.innerHTML = `<div class="text-red-600 font-bold">¡ERROR! Revisa tu clave de Firebase.</div>`;
+                document.getElementById('catalog-loading').innerHTML = `<div class="text-red-600 font-bold">¡ERROR! Revisa tu clave de Firebase.</div>`;
             });
         }
-        
-        // --- ESCUCHAR PEDIDOS PENDIENTES ---
-        function subscribeToPendingOrders() {
-            const q = collection(db, "pedidos_pendientes");
-            const pendingListEl = document.getElementById('pending-list');
+
+        // --- FUNCIÓN PARA REGISTRAR VENTA MANUAL (SIN USAR EL CARRITO) ---
+        async function addManualSale(productName, quantity, salePrice, clientName, paymentMethod, deductStock = true) {
             
-            onSnapshot(q, (querySnapshot) => {
-                pendingOrders = [];
-                pendingListEl.innerHTML = '';
-                
-                if (querySnapshot.empty) {
-                    pendingListEl.innerHTML = '<p class="text-stone-500 text-sm p-2">No hay pedidos pendientes guardados.</p>';
-                    return;
-                }
+            const product = productData.find(p => p.nombre === productName);
 
-                querySnapshot.forEach((doc) => {
-                    const order = doc.data();
-                    order.docId = doc.id;
-                    pendingOrders.push(order);
-
-                    const totalItems = order.items.reduce((sum, item) => sum + item.cantidad, 0);
-                    
-                    const orderDiv = document.createElement('div');
-                    orderDiv.className = 'bg-stone-50 p-3 rounded-lg border border-stone-200 flex justify-between items-center';
-                    orderDiv.innerHTML = `
-                        <div class="flex-grow">
-                            <p class="font-bold text-stone-700">${order.cliente_nombre || 'Cliente sin nombre'}</p>
-                            <p class="text-xs text-stone-500">${order.fecha_guardado}</p>
-                            <p class="text-sm text-amber-700">${totalItems} ítems | ${formatCurrency(order.total_final)}</p>
-                        </div>
-                        <div class="space-x-2">
-                            <button onclick="loadPendingOrder('${order.docId}')" class="bg-amber-500 text-white p-2 rounded-lg text-xs hover:bg-amber-600">
-                                Cargar
-                            </button>
-                            <button onclick="deletePendingOrder('${order.docId}')" class="bg-red-400 text-white p-2 rounded-lg text-xs hover:bg-red-500">
-                                🗑️
-                            </button>
-                        </div>
-                    `;
-                    pendingListEl.appendChild(orderDiv);
-                });
-            }, (error) => {
-                console.error("Error al suscribirse a pedidos pendientes:", error);
-                pendingListEl.innerHTML = '<p class="text-red-500 text-sm p-2">Error al cargar pedidos.</p>';
-            });
-        }
-        
-        // --- FUNCIÓN PARA CARGAR PEDIDO PENDIENTE ---
-        window.loadPendingOrder = function(docId) {
-            const order = pendingOrders.find(o => o.docId === docId);
-            if (!order) {
-                showToast("Error: Pedido no encontrado.");
+            if (!product) {
+                showToast(`🚫 Producto no encontrado en el stock: ${productName}`);
                 return;
             }
 
-            if (!confirm(`¿Seguro que quieres cargar el pedido de ${order.cliente_nombre}? Esto borrará el carrito actual.`)) {
+            const quantityToDeduct = parseInt(quantity);
+            const currentStock = product.stock;
+            
+            if (deductStock && currentStock < quantityToDeduct) {
+                showToast(`🚫 No hay suficiente stock de ${productName}. Quedan ${currentStock}.`);
                 return;
             }
-
-            // Cargar datos al carrito (simulando addToCart, pero directo)
-            cart = {};
-            order.items.forEach(item => {
-                const id = productData.find(p => p.nombre === item.nombre)?.id;
-                if (id) {
-                    cart[id] = {
-                        id: id,
-                        nombre: item.nombre,
-                        // Usar el precio unitario guardado en el pedido
-                        precio: item.precio_unitario, 
-                        cantidad: item.cantidad
-                    };
-                }
-            });
-
-            // Cargar datos de cliente
-            document.getElementById('client-name').value = order.cliente_nombre || '';
-            document.getElementById('whatsapp-number').value = order.cliente_whatsapp || '';
-            document.getElementById('discount-select').value = order.descuento_aplicado || '0'; 
-            document.getElementById('payment-method').value = order.metodo_pago || 'Otro'; 
             
-            // Eliminar el pedido de la nube
-            deletePendingOrder(docId, false); // No confirmar doble
+            let confirmationMessage = `⚠️ REGISTRAR VENTA MANUAL: ${productName} (x${quantityToDeduct}) a ${clientName} por ${formatCurrency(salePrice)}.`;
             
-            saveCart();
-            renderCart();
-            showToast(`Pedido de ${order.cliente_nombre} cargado.`);
-        }
-
-        // --- FUNCIÓN PARA ELIMINAR PEDIDO PENDIENTE ---
-        window.deletePendingOrder = async function(docId, shouldConfirm = true) {
-             if (shouldConfirm && !confirm("¿Eliminar este pedido pendiente?")) {
-                return;
+            if (deductStock) {
+                confirmationMessage += ` ¿Deseas descontar stock?`;
+            } else {
+                confirmationMessage += ` El stock NO será descontado. ¿Confirmar solo el registro de venta?`;
             }
+
+            if (!window.confirm(confirmationMessage)) {
+                 return;
+            }
+
+            const subtotal = salePrice * quantityToDeduct; 
+            const itemsToRecord = [{
+                nombre: productName,
+                cantidad: quantityToDeduct,
+                precio: salePrice, // El precio al que se vendió
+                subtotal: subtotal
+            }];
 
             try {
-                await deleteDoc(doc(db, "pedidos_pendientes", docId));
-                showToast("Pedido pendiente eliminado.");
-            } catch (e) {
-                console.error("Error eliminando pedido pendiente:", e);
-                showToast("⚠️ Falló la eliminación.");
-            }
-        }
+                const batch = writeBatch(db);
 
-        // --- FUNCIÓN PARA GUARDAR PEDIDO PENDIENTE ---
-        window.savePendingOrder = async function() {
-            if (Object.keys(cart).length === 0) {
-                alert("El carrito está vacío. Agrega productos para guardar un pedido.");
-                return;
-            }
-
-            const clientName = document.getElementById('client-name').value.trim();
-            const whatsappNumber = document.getElementById('whatsapp-number').value.trim().replace(/\D/g, ''); 
-            const finalDiscountRate = getApplicableDiscountRate();
-            const paymentMethod = document.getElementById('payment-method').value;
-            
-            const subtotalWithoutDiscount = calculateSubtotalWithoutDiscount();
-            const totalWithDiscount = subtotalWithoutDiscount * (1 - finalDiscountRate);
-
-            if (!clientName) {
-                alert("Por favor, ingresa el Nombre y Apellido del cliente antes de guardar.");
-                return;
-            }
-
-            const itemsToSave = [];
-            for (const id in cart) {
-                const item = cart[id];
-                itemsToSave.push({
-                    nombre: item.nombre,
-                    cantidad: item.cantidad,
-                    precio_unitario: Number(item.precio),
-                });
-            }
-
-            try {
-                await addDoc(collection(db, "pedidos_pendientes"), {
-                    timestamp: new Date(),
-                    fecha_guardado: new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
-                    cliente_nombre: clientName,
-                    cliente_whatsapp: whatsappNumber,
-                    total_final: totalWithDiscount,
-                    descuento_aplicado: finalDiscountRate,
-                    metodo_pago: paymentMethod, // NUEVO CAMPO
-                    items: itemsToSave,
-                });
+                // 1. Descontar Stock (SOLO si deductStock es TRUE)
+                if (deductStock) {
+                    const newStock = currentStock - quantityToDeduct;
+                    const docRef = doc(db, "products", product.id);
+                    batch.update(docRef, { stock: newStock });
+                    await batch.commit();
+                }
                 
-                // Limpiar carrito después de guardar
-                cart = {};
-                saveCart();
-                updateDashboard();
-                showToast(`Pedido de ${clientName} guardado correctamente.`);
+                // 2. Registrar la venta
+                await recordSale(clientName, "No especificado", subtotal, 0, paymentMethod, itemsToRecord);
+                
+                const stockMsg = deductStock ? "y stock actualizado" : "sin modificar stock";
+                showToast(`✅ Venta manual registrada ${stockMsg} para ${productName}.`);
 
             } catch (e) {
-                console.error("Error guardando pedido pendiente:", e);
-                showToast("⚠️ Falló al guardar el pedido en la nube.");
+                console.error("Error al completar la transacción de venta manual:", e);
+                showToast("Hubo un error al registrar la venta manual.");
             }
         }
         
-        // --- FUNCIÓN DE REGISTRO DE VENTA ---
+        // --- FUNCIÓN DE REGISTRO DE VENTA (EXISTENTE) ---
         async function recordSale(clientName, whatsappNumber, total, discountRate, paymentMethod, items) {
             const formattedDate = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
             
@@ -914,23 +829,22 @@
         }
 
 
-        // 3. Confirmar Venta en la Nube
+        // 3. Confirmar Venta en la Nube (Desde el Carrito)
         async function confirmSaleAndDeductStock() {
             if (Object.keys(cart).length === 0) {
-                alert("El carrito está vacío. Debes agregar productos antes de registrar una venta.");
+                showToast("El carrito está vacío. Debes agregar productos antes de registrar una venta.");
                 return;
             }
 
-            // Usamos un modal de confirmación más claro
-            if (!confirm("⚠️ CONFIRMAR BAJA DE STOCK: ¿Estás seguro de que la venta ha sido cobrada y deseas descontar el stock de estos productos?")) {
-                return;
+            if (!window.confirm("⚠️ CONFIRMAR BAJA DE STOCK: ¿Estás seguro de que la venta ha sido cobrada y deseas descontar el stock de estos productos?")) {
+                 return;
             }
+
 
             const clientName = document.getElementById('client-name').value.trim();
             const whatsappNumber = document.getElementById('whatsapp-number').value.trim().replace(/\D/g, ''); 
             const paymentMethod = document.getElementById('payment-method').value; // Leer el método de pago
             
-            // Usamos SOLO el descuento manual del select
             const discountRate = parseFloat(document.getElementById('discount-select').value); 
 
             let subtotal = 0;
@@ -939,7 +853,6 @@
             const batch = writeBatch(db);
             let error = false;
 
-            // Preparar actualizaciones y calcular totales para el registro
             for (const id in cart) {
                 const item = cart[id];
                 const itemSubtotal = item.precio * item.cantidad;
@@ -950,7 +863,7 @@
                 if (productInDb) {
                     const newStock = productInDb.stock - item.cantidad;
                     if (newStock < 0) {
-                        alert(`Error: No hay suficiente stock de ${productInDb.nombre}. Quedan ${productInDb.stock}.`);
+                        showToast(`Error: No hay suficiente stock de ${productInDb.nombre}. Quedan ${productInDb.stock}.`);
                         error = true;
                         break;
                     }
@@ -974,18 +887,26 @@
                     // 3. Limpiar y notificar
                     cart = {};
                     saveCart(); // Limpiar localstorage
+                    
+                    // Limpiar también los campos de la cotización
+                    document.getElementById('client-name').value = '';
+                    document.getElementById('whatsapp-number').value = '';
+                    document.getElementById('discount-select').value = '0';
+                    document.getElementById('payment-method').value = 'Otro';
+                    
+                    updateDashboard(); 
                     showToast("✅ Venta registrada y stock descontado.");
                 } catch (e) {
                     console.error("Error al completar la transacción:", e);
-                    alert("Hubo un error al actualizar el stock/registrar la venta. Revisa tu conexión y permisos.");
+                    showToast("Hubo un error al actualizar el stock/registrar la venta. Revisa tu conexión y permisos.");
                 }
             }
         }
         
         // 4. Función de reinicio de emergencia (Borra todo el stock en la nube y local)
         window.resetLocalData = async function() {
-            if (!confirm("⚠️ ADVERTENCIA: Esta acción BORRARÁ TODOS los productos de la base de datos de Firebase y subirá los productos del código actual. ¿Estás absolutamente seguro?")) {
-                return;
+            if (!window.confirm("⚠️ ADVERTENCIA: Esta acción BORRARÁ TODOS los productos de la base de datos de Firebase y subirá los productos del código actual. ¿Estás absolutamente seguro?")) {
+                 return;
             }
 
             // 1. Borrar datos locales (carrito)
@@ -1008,7 +929,7 @@
                 window.location.reload(true);
             } catch(e) {
                 console.error("Error al borrar datos de Firebase:", e);
-                alert("Hubo un error al borrar los datos de Firebase. Revisa tus permisos o conexión.");
+                showToast("Hubo un error al borrar los datos de Firebase. Revisa tus permisos o conexión.");
             }
         }
         
@@ -1145,7 +1066,7 @@
                 const subtotal = numericPrice * item.cantidad;
                 cartItemsCount += item.cantidad;
 
-                const productReal = productData.find(p => p.id == id);
+                const productReal = productData.find(p => p.id === id);
                 const maxStock = productReal ? productReal.stock : 0;
 
                 const itemDiv = document.createElement('div');
@@ -1344,6 +1265,22 @@
                 const whatsappText = encodeURIComponent(summaryLines.join('\n'));
                 const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappText}`;
                 window.open(whatsappUrl, '_blank');
+            } else {
+                // Si no hay número, simplemente copia el texto al portapapeles
+                const textToCopy = summaryLines.join('\n');
+                try {
+                    // Usar document.execCommand('copy') como fallback para iframe/sandbox
+                    const textarea = document.createElement('textarea');
+                    textarea.value = textToCopy;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    showToast("Texto de la cotización copiado al portapapeles.");
+                } catch (err) {
+                    showToast("Error al copiar al portapapeles.");
+                    console.error('Error al copiar el texto: ', err);
+                }
             }
         }
 
@@ -1352,7 +1289,7 @@
             const whatsappNumber = document.getElementById('whatsapp-number').value.trim().replace(/\D/g, ''); 
             
             if (Object.keys(cart).length === 0) {
-                alert("El carrito está vacío.");
+                showToast("El carrito está vacío.");
                 return;
             }
 
@@ -1462,7 +1399,7 @@
             // --- LÓGICA DE COMPARTIR NATIVA (COMPORTAMIENTO DESEADO) ---
             canvas.toBlob(async (blob) => {
                 if (!blob) {
-                    alert('Error generando la imagen.');
+                    showToast('Error generando la imagen.');
                     return;
                 }
                 const file = new File([blob], 'cotizacion_blanco_madera.png', { type: 'image/png' });
@@ -1644,11 +1581,21 @@
                 document.getElementById('whatsapp-number').value = '';
                 updateDashboard();
             });
+            
+            // --- BLOQUE MODIFICADO: LIMPIEZA TOTAL DEL CARRITO ---
             document.getElementById('clear-cart-button').addEventListener('click', () => {
                 cart = {};
+                // Limpiar también los campos de la cotización
+                document.getElementById('client-name').value = '';
+                document.getElementById('whatsapp-number').value = '';
+                document.getElementById('discount-select').value = '0';
+                document.getElementById('payment-method').value = 'Otro';
+                
                 saveCart();
-                updateDashboard();
+                updateDashboard(); // Esto llama a renderCart() y renderProductList()
+                showToast("Carrito y datos de cliente vaciados.");
             });
+            // ----------------------------------------------------
             
             // Re-renderizar carrito al cambiar el descuento manual 
             document.getElementById('discount-select').addEventListener('change', renderCart); 
@@ -1664,6 +1611,21 @@
             
             document.getElementById('print-button').addEventListener('click', printQuote);
             document.getElementById('download-sales-report-button').addEventListener('click', downloadSalesReport); // Botón de Reporte
+
+            // EVENTO DE VENTA MANUAL (¡SOLUCIÓN PARA NO USAR LA CONSOLA!)
+            document.getElementById('add-manual-sale-button').addEventListener('click', () => {
+                // Parámetros: productName, quantity, salePrice, clientName, paymentMethod, deductStock (FALSE)
+                addManualSale(
+                    "Calendario de adviento", 
+                    1, 
+                    20000, 
+                    "Nati Giordana (Venta Externa)", 
+                    "Otro", // Método de Pago
+                    false // <--- ¡AQUÍ DECIMOS NO DESCONTAR STOCK!
+                );
+            });
+            // ----------------------------------------------------
+
             document.getElementById('save-pending-button').addEventListener('click', savePendingOrder); // Botón Guardar Pendiente
             
             const isMobile = window.innerWidth < 768;
