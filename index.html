@@ -280,9 +280,14 @@
                             </div>
                         </div>
                         <div class="mt-3">
-                            <label for="combo-items" class="block text-sm font-semibold text-stone-700 mb-1">Productos incluidos (formato: prod_id:cantidad,prod_id:cantidad)</label>
-                            <textarea id="combo-items" rows="2" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2 text-sm" placeholder="prod_1:2,prod_3:1"></textarea>
-                            <p class="text-xs text-stone-500 mt-1">Puedes copiar los IDs desde el catálogo. Si no indicas precio fijo, se calculará la suma de productos menos el descuento.</p>
+                            <label for="combo-product-search" class="block text-sm font-semibold text-stone-700 mb-1">Productos incluidos</label>
+                            <div class="bg-stone-50 border border-stone-200 rounded-lg p-3 space-y-3">
+                                <input id="combo-product-search" type="text" class="w-full rounded-lg border-stone-300 shadow-sm focus:border-amber-600 focus:ring-amber-600 p-2 text-sm" placeholder="Buscar por nombre o ID...">
+                                <div id="combo-product-list" class="max-h-48 overflow-y-auto space-y-2">
+                                    <p class="text-sm text-stone-500">Sincronizando productos...</p>
+                                </div>
+                            </div>
+                            <p class="text-xs text-stone-500 mt-1">Selecciona los productos del combo, define cantidades y usa la búsqueda para filtrar.</p>
                         </div>
                         <div class="mt-4 flex flex-wrap gap-3">
                             <button id="save-combo-button" class="bg-amber-600 text-white font-bold py-2 px-4 rounded-lg shadow hover:bg-amber-700 transition duration-300 focus:outline-none focus:ring-4 focus:ring-amber-500 focus:ring-offset-2">
@@ -775,7 +780,7 @@
                 
                 querySnapshot.forEach((doc) => {
                     const data = doc.data();
-                    if (!data.id) data.id = doc.id; 
+                    if (!data.id) data.id = doc.id;
                     productData.push(data);
                     categories.add(data.categoria);
                 });
@@ -783,7 +788,8 @@
                 // Actualizar vista
                 populateCategoryFilter();
                 updateDashboard();
-                loadingElement.style.display = 'none'; 
+                renderComboProductSelector();
+                loadingElement.style.display = 'none';
                 document.getElementById('connection-status').textContent = "Sincronizado y Listo 🟢";
                 document.getElementById('connection-status').classList.remove('text-stone-400');
                 document.getElementById('connection-status').classList.add('text-green-600');
@@ -1935,18 +1941,92 @@
             return Math.max(itemsTotal * (1 - discountRate), 0);
         }
 
-        function parseComboItems(rawItems) {
-            if (!rawItems) return [];
-            return rawItems.split(',')
-                .map(piece => piece.trim())
-                .filter(Boolean)
-                .map(piece => {
-                    const [productId, qtyRaw] = piece.split(':').map(p => p.trim());
-                    if (!productId) return null;
-                    const qty = parseInt(qtyRaw || '1');
-                    return { productId, cantidad: isNaN(qty) || qty <= 0 ? 1 : qty };
+        function getSelectedComboItemsFromDom() {
+            const selectedItems = {};
+            document.querySelectorAll('.combo-product-checkbox:checked').forEach((checkbox) => {
+                const productId = checkbox.dataset.productId;
+                const qtyInput = document.querySelector(`.combo-product-qty[data-product-id="${productId}"]`);
+                const qty = parseInt(qtyInput?.value || '0', 10);
+                selectedItems[productId] = { cantidad: qty };
+            });
+            return selectedItems;
+        }
+
+        function renderComboProductSelector(presetSelection = null) {
+            const listEl = document.getElementById('combo-product-list');
+            const searchInput = document.getElementById('combo-product-search');
+            if (!listEl || !searchInput) return;
+
+            const currentSelection = presetSelection || getSelectedComboItemsFromDom();
+            const searchTerm = searchInput.value.trim().toLowerCase();
+
+            const filteredProducts = productData
+                .filter(product => {
+                    const nameMatch = (product.nombre || '').toLowerCase().includes(searchTerm);
+                    const idMatch = (product.id || '').toLowerCase().includes(searchTerm);
+                    const isSelected = Boolean(currentSelection[product.id]);
+                    return nameMatch || idMatch || isSelected;
                 })
-                .filter(Boolean);
+                .sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
+
+            listEl.innerHTML = '';
+
+            if (productData.length === 0) {
+                listEl.innerHTML = '<p class="text-sm text-stone-500">Sincronizando productos...</p>';
+                return;
+            }
+
+            const renderRow = (product, { preselected = false, quantity = 1, disabled = false, extraLabel = '' } = {}) => {
+                const row = document.createElement('div');
+                row.className = 'flex items-center justify-between bg-white border border-stone-200 rounded-lg p-2 shadow-sm';
+
+                row.innerHTML = `
+                    <label class="flex items-center gap-2 flex-1">
+                        <input type="checkbox" class="combo-product-checkbox rounded border-stone-300 text-amber-600 focus:ring-amber-600"
+                            data-product-id="${product.id}" ${preselected ? 'checked' : ''} ${disabled ? 'disabled' : ''}>
+                        <div>
+                            <p class="text-sm font-semibold text-stone-800">${product.nombre || product.id}</p>
+                            <p class="text-xs text-stone-500">${product.id}${extraLabel ? ` · ${extraLabel}` : ''}</p>
+                        </div>
+                    </label>
+                    <input type="number" min="1" class="combo-product-qty w-20 ml-3 rounded-lg border-stone-300 shadow-sm focus:border-amber-600 focus:ring-amber-600 p-1 text-sm"
+                        data-product-id="${product.id}" value="${quantity}" ${disabled ? 'disabled' : ''}>
+                `;
+
+                listEl.appendChild(row);
+            };
+
+            filteredProducts.forEach(product => {
+                const selected = currentSelection[product.id];
+                renderRow(product, { preselected: Boolean(selected), quantity: selected?.cantidad || 1 });
+            });
+
+            const missingProducts = Object.keys(currentSelection).filter(id => !productData.some(p => p.id === id));
+            missingProducts.forEach(id => {
+                renderRow({ id, nombre: 'Producto no encontrado' }, { preselected: true, quantity: currentSelection[id].cantidad || 1, extraLabel: 'ID no disponible en catálogo' });
+            });
+
+            if (!listEl.children.length) {
+                listEl.innerHTML = '<p class="text-sm text-stone-500">No se encontraron productos con ese criterio.</p>';
+            }
+        }
+
+        function parseComboItems() {
+            const { items, hasInvalidQuantity } = Array.from(document.querySelectorAll('.combo-product-checkbox:checked')).reduce((acc, checkbox) => {
+                const productId = checkbox.dataset.productId;
+                const qtyInput = document.querySelector(`.combo-product-qty[data-product-id="${productId}"]`);
+                const qty = parseInt(qtyInput?.value || '0', 10);
+
+                if (isNaN(qty) || qty <= 0) {
+                    acc.hasInvalidQuantity = true;
+                    return acc;
+                }
+
+                acc.items.push({ productId, cantidad: qty });
+                return acc;
+            }, { items: [], hasInvalidQuantity: false });
+
+            return { items, hasInvalidQuantity };
         }
 
         function resetComboForm(message = '') {
@@ -1954,8 +2034,10 @@
             document.getElementById('combo-name').value = '';
             document.getElementById('combo-price').value = '';
             document.getElementById('combo-discount').value = '';
-            document.getElementById('combo-items').value = '';
             document.getElementById('combo-visible').checked = true;
+            const comboSearch = document.getElementById('combo-product-search');
+            if (comboSearch) comboSearch.value = '';
+            renderComboProductSelector({});
             document.getElementById('combo-form-status').textContent = message;
         }
 
@@ -1967,9 +2049,16 @@
             document.getElementById('combo-name').value = combo.nombre || '';
             document.getElementById('combo-price').value = combo.precioBase ?? combo.precio ?? '';
             document.getElementById('combo-discount').value = combo.descuento ? (normalizeDiscountValue(combo.descuento) * 100) : '';
-            document.getElementById('combo-items').value = (combo.items || []).map(item => `${item.productId}:${item.cantidad}`).join(',');
             document.getElementById('combo-visible').checked = combo.visible !== false;
             document.getElementById('combo-form-status').textContent = `Editando combo: ${combo.nombre}`;
+
+            const selectedItems = {};
+            (combo.items || []).forEach(item => {
+                selectedItems[item.productId] = { cantidad: item.cantidad || 1 };
+            });
+            const comboSearch = document.getElementById('combo-product-search');
+            if (comboSearch) comboSearch.value = '';
+            renderComboProductSelector(selectedItems);
         }
 
         window.deleteCombo = async function(id) {
@@ -1995,7 +2084,7 @@
             const price = Number(document.getElementById('combo-price').value);
             const discountPercent = Number(document.getElementById('combo-discount').value);
             const visible = document.getElementById('combo-visible').checked;
-            const items = parseComboItems(document.getElementById('combo-items').value);
+            const { items, hasInvalidQuantity } = parseComboItems();
 
             const statusEl = document.getElementById('combo-form-status');
             statusEl.textContent = '';
@@ -2006,6 +2095,10 @@
             }
             if (items.length === 0) {
                 statusEl.textContent = 'Agrega al menos un producto al combo.';
+                return;
+            }
+            if (hasInvalidQuantity) {
+                statusEl.textContent = 'Las cantidades deben ser mayores a cero.';
                 return;
             }
 
@@ -2215,9 +2308,10 @@
             document.getElementById('save-combo-button').addEventListener('click', saveComboFromForm);
             document.getElementById('cancel-combo-edit').addEventListener('click', () => resetComboForm('Edición cancelada.'));
             document.getElementById('clear-combo-form').addEventListener('click', () => resetComboForm('Formulario limpio.'));
+            document.getElementById('combo-product-search').addEventListener('input', () => renderComboProductSelector());
 
             // NOTA: EL EVENTO addManualSale ha sido ELIMINADO de aquí.
-            
+
             // CORRECCIÓN: Usar window.savePendingOrder
             document.getElementById('save-pending-button').addEventListener('click', window.savePendingOrder); // Botón Guardar Pendiente
             
@@ -2231,6 +2325,7 @@
                 document.getElementById('filters-container').style.display = 'grid';
             }
 
+            renderComboProductSelector();
             updateDashboard();
         });
     </script>
