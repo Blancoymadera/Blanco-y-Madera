@@ -203,18 +203,53 @@
         </div>
     </header>
 
-    <main class="container mx-auto p-4 sm:p-6 lg:p-8 pt-0"> 
+    <main class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 pt-0 space-y-6">
         <!-- CONTENIDO QUE SE DESPLAZA -->
-        
+
         <!-- BLOQUE DE TÍTULO Y ESTADO (Desplazable) -->
-        <div class="header-title-block bg-white pb-2 text-center">
-            <h1 class="main-title text-4xl font-extrabold text-amber-800 tracking-wide">CATÁLOGO</h1>
-            <p class="text-stone-600 mt-1">Selecciona productos para generar la cotización del cliente.</p>
-            <div id="connection-status" class="text-xs text-stone-400 mt-1">Conectando a la nube...</div>
+        <div class="header-title-block text-center">
+            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-50 via-white to-amber-100 border border-amber-100 shadow-lg p-6">
+                <div class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_20%_20%,#f59e0b,transparent_25%),radial-gradient(circle_at_80%_0%,#d97706,transparent_30%)]"></div>
+                <div class="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div class="text-left md:text-start">
+                        <p class="text-xs uppercase tracking-[0.35em] text-amber-500 font-semibold">Gestión rápida</p>
+                        <h1 class="main-title text-4xl font-extrabold text-amber-800 tracking-wide">Catálogo y cotizaciones</h1>
+                        <p class="text-stone-600 mt-1 max-w-2xl">Usa los filtros para localizar productos, arma combos y genera la cotización en segundos.</p>
+                        <div id="connection-status" class="inline-flex items-center gap-2 text-xs font-semibold text-stone-500 mt-3 px-3 py-2 rounded-full bg-white/70 border border-stone-200 shadow-sm">Conectando a la nube...</div>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full md:w-auto">
+                        <div class="bg-white border border-stone-200 rounded-2xl shadow-sm p-4 text-left">
+                            <p class="text-xs text-stone-500">Productos</p>
+                            <p id="metric-products" class="text-3xl font-extrabold text-amber-700 leading-tight">—</p>
+                        </div>
+                        <div class="bg-white border border-stone-200 rounded-2xl shadow-sm p-4 text-left">
+                            <p class="text-xs text-stone-500">Combos</p>
+                            <p id="metric-combos" class="text-3xl font-extrabold text-amber-700 leading-tight">—</p>
+                        </div>
+                        <div class="bg-white border border-stone-200 rounded-2xl shadow-sm p-4 text-left">
+                            <p class="text-xs text-stone-500">Ítems en carrito</p>
+                            <p id="metric-cart" class="text-3xl font-extrabold text-amber-700 leading-tight">—</p>
+                        </div>
+                        <div class="bg-white border border-stone-200 rounded-2xl shadow-sm p-4 text-left">
+                            <p class="text-xs text-stone-500">Subtotal</p>
+                            <p id="metric-cart-total" class="text-3xl font-extrabold text-amber-700 leading-tight">—</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        
-        <div class="bg-white p-6 rounded-xl shadow-lg mb-8 no-print" id="filters-container">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <div class="bg-white/90 backdrop-blur-sm p-6 rounded-xl shadow-lg no-print sticky top-16 z-20 border border-stone-100" id="filters-container">
+            <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                    <p class="text-sm font-semibold text-stone-800 flex items-center gap-2"><span class="text-lg">🔍</span> Filtros inteligentes</p>
+                    <p class="text-xs text-stone-500">Combina búsqueda y categoría para acotar el catálogo.</p>
+                </div>
+                <div class="flex items-center gap-2 text-sm text-stone-500">
+                    <span class="px-3 py-1 rounded-full bg-amber-50 text-amber-700 font-semibold" id="results-count">Mostrando todo</span>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
                 <div>
                     <label for="category-filter" class="block text-sm font-semibold text-stone-700 mb-1">Filtrar por Categoría</label>
                     <select id="category-filter" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
@@ -226,8 +261,8 @@
                     <input type="text" id="search-box" placeholder="Escribe el nombre del producto..." class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
                 </div>
                 <div class="md:self-end">
-                    <button id="reset-button" class="w-full md:w-auto bg-stone-500 text-white font-bold py-2.5 px-6 rounded-lg shadow-xl hover:bg-stone-600 transition duration-300 focus:outline-none focus:ring-4 focus:ring-stone-400 focus:ring-offset-2">
-                        Mostrar Todos
+                    <button id="reset-button" class="w-full md:w-auto bg-stone-700 text-white font-bold py-2.5 px-6 rounded-lg shadow-xl hover:bg-stone-800 transition duration-300 focus:outline-none focus:ring-4 focus:ring-stone-400 focus:ring-offset-2">
+                        Limpiar filtros
                     </button>
                 </div>
             </div>
@@ -238,10 +273,24 @@
         <!-- Contenedor de Notificaciones -->
         <div id="toast-container"></div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
-            <!-- PANEL IZQUIERDO: CATÁLOGO, PENDIENTES Y REPORTES -->
+        <div class="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6 items-start">
+
+            <!-- PANEL IZQUIERDO: CATÁLOGO Y COMBOS -->
             <div class="space-y-6">
+
+                <!-- CATÁLOGO -->
+                <div id="catalog-panel" class="bg-white p-6 rounded-xl shadow-lg relative min-h-[400px]" data-view="catalog">
+                    <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">Catálogo de Productos Disponibles</h2>
+
+                    <!-- Overlay de Carga -->
+                    <div id="catalog-loading" class="loading-overlay">
+                        <div class="text-amber-600 font-bold animate-pulse">Cargando productos de la nube...</div>
+                    </div>
+
+                    <div id="product-list" class="overflow-y-auto h-[60vh] md:h-[70vh] pr-4 space-y-2">
+                        <p class="text-stone-500">Conectando...</p>
+                    </div>
+                </div>
 
                 <!-- COMBOS DESTACADOS -->
                 <div id="combo-panel" class="bg-white p-6 rounded-xl shadow-lg" data-view="combos">
@@ -300,20 +349,6 @@
                         <p id="combo-form-status" class="text-xs text-red-600 mt-2"></p>
                     </div>
                 </div>
-                
-                <!-- CATÁLOGO -->
-                <div id="catalog-panel" class="bg-white p-6 rounded-xl shadow-lg relative min-h-[400px]" data-view="catalog">
-                    <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">Catálogo de Productos Disponibles</h2>
-                    
-                    <!-- Overlay de Carga -->
-                    <div id="catalog-loading" class="loading-overlay">
-                        <div class="text-amber-600 font-bold animate-pulse">Cargando productos de la nube...</div>
-                    </div>
-                    
-                    <div id="product-list" class="overflow-y-auto h-[60vh] md:h-[70vh] pr-4 space-y-2">
-                        <p class="text-stone-500">Conectando...</p>
-                    </div>
-                </div>
 
                 <!-- PEDIDOS PENDIENTES (NUEVO) -->
                 <div class="bg-white p-6 rounded-xl shadow-lg no-print">
@@ -322,7 +357,7 @@
                         <p id="pending-loading" class="text-stone-500">Cargando pedidos guardados...</p>
                     </div>
                 </div>
-                
+
                 <!-- PANEL DE REPORTES -->
                 <div class="bg-white p-6 rounded-xl shadow-lg no-print">
                     <h2 class="text-xl font-semibold mb-4 text-stone-700 border-b pb-2 border-stone-200">📊 Reportes y Gestión</h2>
@@ -330,19 +365,19 @@
                         <button id="download-sales-report-button" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-blue-700 transition duration-300 focus:outline-none focus:ring-4 focus:ring-blue-400 focus:ring-offset-2 mb-3">
                             ⬇️ Descargar Historial de Ventas (CSV)
                         </button>
-                        
+
                         <!-- NOTA: El botón de Venta Manual ha sido ELIMINADO de aquí -->
                         <p class="text-xs text-stone-500 text-center mt-1">
                             * El historial de ventas y reportes está listo para descargar.
                         </p>
-                        
+
                     </div>
                 </div>
             </div>
-            
+
             <!-- PANEL DERECHO: COTIZACIÓN (CARRITO) -->
             <!-- CORRECCIÓN: Se elimina 'hidden' para que se muestre en todas las pantallas. -->
-            <div id="cart-panel" class="md:flex flex-col bg-white p-6 rounded-xl shadow-lg" data-view="cart">
+            <div id="cart-panel" class="flex flex-col bg-white p-6 rounded-xl shadow-lg lg:sticky lg:top-24 lg:min-w-[320px] max-h-[calc(100vh-7rem)] overflow-hidden" data-view="cart">
                 <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">Cotización Actual</h2>
                 
                 <div class="mb-4 no-print">
@@ -1316,6 +1351,43 @@
             return result;
         }
 
+        function updateResultsSummary(count) {
+            const resultsCount = document.getElementById('results-count');
+            if (!resultsCount) return;
+
+            if (count === null || count === undefined) {
+                resultsCount.textContent = 'Mostrando todo';
+                return;
+            }
+
+            const label = count === 1 ? 'resultado' : 'resultados';
+            resultsCount.textContent = `${count} ${label}`;
+        }
+
+        function updateMetrics(filteredCount = null) {
+            const productTotalEl = document.getElementById('metric-products');
+            const comboTotalEl = document.getElementById('metric-combos');
+            const cartItemsEl = document.getElementById('metric-cart');
+            const cartSubtotalEl = document.getElementById('metric-cart-total');
+
+            if (productTotalEl) productTotalEl.textContent = productData.length || 0;
+            if (comboTotalEl) comboTotalEl.textContent = comboData.length || 0;
+
+            if (cartItemsEl) {
+                const itemsCount = Object.values(cart).reduce((sum, item) => sum + (item.cantidad || 0), 0);
+                cartItemsEl.textContent = itemsCount;
+            }
+
+            if (cartSubtotalEl) {
+                const subtotal = calculateSubtotalWithoutDiscount();
+                cartSubtotalEl.textContent = subtotal ? formatCurrency(subtotal) : '$0';
+            }
+
+            if (typeof filteredCount === 'number') {
+                updateResultsSummary(filteredCount);
+            }
+        }
+
         function getApplicableDiscountRate() {
             // AHORA ESTA FUNCIÓN SOLO DEVUELVE EL VALOR DEL DESCUENTO MANUAL SELECCIONADO.
             const discountSelect = document.getElementById('discount-select');
@@ -1476,8 +1548,9 @@
                  subtotalDisplay.textContent = `Subtotal sin Descuento: ${formatCurrency(subtotalWithoutDiscount)}`;
                  cartList.appendChild(subtotalDisplay);
             }
-            
+
             renderPrintView(subtotalWithoutDiscount, totalWithDiscount, finalDiscountRate);
+            updateMetrics();
         }
 
         window.changeQuantity = function(id, delta) {
@@ -2169,6 +2242,8 @@
 
                 comboList.appendChild(comboCard);
             });
+
+            updateMetrics();
         }
 
         function renderProductList(data) {
@@ -2244,13 +2319,15 @@
             });
 
             renderProductList(filteredData);
-            renderCart(); 
+            renderCart();
+            updateResultsSummary(filteredData.length);
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
             // CARGAR DATOS Y STOCK AL INICIAR
-            loadCart(); 
-            
+            loadCart();
+            updateMetrics();
+
             try {
                 // 1. Inicializar y subir datos si es necesario
                 await initDatabaseIfNeeded();
