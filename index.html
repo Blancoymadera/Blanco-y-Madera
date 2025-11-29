@@ -751,6 +751,45 @@
             {"Product Name":"Tarjetitas","Price":"150", "Stock": "26"},
         ];
 
+        // --- FALLBACK LOCAL (catálogo visible aunque falle Firebase) ---
+        function loadProductsFromRawData(reason = '') {
+            productData = [];
+            categories = new Set();
+
+            let uniqueIdCounter = 0;
+            let currentCategory = 'Varios';
+
+            rawData.forEach((item) => {
+                const cleanedPrice = item.Price ? item.Price.replace(/[^\d.]/g, '').trim() : '0';
+                const price = parseInt(cleanedPrice);
+                const name = item["Product Name"].trim();
+                const stock = item.Stock ? parseInt(item.Stock) : 10;
+
+                if (isNaN(price) || price === 0) {
+                    currentCategory = name;
+                } else {
+                    const id = `local_${uniqueIdCounter++}`;
+                    productData.push({ id, nombre: name, categoria: currentCategory, precio: price, stock });
+                    categories.add(currentCategory);
+                }
+            });
+
+            populateCategoryFilter();
+            updateDashboard();
+            updateMetrics();
+
+            const statusElement = document.getElementById('connection-status');
+            const loadingElement = document.getElementById('catalog-loading');
+            if (statusElement) {
+                statusElement.textContent = `Catálogo local cargado${reason ? ` (${reason})` : ''} ⚠️`;
+                statusElement.classList.remove('text-stone-500');
+                statusElement.classList.add('text-amber-700');
+            }
+            if (loadingElement) loadingElement.style.display = 'none';
+
+            console.warn('Usando catálogo local por falla de sincronización.', reason);
+        }
+
         // --- FUNCIONES DE BASE DE DATOS ---
 
         // 1. Inicializar Datos si la DB está vacía
@@ -832,6 +871,7 @@
                 console.error("Error al suscribirse a la DB:", error);
                 document.getElementById('connection-status').textContent = "ERROR: Conexión a Firebase fallida 🔴";
                 document.getElementById('catalog-loading').innerHTML = `<div class="text-red-600 font-bold">¡ERROR! Revisa tu clave de Firebase.</div>`;
+                loadProductsFromRawData('sin conexión a Firebase');
             });
         }
 
@@ -2340,6 +2380,7 @@
                 console.error("Error al conectar Firebase:", e);
                 document.getElementById('connection-status').textContent = "ERROR: Conexión a Firebase fallida 🔴";
                 document.getElementById('catalog-loading').innerHTML = `<div class="text-red-600 font-bold">¡ERROR! Revisa tu clave de Firebase.</div>`;
+                loadProductsFromRawData('no se pudo conectar con la nube');
             }
             
             document.getElementById('category-filter').addEventListener('change', updateDashboard);
