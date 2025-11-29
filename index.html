@@ -273,7 +273,7 @@
         <!-- Contenedor de Notificaciones -->
         <div id="toast-container"></div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6 items-start">
+        <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1.6fr)_minmax(360px,1fr)] gap-6 items-start">
 
             <!-- PANEL IZQUIERDO: CATÁLOGO Y COMBOS -->
             <div class="space-y-6">
@@ -377,7 +377,7 @@
 
             <!-- PANEL DERECHO: COTIZACIÓN (CARRITO) -->
             <!-- CORRECCIÓN: Se elimina 'hidden' para que se muestre en todas las pantallas. -->
-            <div id="cart-panel" class="flex flex-col bg-white p-6 rounded-xl shadow-lg lg:sticky lg:top-24 lg:min-w-[320px] max-h-[calc(100vh-7rem)] overflow-hidden" data-view="cart">
+            <div id="cart-panel" class="flex flex-col bg-white p-6 rounded-xl shadow-lg lg:sticky lg:top-24 lg:min-w-[340px] lg:max-w-[400px] max-h-[calc(100vh-7rem)] overflow-hidden" data-view="cart">
                 <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">Cotización Actual</h2>
                 
                 <div class="mb-4 no-print">
