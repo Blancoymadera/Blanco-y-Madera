@@ -273,12 +273,9 @@
                             ⬇️ Descargar Historial de Ventas (CSV)
                         </button>
                         
-                        <!-- NUEVO BOTÓN PARA REGISTRAR VENTA MANUAL -->
-                        <button id="add-manual-sale-button" class="w-full bg-red-500 text-white font-bold py-3 rounded-lg shadow-md hover:bg-red-600 transition duration-300 focus:outline-none focus:ring-4 focus:ring-red-400 focus:ring-offset-2">
-                             ➕ Registrar Venta Manual (SIN Descontar Stock)
-                        </button>
-                        <p class="text-xs text-red-500 text-center mt-1">
-                            * Presiona el botón de arriba para registrar una venta manual SIN DESCONTAR STOCK
+                        <!-- NOTA: El botón de Venta Manual ha sido ELIMINADO de aquí -->
+                        <p class="text-xs text-stone-500 text-center mt-1">
+                            * El historial de ventas y reportes está listo para descargar.
                         </p>
                         
                     </div>
@@ -286,7 +283,8 @@
             </div>
             
             <!-- PANEL DERECHO: COTIZACIÓN (CARRITO) -->
-            <div id="cart-panel" class="hidden md:flex flex-col bg-white p-6 rounded-xl shadow-lg" data-view="cart">
+            <!-- CORRECCIÓN: Se elimina 'hidden' para que se muestre en todas las pantallas. -->
+            <div id="cart-panel" class="md:flex flex-col bg-white p-6 rounded-xl shadow-lg" data-view="cart">
                 <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">Cotización Actual</h2>
                 
                 <div class="mb-4 no-print">
@@ -711,7 +709,8 @@
         }
 
         // 2. Escuchar cambios en tiempo real (Sincronización)
-        function subscribeToProducts() {
+        // CORRECCIÓN: Se agrega 'window.' para hacerla global y accesible.
+        window.subscribeToProducts = function() {
             const q = collection(db, "products");
             const loadingElement = document.getElementById('catalog-loading');
             
@@ -739,7 +738,165 @@
                 document.getElementById('catalog-loading').innerHTML = `<div class="text-red-600 font-bold">¡ERROR! Revisa tu clave de Firebase.</div>`;
             });
         }
+        
+        // --- ESCUCHAR PEDIDOS PENDIENTES ---
+        // CORRECCIÓN: Se agrega 'window.' para hacerla global y accesible.
+        window.subscribeToPendingOrders = function() {
+            const q = collection(db, "pedidos_pendientes");
+            const pendingListEl = document.getElementById('pending-list');
+            
+            onSnapshot(q, (querySnapshot) => {
+                pendingOrders = [];
+                pendingListEl.innerHTML = '';
+                
+                if (querySnapshot.empty) {
+                    pendingListEl.innerHTML = '<p class="text-stone-500 text-sm p-2">No hay pedidos pendientes guardados.</p>';
+                    return;
+                }
 
+                querySnapshot.forEach((doc) => {
+                    const order = doc.data();
+                    order.docId = doc.id;
+                    pendingOrders.push(order);
+
+                    const totalItems = order.items.reduce((sum, item) => sum + item.cantidad, 0);
+                    
+                    const orderDiv = document.createElement('div');
+                    orderDiv.className = 'bg-stone-50 p-3 rounded-lg border border-stone-200 flex justify-between items-center';
+                    orderDiv.innerHTML = `
+                        <div class="flex-grow">
+                            <p class="font-bold text-stone-700">${order.cliente_nombre || 'Cliente sin nombre'}</p>
+                            <p class="text-xs text-stone-500">${order.fecha_guardado}</p>
+                            <p class="text-sm text-amber-700">${totalItems} ítems | ${formatCurrency(order.total_final)}</p>
+                        </div>
+                        <div class="space-x-2">
+                            <button onclick="loadPendingOrder('${order.docId}')" class="bg-amber-500 text-white p-2 rounded-lg text-xs hover:bg-amber-600">
+                                Cargar
+                            </button>
+                            <button onclick="deletePendingOrder('${order.docId}')" class="bg-red-400 text-white p-2 rounded-lg text-xs hover:bg-red-500">
+                                🗑️
+                            </button>
+                        </div>
+                    `;
+                    pendingListEl.appendChild(orderDiv);
+                });
+            }, (error) => {
+                console.error("Error al suscribirse a pedidos pendientes:", error);
+                pendingListEl.innerHTML = '<p class="text-red-500 text-sm p-2">Error al cargar pedidos.</p>';
+            });
+        }
+        
+        // --- FUNCIÓN PARA CARGAR PEDIDO PENDIENTE ---
+        window.loadPendingOrder = function(docId) {
+            const order = pendingOrders.find(o => o.docId === docId);
+            if (!order) {
+                showToast("Error: Pedido no encontrado.");
+                return;
+            }
+
+            if (!window.confirm(`¿Seguro que quieres cargar el pedido de ${order.cliente_nombre}? Esto borrará el carrito actual.`)) {
+                return;
+            }
+
+            // Cargar datos al carrito (simulando addToCart, pero directo)
+            cart = {};
+            order.items.forEach(item => {
+                const id = productData.find(p => p.nombre === item.nombre)?.id;
+                if (id) {
+                    cart[id] = {
+                        id: id,
+                        nombre: item.nombre,
+                        // Usar el precio unitario guardado en el pedido
+                        precio: item.precio_unitario, 
+                        cantidad: item.cantidad
+                    };
+                }
+            });
+
+            // Cargar datos de cliente
+            document.getElementById('client-name').value = order.cliente_nombre || '';
+            document.getElementById('whatsapp-number').value = order.cliente_whatsapp || '';
+            document.getElementById('discount-select').value = order.descuento_aplicado || '0'; 
+            document.getElementById('payment-method').value = order.metodo_pago || 'Otro'; 
+            
+            // Eliminar el pedido de la nube
+            window.deletePendingOrder(docId, false); // No confirmar doble
+            
+            saveCart();
+            renderCart();
+            showToast(`Pedido de ${order.cliente_nombre} cargado.`);
+        }
+
+        // --- FUNCIÓN PARA ELIMINAR PEDIDO PENDIENTE ---
+        window.deletePendingOrder = async function(docId, shouldConfirm = true) {
+             if (shouldConfirm && !window.confirm("¿Eliminar este pedido pendiente?")) {
+                 return;
+             }
+
+            try {
+                await deleteDoc(doc(db, "pedidos_pendientes", docId));
+                showToast("Pedido pendiente eliminado.");
+            } catch (e) {
+                console.error("Error eliminando pedido pendiente:", e);
+                showToast("⚠️ Falló la eliminación.");
+            }
+        }
+
+        // --- FUNCIÓN PARA GUARDAR PEDIDO PENDIENTE ---
+        window.savePendingOrder = async function() {
+            if (Object.keys(cart).length === 0) {
+                window.alert("El carrito está vacío. Agrega productos para guardar un pedido.");
+                return;
+            }
+
+            const clientName = document.getElementById('client-name').value.trim();
+            const whatsappNumber = document.getElementById('whatsapp-number').value.trim().replace(/\D/g, ''); 
+            const finalDiscountRate = getApplicableDiscountRate();
+            const paymentMethod = document.getElementById('payment-method').value;
+            
+            const subtotalWithoutDiscount = calculateSubtotalWithoutDiscount();
+            const totalWithDiscount = subtotalWithoutDiscount * (1 - finalDiscountRate);
+
+            if (!clientName) {
+                window.alert("Por favor, ingresa el Nombre y Apellido del cliente antes de guardar.");
+                return;
+            }
+
+            const itemsToSave = [];
+            for (const id in cart) {
+                const item = cart[id];
+                itemsToSave.push({
+                    nombre: item.nombre,
+                    cantidad: item.cantidad,
+                    precio_unitario: Number(item.precio),
+                    total_item: Number(item.precio) * item.cantidad,
+                });
+            }
+
+            try {
+                await addDoc(collection(db, "pedidos_pendientes"), {
+                    timestamp: new Date(),
+                    fecha_guardado: new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+                    cliente_nombre: clientName,
+                    cliente_whatsapp: whatsappNumber,
+                    total_final: totalWithDiscount,
+                    descuento_aplicado: finalDiscountRate,
+                    metodo_pago: paymentMethod, // NUEVO CAMPO
+                    items: itemsToSave,
+                });
+                
+                // Limpiar carrito después de guardar
+                cart = {};
+                saveCart();
+                updateDashboard();
+                showToast(`Pedido de ${clientName} guardado correctamente.`);
+
+            } catch (e) {
+                console.error("Error guardando pedido pendiente:", e);
+                showToast("⚠️ Falló al guardar el pedido en la nube.");
+            }
+        }
+        
         // --- FUNCIÓN PARA REGISTRAR VENTA MANUAL (SIN USAR EL CARRITO) ---
         async function addManualSale(productName, quantity, salePrice, clientName, paymentMethod, deductStock = true) {
             
@@ -1563,9 +1720,9 @@
                 // 1. Inicializar y subir datos si es necesario
                 await initDatabaseIfNeeded();
                 // 2. Conectarse a la sincronización en tiempo real (Stock y Ventas)
-                subscribeToProducts(); 
+                window.subscribeToProducts(); 
                 // 3. Conectarse a pedidos pendientes
-                subscribeToPendingOrders();
+                window.subscribeToPendingOrders();
             } catch (e) {
                 console.error("Error al conectar Firebase:", e);
                 document.getElementById('connection-status').textContent = "ERROR: Conexión a Firebase fallida 🔴";
@@ -1612,26 +1769,16 @@
             document.getElementById('print-button').addEventListener('click', printQuote);
             document.getElementById('download-sales-report-button').addEventListener('click', downloadSalesReport); // Botón de Reporte
 
-            // EVENTO DE VENTA MANUAL (¡SOLUCIÓN PARA NO USAR LA CONSOLA!)
-            document.getElementById('add-manual-sale-button').addEventListener('click', () => {
-                // Parámetros: productName, quantity, salePrice, clientName, paymentMethod, deductStock (FALSE)
-                addManualSale(
-                    "Calendario de adviento", 
-                    1, 
-                    20000, 
-                    "Nati Giordana (Venta Externa)", 
-                    "Otro", // Método de Pago
-                    false // <--- ¡AQUÍ DECIMOS NO DESCONTAR STOCK!
-                );
-            });
-            // ----------------------------------------------------
-
-            document.getElementById('save-pending-button').addEventListener('click', savePendingOrder); // Botón Guardar Pendiente
+            // NOTA: EL EVENTO addManualSale ha sido ELIMINADO de aquí.
+            
+            // CORRECCIÓN: Usar window.savePendingOrder
+            document.getElementById('save-pending-button').addEventListener('click', window.savePendingOrder); // Botón Guardar Pendiente
             
             const isMobile = window.innerWidth < 768;
             if (isMobile) {
                 showView('catalog');
             } else {
+                // CORRECCIÓN: Mostrar siempre el catálogo y el carrito en escritorio
                 document.getElementById('catalog-panel').style.display = 'block';
                 document.getElementById('cart-panel').style.display = 'flex';
                 document.getElementById('filters-container').style.display = 'grid';
