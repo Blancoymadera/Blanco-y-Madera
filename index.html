@@ -9,7 +9,7 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
         body {
             font-family: 'Inter', sans-serif;
-            background: radial-gradient(circle at 20% 20%, #fff7ed 0, #fefce8 45%, #fff 100%);
+            background-color: #fefce8; /* Fondo suave (Amber 50) */
         }
         .item-card {
             transition: transform 0.1s ease-out;
@@ -207,190 +207,96 @@
         <!-- CONTENIDO QUE SE DESPLAZA -->
         
         <!-- BLOQUE DE TÍTULO Y ESTADO (Desplazable) -->
-        <div class="header-title-block bg-white p-6 rounded-2xl shadow-md mb-4">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div class="text-left">
-                    <p class="text-xs uppercase tracking-[0.3em] text-stone-400">Blanco & Madera</p>
-                    <h1 class="main-title text-4xl font-extrabold text-amber-800 tracking-wide">Catálogo y combos</h1>
-                    <p class="text-stone-600 mt-1">Buscar, combinar y cotizar en el mismo recorrido.</p>
+        <div class="header-title-block bg-white pb-2 text-center">
+            <h1 class="main-title text-4xl font-extrabold text-amber-800 tracking-wide">CATÁLOGO</h1>
+            <p class="text-stone-600 mt-1">Selecciona productos para generar la cotización del cliente.</p>
+            <div id="connection-status" class="text-xs text-stone-400 mt-1">Conectando a la nube...</div>
+        </div>
+        
+        <div class="bg-white p-6 rounded-xl shadow-lg mb-8 no-print" id="filters-container">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label for="category-filter" class="block text-sm font-semibold text-stone-700 mb-1">Filtrar por Categoría</label>
+                    <select id="category-filter" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
+                        <option value="all">Todas las Categorías</option>
+                    </select>
                 </div>
-                <div class="flex flex-wrap gap-3 justify-center md:justify-end">
-                    <div id="connection-status" class="flex items-center gap-2 px-3 py-2 rounded-full bg-stone-100 text-xs text-stone-500 shadow-inner">
-                        Conectando a la nube...
-                    </div>
-                    <div class="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 text-amber-800 text-sm shadow">
-                        <span class="text-lg">🧺</span>
-                        <div class="leading-tight">
-                            <span class="block font-semibold">Catálogo arriba</span>
-                            <span class="block text-[11px] text-amber-700">Combos y carrito optimizados</span>
-                        </div>
-                    </div>
+                <div>
+                    <label for="search-box" class="block text-sm font-semibold text-stone-700 mb-1">Buscar por Nombre</label>
+                    <input type="text" id="search-box" placeholder="Escribe el nombre del producto..." class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
+                </div>
+                <div class="md:self-end">
+                    <button id="reset-button" class="w-full md:w-auto bg-stone-500 text-white font-bold py-2.5 px-6 rounded-lg shadow-xl hover:bg-stone-600 transition duration-300 focus:outline-none focus:ring-4 focus:ring-stone-400 focus:ring-offset-2">
+                        Mostrar Todos
+                    </button>
                 </div>
             </div>
         </div>
-        
-        <div id="print-view" class="hidden print-header"></div>
 
+        <div id="print-view" class="hidden print-header"></div>
+        
         <!-- Contenedor de Notificaciones -->
         <div id="toast-container"></div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-
-            <!-- PANEL IZQUIERDO: CATÁLOGO, COMBOS Y UTILIDADES -->
-            <div class="lg:col-span-2 space-y-6">
-
-                <!-- BUSCADOR Y FILTROS -->
-                <div class="bg-white p-5 rounded-xl shadow-lg no-print space-y-4" id="filters-container">
-                    <div class="flex flex-col gap-3">
-                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                            <div>
-                                <h2 class="text-xl font-semibold text-amber-800">Explorar productos</h2>
-                                <p class="text-sm text-stone-500">Catálogo y buscador juntos para elegir rápido.</p>
-                            </div>
-                            <div class="flex items-center gap-2 text-xs text-stone-500 bg-stone-50 px-3 py-2 rounded-lg shadow-inner">
-                                <span class="text-lg">🧭</span> Navega, agrega y arma combos debajo
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label for="category-filter" class="block text-sm font-semibold text-stone-700 mb-1">Filtrar por Categoría</label>
-                                <select id="category-filter" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
-                                    <option value="all">Todas las Categorías</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label for="search-box" class="block text-sm font-semibold text-stone-700 mb-1">Buscar por Nombre</label>
-                                <input type="text" id="search-box" placeholder="" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
-                            </div>
-                            <div class="md:self-end">
-                                <button id="reset-button" class="w-full md:w-auto bg-stone-600 text-white font-bold py-2.5 px-6 rounded-lg shadow-xl hover:bg-stone-700 transition duration-300 focus:outline-none focus:ring-4 focus:ring-stone-400 focus:ring-offset-2">
-                                    Mostrar Todos
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- PANEL IZQUIERDO: CATÁLOGO, PENDIENTES Y REPORTES -->
+            <div class="space-y-6">
+                
                 <!-- CATÁLOGO -->
-                <div id="catalog-panel" class="bg-white p-6 rounded-xl shadow-lg relative min-h-[400px] border border-amber-100" data-view="catalog">
-                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
-                        <div>
-                            <h2 class="text-xl font-semibold text-amber-800">Catálogo de Productos Disponibles</h2>
-                            <p class="text-sm text-stone-500">Productos y buscador están arriba para decidir primero.</p>
-                        </div>
-                        <div class="flex items-center gap-2 text-xs text-stone-500 bg-stone-50 px-3 py-2 rounded-lg shadow-inner">
-                            <span class="text-lg">⬇️</span> Combos y gestión debajo
-                        </div>
-                    </div>
-
+                <div id="catalog-panel" class="bg-white p-6 rounded-xl shadow-lg relative min-h-[400px]" data-view="catalog">
+                    <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">Catálogo de Productos Disponibles</h2>
+                    
                     <!-- Overlay de Carga -->
                     <div id="catalog-loading" class="loading-overlay">
                         <div class="text-amber-600 font-bold animate-pulse">Cargando productos de la nube...</div>
                     </div>
-
-                    <div id="product-list" class="overflow-y-auto h-[55vh] md:h-[60vh] pr-4 space-y-2">
+                    
+                    <div id="product-list" class="overflow-y-auto h-[60vh] md:h-[70vh] pr-4 space-y-2">
                         <p class="text-stone-500">Conectando...</p>
                     </div>
                 </div>
 
-                <!-- COMBOS DESTACADOS -->
-                <div id="combo-panel" class="bg-white p-6 rounded-xl shadow-lg" data-view="combos">
-                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
-                        <div>
-                            <h2 class="text-xl font-semibold text-amber-800">Combos y Packs</h2>
-                            <p class="text-sm text-stone-500">Arma conjuntos rápidos con los productos que ya filtraste arriba.</p>
-                        </div>
-                        <button id="clear-combo-form" class="bg-stone-200 text-stone-700 px-4 py-2 rounded-lg shadow hover:bg-stone-300 text-sm">
-                            Limpiar formulario
-                        </button>
-                    </div>
-
-                    <div id="combo-list" class="space-y-3 mb-6">
-                        <p class="text-sm text-stone-500">Cargando combos...</p>
-                    </div>
-
-                    <div class="border-t border-stone-200 pt-4">
-                        <h3 class="text-lg font-semibold text-stone-700 mb-2">Crear o editar combo</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div>
-                                <label for="combo-name" class="block text-sm font-semibold text-stone-700 mb-1">Nombre</label>
-                                <input id="combo-name" type="text" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2" placeholder="">
-                            </div>
-                            <div>
-                                <label for="combo-price" class="block text-sm font-semibold text-stone-700 mb-1">Precio fijo (opcional)</label>
-                                <input id="combo-price" type="number" min="0" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2" placeholder="">
-                            </div>
-                            <div>
-                                <label for="combo-discount" class="block text-sm font-semibold text-stone-700 mb-1">Descuento (%) si no hay precio fijo</label>
-                                <input id="combo-discount" type="number" min="0" max="100" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2" placeholder="">
-                            </div>
-                            <div class="flex items-center space-x-2 pt-6">
-                                <input id="combo-visible" type="checkbox" class="rounded border-stone-300 text-amber-600 focus:ring-amber-600" checked>
-                                <label for="combo-visible" class="text-sm font-semibold text-stone-700">Visible en catálogo</label>
-                            </div>
-                        </div>
-                        <div class="mt-3">
-                            <label for="combo-product-search" class="block text-sm font-semibold text-stone-700 mb-1">Productos incluidos</label>
-                            <div class="bg-stone-50 border border-stone-200 rounded-lg p-3 space-y-3">
-                                <input id="combo-product-search" type="text" class="w-full rounded-lg border-stone-300 shadow-sm focus:border-amber-600 focus:ring-amber-600 p-2 text-sm" placeholder="">
-                                <div id="combo-product-list" class="max-h-48 overflow-y-auto space-y-2">
-                                    <p class="text-sm text-stone-500">Sincronizando productos...</p>
-                                </div>
-                            </div>
-                            <p class="text-xs text-stone-500 mt-1">Selecciona los productos del combo, define cantidades y usa la búsqueda para filtrar.</p>
-                        </div>
-                        <div class="mt-4 flex flex-wrap gap-3">
-                            <button id="save-combo-button" class="bg-amber-600 text-white font-bold py-2 px-4 rounded-lg shadow hover:bg-amber-700 transition duration-300 focus:outline-none focus:ring-4 focus:ring-amber-500 focus:ring-offset-2">
-                                Guardar combo
-                            </button>
-                            <button id="cancel-combo-edit" class="bg-stone-500 text-white font-bold py-2 px-4 rounded-lg shadow hover:bg-stone-600 transition duration-300 focus:outline-none focus:ring-4 focus:ring-stone-400 focus:ring-offset-2">
-                                Cancelar edición
-                            </button>
-                        </div>
-                        <p id="combo-form-status" class="text-xs text-red-600 mt-2"></p>
+                <!-- PEDIDOS PENDIENTES (NUEVO) -->
+                <div class="bg-white p-6 rounded-xl shadow-lg no-print">
+                    <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">⏳ Pedidos Pendientes</h2>
+                    <div id="pending-list" class="space-y-2 max-h-60 overflow-y-auto">
+                        <p id="pending-loading" class="text-stone-500">Cargando pedidos guardados...</p>
                     </div>
                 </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- PEDIDOS PENDIENTES (NUEVO) -->
-                    <div class="bg-white p-6 rounded-xl shadow-lg no-print">
-                        <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">⏳ Pedidos Pendientes</h2>
-                        <div id="pending-list" class="space-y-2 max-h-60 overflow-y-auto">
-                            <p id="pending-loading" class="text-stone-500">Cargando pedidos guardados...</p>
-                        </div>
-                    </div>
-
-                    <!-- PANEL DE REPORTES -->
-                    <div class="bg-white p-6 rounded-xl shadow-lg no-print">
-                        <h2 class="text-xl font-semibold mb-4 text-stone-700 border-b pb-2 border-stone-200">📊 Reportes y Gestión</h2>
-                        <div class="flex flex-col space-y-3">
-                            <button id="download-sales-report-button" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-blue-700 transition duration-300 focus:outline-none focus:ring-4 focus:ring-blue-400 focus:ring-offset-2 mb-3">
-                                ⬇️ Descargar Historial de Ventas (CSV)
-                            </button>
-
-                            <!-- NOTA: El botón de Venta Manual ha sido ELIMINADO de aquí -->
-                            <p class="text-xs text-stone-500 text-center mt-1">
-                                * El historial de ventas y reportes está listo para descargar.
-                            </p>
-
-                        </div>
+                
+                <!-- PANEL DE REPORTES -->
+                <div class="bg-white p-6 rounded-xl shadow-lg no-print">
+                    <h2 class="text-xl font-semibold mb-4 text-stone-700 border-b pb-2 border-stone-200">📊 Reportes y Gestión</h2>
+                    <div class="flex flex-col space-y-3">
+                        <button id="download-sales-report-button" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-blue-700 transition duration-300 focus:outline-none focus:ring-4 focus:ring-blue-400 focus:ring-offset-2 mb-3">
+                            ⬇️ Descargar Historial de Ventas (CSV)
+                        </button>
+                        
+                        <!-- NUEVO BOTÓN PARA REGISTRAR VENTA MANUAL -->
+                        <button id="add-manual-sale-button" class="w-full bg-red-500 text-white font-bold py-3 rounded-lg shadow-md hover:bg-red-600 transition duration-300 focus:outline-none focus:ring-4 focus:ring-red-400 focus:ring-offset-2">
+                             ➕ Registrar Venta Manual (SIN Descontar Stock)
+                        </button>
+                        <p class="text-xs text-red-500 text-center mt-1">
+                            * Presiona el botón de arriba para registrar una venta manual SIN DESCONTAR STOCK
+                        </p>
+                        
                     </div>
                 </div>
             </div>
-
+            
             <!-- PANEL DERECHO: COTIZACIÓN (CARRITO) -->
-            <!-- CORRECCIÓN: Se fuerza la visualización con 'flex' y se mejora el scroll con sticky/max-h. -->
-            <div id="cart-panel" class="flex flex-col bg-white p-6 rounded-xl shadow-lg lg:sticky lg:top-6 lg:max-h-[80vh] overflow-hidden border border-amber-100" data-view="cart">
+            <div id="cart-panel" class="hidden md:flex flex-col bg-white p-6 rounded-xl shadow-lg" data-view="cart">
                 <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">Cotización Actual</h2>
                 
                 <div class="mb-4 no-print">
                     <label for="client-name" class="block text-sm font-semibold text-stone-700 mb-1">Nombre y Apellido (para agendar):</label>
-                    <input type="text" id="client-name" placeholder="" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
+                    <input type="text" id="client-name" placeholder="Ej: Pepito Gomez" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
                 </div>
                 
                 <div class="mb-4 no-print">
                     <label for="whatsapp-number" class="block text-sm font-semibold text-stone-700 mb-1">Número de WhatsApp del Cliente (Formato: 549...):</label>
-                    <input type="tel" id="whatsapp-number" placeholder="" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
+                    <input type="tel" id="whatsapp-number" placeholder="Ej: 5493415551234" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
                 </div>
                 
                 <!-- NUEVO: MÉTODO DE PAGO -->
@@ -405,7 +311,7 @@
                 </div>
                 <!------------------------->
 
-                <div id="cart-list" class="overflow-y-auto flex-grow pr-4 space-y-2 max-h-[40vh] lg:max-h-[48vh]">
+                <div id="cart-list" class="overflow-y-auto flex-grow pr-4 space-y-2">
                     <p id="empty-cart-message" class="text-stone-500 text-center mt-8">El carrito está vacío. Agrega productos del catálogo.</p>
                 </div>
 
@@ -514,11 +420,9 @@
         const db = getFirestore(app);
         
         // --- VARIABLES GLOBALES Y DATOS MAESTROS ---
-        let productData = []; // Se llenará desde Firebase (productos individuales)
-        let comboData = []; // Lista de combos activos
+        let productData = []; // Se llenará desde Firebase
         let cart = {}; // Se llenará desde LocalStorage
         let categories = new Set();
-        let editingComboId = null; // Control de edición en el formulario
         const STORAGE_KEY_CART = 'bm_cart';
         
         // Almacena pedidos pendientes para su visualización
@@ -754,57 +658,9 @@
             {"Product Name":"Tarjetitas","Price":"150", "Stock": "26"},
         ];
 
-        // NUEVA ESTRUCTURA DE DATOS PARA COMBOS (Solo se usa si la colección 'combos' está vacía)
-        const rawCombos = [
-            {
-                id: "combo_relax",
-                nombre: "Combo Relax Total",
-                categoria: "COMBOS",
-                precioBase: 15000,
-                descuento: 0,
-                visible: true,
-                descripcion: "Vela Francisca lavanda + Posa Vela Monstera", 
-                items: [
-                    { productId: "prod_68", cantidad: 1 }, // Vela Francisca lavanda
-                    { productId: "prod_67", cantidad: 1 }  // Posa Vela Monstera
-                ]
-            },
-            {
-                id: "combo_mesa",
-                nombre: "Combo Mesa Noche",
-                categoria: "COMBOS",
-                precioBase: 25000,
-                descuento: 0,
-                visible: true,
-                descripcion: "Camino De Mesa Albania + Set Servilletas Tussor X4 Blanco",
-                items: [
-                    { productId: "prod_19", cantidad: 1 }, // Camino De Mesa Albania
-                    { productId: "prod_29", cantidad: 1 }  // Set Servilletas Tussor X4 Blanco
-                ]
-            }
-        ];
-
         // --- FUNCIONES DE BASE DE DATOS ---
 
-        // Función para subir los combos iniciales a Firebase
-        async function initCombosIfNeeded() {
-            const combosCollection = collection(db, "combos");
-            const snapshot = await getDocs(combosCollection);
-            
-            if (snapshot.empty) {
-                console.log("Colección de combos vacía. Subiendo combos iniciales...");
-                const batch = writeBatch(db);
-                
-                rawCombos.forEach((combo) => {
-                    const docRef = doc(db, "combos", combo.id);
-                    batch.set(docRef, combo);
-                });
-                await batch.commit();
-                console.log("Combos subidos a la nube.");
-            }
-        }
-        
-        // 1. Inicializar Productos si la DB está vacía
+        // 1. Inicializar Datos si la DB está vacía
         async function initDatabaseIfNeeded() {
             const productsCollection = collection(db, "products");
             const snapshot = await getDocs(productsCollection);
@@ -814,6 +670,7 @@
             // Si la base de datos está VACÍA, cargamos los productos desde rawData.
             if (snapshot.empty) {
                 statusElement.textContent = "Base de datos vacía. Subiendo productos...";
+                console.log("Base de datos vacía. Subiendo productos...");
                 
                 const batch = writeBatch(db);
                 let currentCategory = "Varios";
@@ -825,19 +682,18 @@
                     const name = item["Product Name"].trim();
                     const stock = item.Stock ? parseInt(item.Stock) : 10;
 
+                    // Si el precio es NaN o 0, asumimos que es un encabezado de categoría
                     if (isNaN(price) || price === 0) {
                         currentCategory = name; 
                     } else {
-                        // El ID debe coincidir con los IDs usados en rawCombos (prod_X)
-                        const id = `prod_${uniqueIdCounter++}`; 
+                        const id = `prod_${uniqueIdCounter++}`;
                         const docRef = doc(db, "products", id);
                         batch.set(docRef, {
                             id: id,
                             nombre: name,
                             categoria: currentCategory,
                             precio: price,
-                            stock: stock,
-                            isCombo: false // Marca como producto normal
+                            stock: stock
                         });
                         categories.add(currentCategory);
                     }
@@ -845,17 +701,19 @@
 
                 await batch.commit();
                 statusElement.textContent = "Productos subidos. Sincronizando... 🔄";
+                console.log("¡Productos subidos a la nube! Iniciando escucha...");
             } else {
                 statusElement.textContent = "Conectado a stock centralizado 🟢";
                 statusElement.classList.add('text-green-600');
+                loadingElement.style.display = 'none'; 
+                console.log("Conectado a base de datos existente.");
             }
-            loadingElement.style.display = 'none'; 
-            console.log("Conexión inicial completada.");
         }
 
-        // 2. Escuchar cambios en tiempo real (Sincronización de Productos)
-        window.subscribeToProducts = function() {
+        // 2. Escuchar cambios en tiempo real (Sincronización)
+        function subscribeToProducts() {
             const q = collection(db, "products");
+            const loadingElement = document.getElementById('catalog-loading');
             
             onSnapshot(q, (querySnapshot) => {
                 productData = [];
@@ -867,201 +725,79 @@
                     productData.push(data);
                     categories.add(data.categoria);
                 });
-                
+
                 // Actualizar vista
                 populateCategoryFilter();
                 updateDashboard();
+                loadingElement.style.display = 'none'; 
                 document.getElementById('connection-status').textContent = "Sincronizado y Listo 🟢";
                 document.getElementById('connection-status').classList.remove('text-stone-400');
                 document.getElementById('connection-status').classList.add('text-green-600');
             }, (error) => {
-                console.error("Error al suscribirse a la DB de productos:", error);
-                document.getElementById('connection-status').textContent = "ERROR: Conexión a productos fallida 🔴";
+                console.error("Error al suscribirse a la DB:", error);
+                document.getElementById('connection-status').textContent = "ERROR: Conexión a Firebase fallida 🔴";
+                document.getElementById('catalog-loading').innerHTML = `<div class="text-red-600 font-bold">¡ERROR! Revisa tu clave de Firebase.</div>`;
             });
         }
 
-        // NUEVO: 3. Escuchar cambios en Combos
-        window.subscribeToCombos = function() {
-             const q = collection(db, "combos");
-             
-             onSnapshot(q, (querySnapshot) => {
-                 comboData = [];
-                 querySnapshot.forEach((doc) => {
-                     const combo = doc.data();
-                     // Se añade la categoría COMBOS para el filtro
-                     categories.add(combo.categoria); 
-                     comboData.push(combo);
-                 });
-                 // Re-renderiza para mostrar los combos
-                 populateCategoryFilter();
-                 updateDashboard();
-                 renderComboList(); // Llama a la función para dibujar los combos en el panel
-                 renderComboProductSelector(); // Actualiza el selector de productos para nuevos combos
-             }, (error) => {
-                console.error("Error al suscribirse a la DB de combos:", error);
-             });
-        }
-        
-        // --- ESCUCHAR PEDIDOS PENDIENTES ---
-        window.subscribeToPendingOrders = function() {
-            const q = collection(db, "pedidos_pendientes");
-            const pendingListEl = document.getElementById('pending-list');
+        // --- FUNCIÓN PARA REGISTRAR VENTA MANUAL (SIN USAR EL CARRITO) ---
+        async function addManualSale(productName, quantity, salePrice, clientName, paymentMethod, deductStock = true) {
             
-            onSnapshot(q, (querySnapshot) => {
-                pendingOrders = [];
-                pendingListEl.innerHTML = '';
-                
-                if (querySnapshot.empty) {
-                    pendingListEl.innerHTML = '<p class="text-stone-500 text-sm p-2">No hay pedidos pendientes guardados.</p>';
-                    return;
-                }
+            const product = productData.find(p => p.nombre === productName);
 
-                querySnapshot.forEach((doc) => {
-                    const order = doc.data();
-                    order.docId = doc.id;
-                    pendingOrders.push(order);
-
-                    const totalItems = order.items.reduce((sum, item) => sum + item.cantidad, 0);
-                    
-                    const orderDiv = document.createElement('div');
-                    orderDiv.className = 'bg-stone-50 p-3 rounded-lg border border-stone-200 flex justify-between items-center';
-                    orderDiv.innerHTML = `
-                        <div class="flex-grow">
-                            <p class="font-bold text-stone-700">${order.cliente_nombre || 'Cliente sin nombre'}</p>
-                            <p class="text-xs text-stone-500">${order.fecha_guardado}</p>
-                            <p class="text-sm text-amber-700">${totalItems} ítems | ${formatCurrency(order.total_final)}</p>
-                        </div>
-                        <div class="space-x-2">
-                            <button onclick="loadPendingOrder('${order.docId}')" class="bg-amber-500 text-white p-2 rounded-lg text-xs hover:bg-amber-600">
-                                Cargar
-                            </button>
-                            <button onclick="deletePendingOrder('${order.docId}')" class="bg-red-400 text-white p-2 rounded-lg text-xs hover:bg-red-500">
-                                🗑️
-                            </button>
-                        </div>
-                    `;
-                    pendingListEl.appendChild(orderDiv);
-                });
-            }, (error) => {
-                console.error("Error al suscribirse a pedidos pendientes:", error);
-                pendingListEl.innerHTML = '<p class="text-red-500 text-sm p-2">Error al cargar pedidos.</p>';
-            });
-        }
-        
-        // --- FUNCIÓN PARA CARGAR PEDIDO PENDIENTE ---
-        window.loadPendingOrder = function(docId) {
-            const order = pendingOrders.find(o => o.docId === docId);
-            if (!order) {
-                showToast("Error: Pedido no encontrado.");
+            if (!product) {
+                showToast(`🚫 Producto no encontrado en el stock: ${productName}`);
                 return;
             }
 
-            if (!window.confirm(`¿Seguro que quieres cargar el pedido de ${order.cliente_nombre}? Esto borrará el carrito actual.`)) {
+            const quantityToDeduct = parseInt(quantity);
+            const currentStock = product.stock;
+            
+            if (deductStock && currentStock < quantityToDeduct) {
+                showToast(`🚫 No hay suficiente stock de ${productName}. Quedan ${currentStock}.`);
                 return;
             }
-
-            // Cargar datos al carrito (simulando addToCart, pero directo)
-            cart = {};
-            order.items.forEach(item => {
-                 const id = item.tipo === 'combo' ? `combo_${item.comboId}` : item.productId;
-                
-                 if (id) {
-                    cart[id] = {
-                        id: id,
-                        comboId: item.comboId || null,
-                        nombre: item.nombre?.replace(/^Combo:\s*/i, '') || item.nombre,
-                        precio: item.precio_unitario,
-                        cantidad: item.cantidad,
-                        items: item.items || [],
-                        tipo: item.tipo || 'producto'
-                    };
-                }
-            });
-
-            // Cargar datos de cliente
-            document.getElementById('client-name').value = order.cliente_nombre || '';
-            document.getElementById('whatsapp-number').value = order.cliente_whatsapp || '';
-            document.getElementById('discount-select').value = order.descuento_aplicado || '0'; 
-            document.getElementById('payment-method').value = order.metodo_pago || 'Otro'; 
             
-            // Eliminar el pedido de la nube
-            window.deletePendingOrder(docId, false); // No confirmar doble
+            let confirmationMessage = `⚠️ REGISTRAR VENTA MANUAL: ${productName} (x${quantityToDeduct}) a ${clientName} por ${formatCurrency(salePrice)}.`;
             
-            saveCart();
-            renderCart();
-            showToast(`Pedido de ${order.cliente_nombre} cargado.`);
-        }
+            if (deductStock) {
+                confirmationMessage += ` ¿Deseas descontar stock?`;
+            } else {
+                confirmationMessage += ` El stock NO será descontado. ¿Confirmar solo el registro de venta?`;
+            }
 
-        // --- FUNCIÓN PARA ELIMINAR PEDIDO PENDIENTE ---
-        window.deletePendingOrder = async function(docId, shouldConfirm = true) {
-             if (shouldConfirm && !window.confirm("¿Eliminar este pedido pendiente?")) {
+            if (!window.confirm(confirmationMessage)) {
                  return;
-             }
+            }
+
+            const subtotal = salePrice * quantityToDeduct; 
+            const itemsToRecord = [{
+                nombre: productName,
+                cantidad: quantityToDeduct,
+                precio: salePrice, // El precio al que se vendió
+                subtotal: subtotal
+            }];
 
             try {
-                await deleteDoc(doc(db, "pedidos_pendientes", docId));
-                showToast("Pedido pendiente eliminado.");
-            } catch (e) {
-                console.error("Error eliminando pedido pendiente:", e);
-                showToast("⚠️ Falló la eliminación.");
-            }
-        }
+                const batch = writeBatch(db);
 
-        // --- FUNCIÓN PARA GUARDAR PEDIDO PENDIENTE ---
-        window.savePendingOrder = async function() {
-            if (Object.keys(cart).length === 0) {
-                window.alert("El carrito está vacío. Agrega productos para guardar un pedido.");
-                return;
-            }
-
-            const clientName = document.getElementById('client-name').value.trim();
-            const whatsappNumber = document.getElementById('whatsapp-number').value.trim().replace(/\D/g, ''); 
-            const finalDiscountRate = getApplicableDiscountRate();
-            const paymentMethod = document.getElementById('payment-method').value;
-            
-            const subtotalWithoutDiscount = calculateSubtotalWithoutDiscount();
-            const totalWithDiscount = subtotalWithoutDiscount * (1 - finalDiscountRate);
-
-            if (!clientName) {
-                window.alert("Por favor, ingresa el Nombre y Apellido del cliente antes de guardar.");
-                return;
-            }
-
-            const itemsToSave = [];
-            for (const id in cart) {
-                const item = cart[id];
-                itemsToSave.push({
-                    nombre: item.nombre,
-                    cantidad: item.cantidad,
-                    precio_unitario: Number(item.precio),
-                    total_item: Number(item.precio) * item.cantidad,
-                    tipo: item.tipo || 'producto',
-                    comboId: item.comboId || null,
-                    items: item.items || [] // Guardar sub-ítems del combo
-                });
-            }
-
-            try {
-                await addDoc(collection(db, "pedidos_pendientes"), {
-                    timestamp: new Date(),
-                    fecha_guardado: new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
-                    cliente_nombre: clientName,
-                    cliente_whatsapp: whatsappNumber,
-                    total_final: totalWithDiscount,
-                    descuento_aplicado: finalDiscountRate,
-                    metodo_pago: paymentMethod, // NUEVO CAMPO
-                    items: itemsToSave,
-                });
+                // 1. Descontar Stock (SOLO si deductStock es TRUE)
+                if (deductStock) {
+                    const newStock = currentStock - quantityToDeduct;
+                    const docRef = doc(db, "products", product.id);
+                    batch.update(docRef, { stock: newStock });
+                    await batch.commit();
+                }
                 
-                // Limpiar carrito después de guardar
-                cart = {};
-                saveCart();
-                updateDashboard();
-                showToast(`Pedido de ${clientName} guardado correctamente.`);
+                // 2. Registrar la venta
+                await recordSale(clientName, "No especificado", subtotal, 0, paymentMethod, itemsToRecord);
+                
+                const stockMsg = deductStock ? "y stock actualizado" : "sin modificar stock";
+                showToast(`✅ Venta manual registrada ${stockMsg} para ${productName}.`);
 
             } catch (e) {
-                console.error("Error guardando pedido pendiente:", e);
-                showToast("⚠️ Falló al guardar el pedido en la nube.");
+                console.error("Error al completar la transacción de venta manual:", e);
+                showToast("Hubo un error al registrar la venta manual.");
             }
         }
         
@@ -1082,8 +818,7 @@
                         nombre: item.nombre,
                         cantidad: item.cantidad,
                         precio_unitario: item.precio,
-                        subtotal: item.subtotal,
-                        combos: item.combos || []
+                        subtotal: item.subtotal
                     }))
                 });
                 console.log("Venta registrada en la colección 'ventas'.");
@@ -1093,51 +828,6 @@
             }
         }
 
-        // Agrega cantidades de productos individuales (sin precios) para chequeo de stock y registro
-        function aggregateCartProducts() {
-            const result = {};
-
-            for (const key in cart) {
-                const line = cart[key];
-                if (line.tipo === 'combo') {
-                    const combo = comboData.find(c => c.id === line.comboId) || {};
-                    const comboLinePrice = Number(line.precio) * line.cantidad;
-                    const items = combo.items || [];
-                    
-                    // Calcular el valor total base de los componentes del combo
-                    const baseSum = items.reduce((sum, item) => {
-                        const product = productData.find(p => p.id === item.productId);
-                        const unitPrice = product ? Number(product.precio) : 0;
-                        return sum + (unitPrice * item.cantidad);
-                    }, 0) || 1;
-
-                    // Distribuir el precio del combo entre los productos individuales para el registro
-                    items.forEach(item => {
-                        const product = productData.find(p => p.id === item.productId);
-                        const unitPrice = product ? Number(product.precio) : 0;
-                        const allocatedSubtotal = baseSum > 0 ? comboLinePrice * ((unitPrice * item.cantidad) / baseSum) : 0;
-
-                        if (!result[item.productId]) {
-                            result[item.productId] = { cantidad: 0, subtotal: 0, combos: new Set() };
-                        }
-
-                        result[item.productId].cantidad += item.cantidad * line.cantidad;
-                        result[item.productId].subtotal += allocatedSubtotal;
-                        if (combo.nombre) {
-                            result[item.productId].combos.add(combo.nombre);
-                        }
-                    });
-                } else {
-                    if (!result[key]) {
-                        result[key] = { cantidad: 0, subtotal: 0, combos: new Set() };
-                    }
-                    result[key].cantidad += line.cantidad;
-                    result[key].subtotal += Number(line.precio) * line.cantidad;
-                }
-            }
-
-            return result;
-        }
 
         // 3. Confirmar Venta en la Nube (Desde el Carrito)
         async function confirmSaleAndDeductStock() {
@@ -1150,51 +840,42 @@
                  return;
             }
 
+
             const clientName = document.getElementById('client-name').value.trim();
             const whatsappNumber = document.getElementById('whatsapp-number').value.trim().replace(/\D/g, ''); 
-            const paymentMethod = document.getElementById('payment-method').value; 
+            const paymentMethod = document.getElementById('payment-method').value; // Leer el método de pago
+            
             const discountRate = parseFloat(document.getElementById('discount-select').value); 
 
-            const aggregated = aggregateCartProducts();
-            const subtotal = calculateSubtotalWithoutDiscount();
-            const totalWithDiscount = subtotal * (1 - discountRate);
-
+            let subtotal = 0;
             const itemsToRecord = [];
+            
             const batch = writeBatch(db);
             let error = false;
 
-            // Iterar sobre los productos individuales agregados y descontar stock
-            for (const productId in aggregated) {
-                const detail = aggregated[productId];
-                const productInDb = productData.find(p => p.id === productId);
+            for (const id in cart) {
+                const item = cart[id];
+                const itemSubtotal = item.precio * item.cantidad;
+                subtotal += itemSubtotal;
+                
+                const productInDb = productData.find(p => p.id === id);
+                
+                if (productInDb) {
+                    const newStock = productInDb.stock - item.cantidad;
+                    if (newStock < 0) {
+                        showToast(`Error: No hay suficiente stock de ${productInDb.nombre}. Quedan ${productInDb.stock}.`);
+                        error = true;
+                        break;
+                    }
+                    const docRef = doc(db, "products", id);
+                    batch.update(docRef, { stock: newStock });
 
-                if (!productInDb) {
-                    showToast(`Error: Producto no encontrado (${productId}).`);
-                    error = true;
-                    break;
+                    itemsToRecord.push({ ...item, subtotal: itemSubtotal });
                 }
-
-                const newStock = productInDb.stock - detail.cantidad;
-                if (newStock < 0) {
-                    showToast(`Error: No hay suficiente stock de ${productInDb.nombre}. Quedan ${productInDb.stock}.`);
-                    error = true;
-                    break;
-                }
-
-                const docRef = doc(db, "products", productId);
-                batch.update(docRef, { stock: newStock });
-
-                itemsToRecord.push({
-                    nombre: productInDb.nombre,
-                    cantidad: detail.cantidad,
-                    // Usamos el precio unitario original del producto, no el subtotal distribuido, 
-                    // ya que el precio de venta final es el del carrito (incluido en totalWithDiscount)
-                    precio: productInDb.precio, 
-                    subtotal: detail.subtotal,
-                    combos: Array.from(detail.combos || [])
-                });
             }
-            
+
+            const totalWithDiscount = subtotal * (1 - discountRate);
+
             if (!error) {
                 try {
                     // 1. Ejecutar el descuento de stock
@@ -1205,7 +886,7 @@
                     
                     // 3. Limpiar y notificar
                     cart = {};
-                    saveCart(); 
+                    saveCart(); // Limpiar localstorage
                     
                     // Limpiar también los campos de la cotización
                     document.getElementById('client-name').value = '';
@@ -1231,20 +912,17 @@
             // 1. Borrar datos locales (carrito)
             localStorage.removeItem(STORAGE_KEY_CART);
             
-            // 2. Borrar todos los documentos de la colección 'products' y 'combos' en Firebase
+            // 2. Borrar todos los documentos de la colección 'products' en Firebase
             try {
                 const statusElement = document.getElementById('connection-status');
                 statusElement.textContent = "Borrando datos antiguos en la nube... 🗑️";
                 
-                const collectionsToDelete = ["products", "combos"];
-                for (const collName of collectionsToDelete) {
-                    const querySnapshot = await getDocs(collection(db, collName));
-                    const batch = writeBatch(db);
-                    querySnapshot.docs.forEach((doc) => {
-                        batch.delete(doc.ref);
-                    });
-                    await batch.commit();
-                }
+                const querySnapshot = await getDocs(collection(db, "products"));
+                const batch = writeBatch(db);
+                querySnapshot.docs.forEach((doc) => {
+                    batch.delete(doc.ref);
+                });
+                await batch.commit();
                 
                 showToast("Base de datos de Firebase borrada. Recargando para inicializar...");
                 // Forzar la recarga para que initDatabaseIfNeeded suba los datos nuevos
@@ -1320,7 +998,7 @@
             return parseFloat(discountSelect.value);
         }
 
-        // --- FUNCIONES UTILITARIAS Y DE COMBOS ---
+        // --- FUNCIONES UTILITARIAS ---
 
         function populateCategoryFilter() {
             const categoryFilter = document.getElementById('category-filter');
@@ -1328,14 +1006,7 @@
             
             categoryFilter.innerHTML = '<option value="all">Todas las Categorías</option>';
             
-            // Unir categorías de productos y combos
-            const allCategories = Array.from(categories).filter(c => c !== 'COMBOS');
-            if (comboData.length > 0) {
-                 allCategories.push('COMBOS');
-            }
-            
-            const sortedCategories = allCategories.sort();
-            
+            const sortedCategories = Array.from(categories).sort();
             sortedCategories.forEach(category => {
                 const option = document.createElement('option');
                 option.value = category;
@@ -1343,7 +1014,7 @@
                 categoryFilter.appendChild(option);
             });
 
-            if (categories.has(currentSelection) || allCategories.includes(currentSelection)) {
+            if (categories.has(currentSelection)) {
                 categoryFilter.value = currentSelection;
             }
         }
@@ -1365,401 +1036,141 @@
             const saved = localStorage.getItem(STORAGE_KEY_CART);
             if (saved) {
                 cart = JSON.parse(saved);
-                // Asegurar que los ítems del carrito tengan el campo 'tipo'
-                Object.keys(cart).forEach(key => {
-                    if (!cart[key].tipo) {
-                         // Asumimos que si no es combo es producto individual
-                        const isCombo = comboData.some(c => c.id === key) || key.startsWith('combo_');
-                        cart[key].tipo = isCombo ? 'combo' : 'producto';
-                        cart[key].comboId = isCombo ? key.replace('combo_', '') : null;
-                    }
-                });
-            }
-        }
-        
-        function normalizeDiscountValue(rawDiscount) {
-            const parsed = Number(rawDiscount || 0);
-            if (parsed <= 1) return parsed; 
-            return parsed / 100;
-        }
-
-        function getComboPrice(combo) {
-            const fixedPrice = Number(combo.precioBase ?? combo.precio);
-            if (!isNaN(fixedPrice) && fixedPrice > 0) {
-                return fixedPrice;
-            }
-
-            const itemsTotal = (combo.items || []).reduce((sum, item) => {
-                const product = productData.find(p => p.id === item.productId);
-                const unitPrice = product ? Number(product.precio) : Number(item.precio || 0);
-                return sum + (unitPrice * item.cantidad);
-            }, 0);
-
-            const discountRate = normalizeDiscountValue(combo.descuento || 0);
-            return Math.max(itemsTotal * (1 - discountRate), 0);
-        }
-
-        function getSelectedComboItemsFromDom() {
-            const selectedItems = {};
-            document.querySelectorAll('.combo-product-checkbox:checked').forEach((checkbox) => {
-                const productId = checkbox.dataset.productId;
-                const qtyInput = document.querySelector(`.combo-product-qty[data-product-id="${productId}"]`);
-                const qty = parseInt(qtyInput?.value || '0', 10);
-                selectedItems[productId] = { cantidad: qty };
-            });
-            return selectedItems;
-        }
-
-        function renderComboProductSelector(presetSelection = null) {
-            const listEl = document.getElementById('combo-product-list');
-            const searchInput = document.getElementById('combo-product-search');
-            if (!listEl || !searchInput) return;
-
-            const currentSelection = presetSelection || getSelectedComboItemsFromDom();
-            const searchTerm = searchInput.value.trim().toLowerCase();
-
-            const filteredProducts = productData
-                .filter(product => {
-                    const nameMatch = (product.nombre || '').toLowerCase().includes(searchTerm);
-                    const idMatch = (product.id || '').toLowerCase().includes(searchTerm);
-                    const isSelected = Boolean(currentSelection[product.id]);
-                    return nameMatch || idMatch || isSelected;
-                })
-                .sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
-
-            listEl.innerHTML = '';
-
-            if (productData.length === 0) {
-                listEl.innerHTML = '<p class="text-sm text-stone-500">Sincronizando productos...</p>';
-                return;
-            }
-
-            const renderRow = (product, { preselected = false, quantity = 1, disabled = false, extraLabel = '' } = {}) => {
-                const row = document.createElement('div');
-                row.className = 'flex items-center justify-between bg-white border border-stone-200 rounded-lg p-2 shadow-sm';
-
-                row.innerHTML = `
-                    <label class="flex items-center gap-2 flex-1">
-                        <input type="checkbox" class="combo-product-checkbox rounded border-stone-300 text-amber-600 focus:ring-amber-600"
-                            data-product-id="${product.id}" ${preselected ? 'checked' : ''} ${disabled ? 'disabled' : ''}>
-                        <div>
-                            <p class="text-sm font-semibold text-stone-800">${product.nombre || product.id}</p>
-                            <p class="text-xs text-stone-500">${product.id}${extraLabel ? ` · ${extraLabel}` : ''}</p>
-                        </div>
-                    </label>
-                    <input type="number" min="1" class="combo-product-qty w-20 ml-3 rounded-lg border-stone-300 shadow-sm focus:border-amber-600 focus:ring-amber-600 p-1 text-sm"
-                        data-product-id="${product.id}" value="${quantity}" ${disabled ? 'disabled' : ''}>
-                `;
-
-                listEl.appendChild(row);
-            };
-
-            filteredProducts.forEach(product => {
-                const selected = currentSelection[product.id];
-                renderRow(product, { preselected: Boolean(selected), quantity: selected?.cantidad || 1 });
-            });
-
-            const missingProducts = Object.keys(currentSelection).filter(id => !productData.some(p => p.id === id));
-            missingProducts.forEach(id => {
-                renderRow({ id, nombre: 'Producto no encontrado' }, { preselected: true, quantity: currentSelection[id].cantidad || 1, extraLabel: 'ID no disponible en catálogo' });
-            });
-
-            if (!listEl.children.length) {
-                listEl.innerHTML = '<p class="text-sm text-stone-500">No se encontraron productos con ese criterio.</p>';
             }
         }
 
-        function parseComboItems() {
-            const { items, hasInvalidQuantity } = Array.from(document.querySelectorAll('.combo-product-checkbox:checked')).reduce((acc, checkbox) => {
-                const productId = checkbox.dataset.productId;
-                const qtyInput = document.querySelector(`.combo-product-qty[data-product-id="${productId}"]`);
-                const qty = parseInt(qtyInput?.value || '0', 10);
+        function renderCart() {
+            const cartList = document.getElementById('cart-list');
+            const cartTotalEl = document.getElementById('cart-total');
+            const emptyMessage = document.getElementById('empty-cart-message');
+            const discountSelect = document.getElementById('discount-select');
+            const cartItemCountEl = document.getElementById('cart-item-count');
+            const discountMessageArea = document.getElementById('discount-message-area'); 
 
-                if (isNaN(qty) || qty <= 0) {
-                    acc.hasInvalidQuantity = true;
-                    return acc;
-                }
+            cartList.innerHTML = ''; 
+            let subtotalWithoutDiscount = 0;
+            let cartItemsCount = 0;
+            
+            subtotalWithoutDiscount = calculateSubtotalWithoutDiscount();
+            let finalDiscountRate = getApplicableDiscountRate(subtotalWithoutDiscount);
 
-                acc.items.push({ productId, cantidad: qty });
-                return acc;
-            }, { items: [], hasInvalidQuantity: false });
-
-            return { items, hasInvalidQuantity };
-        }
-
-        function resetComboForm(message = '') {
-            editingComboId = null;
-            document.getElementById('combo-name').value = '';
-            document.getElementById('combo-price').value = '';
-            document.getElementById('combo-discount').value = '';
-            document.getElementById('combo-visible').checked = true;
-            const comboSearch = document.getElementById('combo-product-search');
-            if (comboSearch) comboSearch.value = '';
-            renderComboProductSelector(null);
-            document.getElementById('combo-form-status').textContent = message;
-        }
-
-        window.editCombo = function(id) {
-            const combo = comboData.find(c => c.id === id);
-            if (!combo) return;
-
-            editingComboId = id;
-            document.getElementById('combo-name').value = combo.nombre || '';
-            document.getElementById('combo-price').value = combo.precioBase ?? combo.precio ?? '';
-            document.getElementById('combo-discount').value = combo.descuento ? (normalizeDiscountValue(combo.descuento) * 100) : '';
-            document.getElementById('combo-visible').checked = combo.visible !== false;
-            document.getElementById('combo-form-status').textContent = `Editando combo: ${combo.nombre}`;
-
-            const selectedItems = {};
-            (combo.items || []).forEach(item => {
-                selectedItems[item.productId] = { cantidad: item.cantidad || 1 };
-            });
-            const comboSearch = document.getElementById('combo-product-search');
-            if (comboSearch) comboSearch.value = '';
-            renderComboProductSelector(selectedItems);
-        }
-
-        window.deleteCombo = async function(id) {
-            if (!window.confirm('¿Eliminar este combo? Las relaciones con carritos podrían quedar desactualizadas.')) {
-                return;
-            }
-            try {
-                await deleteDoc(doc(db, 'combos', id));
-                showToast('Combo eliminado.');
-                // Eliminar del carrito si está presente
-                const cartKey = `combo_${id}`;
-                if (cart[cartKey]) {
-                    delete cart[cartKey];
-                    saveCart();
-                    renderCart();
-                }
-            } catch (e) {
-                console.error('Error eliminando combo:', e);
-                showToast('⚠️ No se pudo eliminar el combo.');
-            }
-        }
-
-        async function saveComboFromForm() {
-            const name = document.getElementById('combo-name').value.trim();
-            const price = Number(document.getElementById('combo-price').value);
-            const discountPercent = Number(document.getElementById('combo-discount').value);
-            const visible = document.getElementById('combo-visible').checked;
-            const { items, hasInvalidQuantity } = parseComboItems();
-
-            const statusEl = document.getElementById('combo-form-status');
-            statusEl.textContent = '';
-
-            if (!name) {
-                statusEl.textContent = 'El nombre es obligatorio.';
-                return;
-            }
-            if (items.length === 0) {
-                statusEl.textContent = 'Agrega al menos un producto al combo.';
-                return;
-            }
-            if (hasInvalidQuantity) {
-                statusEl.textContent = 'Las cantidades deben ser mayores a cero.';
-                return;
+            if (finalDiscountRate > 0) {
+                 discountMessageArea.innerHTML = `<span class="bg-red-100 px-3 py-1 rounded-lg text-red-800">Descuento Manual (${(finalDiscountRate * 100).toFixed(0)}%) Aplicado</span>`;
+            } else {
+                discountMessageArea.innerHTML = '';
             }
 
-            const payload = {
-                nombre: name,
-                categoria: "COMBOS", // Categoría fija
-                precioBase: !isNaN(price) && price > 0 ? price : null,
-                descuento: !isNaN(discountPercent) && discountPercent > 0 ? discountPercent / 100 : 0,
-                visible,
-                items,
-                updatedAt: new Date(),
-            };
+            for (const id in cart) {
+                const item = cart[id];
+                const numericPrice = Number(item.precio); 
+                const subtotal = numericPrice * item.cantidad;
+                cartItemsCount += item.cantidad;
 
-            try {
-                if (editingComboId) {
-                    await setDoc(doc(db, 'combos', editingComboId), { ...payload, id: editingComboId }, { merge: true });
-                    showToast('Combo actualizado.');
-                } else {
-                    const newComboRef = await addDoc(collection(db, 'combos'), payload);
-                    await setDoc(newComboRef, { ...payload, id: newComboRef.id }, { merge: true });
-                    showToast('Combo creado.');
-                }
-                resetComboForm();
-            } catch (e) {
-                console.error('Error guardando combo:', e);
-                statusEl.textContent = 'No se pudo guardar el combo. Revisa conexión y permisos.';
-            }
-        }
+                const productReal = productData.find(p => p.id === id);
+                const maxStock = productReal ? productReal.stock : 0;
 
-        function renderComboList() {
-            const comboList = document.getElementById('combo-list');
-            if (!comboList) return;
-
-            if (comboData.length === 0) {
-                comboList.innerHTML = '<p class="text-sm text-stone-500">No hay combos configurados todavía.</p>';
-                return;
-            }
-
-            const sortedCombos = [...comboData].sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
-            comboList.innerHTML = '';
-
-            sortedCombos.forEach(combo => {
-                const comboPrice = getComboPrice(combo);
-                const items = combo.items || [];
-                const detail = items.map(item => {
-                    const product = productData.find(p => p.id === item.productId);
-                    return `${product ? product.nombre : item.productId} x${item.cantidad}`;
-                }).join(', ');
-
-                const comboCard = document.createElement('div');
-                comboCard.className = 'border border-stone-200 rounded-lg p-3 bg-stone-50';
-                comboCard.innerHTML = `
-                    <div class="flex justify-between items-start gap-3">
-                        <div class="flex-1">
-                            <p class="font-bold text-stone-800">${combo.nombre}</p>
-                            <p class="text-sm text-stone-500">${detail || 'Sin productos cargados'}</p>
-                            <div class="flex items-center gap-2 mt-1">
-                                <span class="text-lg font-extrabold text-amber-800">${formatCurrency(comboPrice)}</span>
-                                ${combo.visible === false ? '<span class="text-xs px-2 py-1 rounded bg-stone-200 text-stone-600">Oculto</span>' : ''}
-                            </div>
-                        </div>
-                        <div class="flex flex-col gap-2">
-                            <button onclick="addComboToCart('${combo.id}')" class="px-3 py-2 text-sm rounded-lg ${combo.visible === false ? 'bg-stone-200 text-stone-500' : 'amber-gradient text-white shadow hover:opacity-90'}" ${combo.visible === false ? 'disabled' : ''}>Añadir</button>
-                            <button onclick="editCombo('${combo.id}')" class="px-3 py-2 text-sm rounded-lg bg-blue-100 text-blue-800 hover:bg-blue-200">Editar</button>
-                            <button onclick="deleteCombo('${combo.id}')" class="px-3 py-2 text-sm rounded-lg bg-red-100 text-red-700 hover:bg-red-200">Eliminar</button>
-                        </div>
+                const itemDiv = document.createElement('div');
+                itemDiv.className = "bg-white p-3 rounded-lg border border-stone-200 flex justify-between items-center item-card";
+                itemDiv.innerHTML = `
+                    <div class="flex flex-col flex-grow">
+                        <p class="font-bold text-stone-700">${item.nombre}</p>
+                        <p class="text-sm text-amber-700">${formatCurrency(item.precio)} x ${item.cantidad}</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="font-extrabold text-lg text-amber-800">${formatCurrency(subtotal)}</span>
+                        <button onclick="changeQuantity('${id}', -1)" class="p-1 bg-stone-300 text-stone-800 rounded-full w-6 h-6 flex items-center justify-center text-xl font-bold leading-none hover:bg-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-500">
+                            -
+                        </button>
+                        <button onclick="changeQuantity('${id}', 1)" 
+                            class="p-1 ${item.cantidad >= maxStock ? 'bg-gray-300 cursor-not-allowed' : 'amber-gradient hover:opacity-90'} text-white rounded-full w-6 h-6 flex items-center justify-center text-xl font-bold leading-none focus:outline-none focus:ring-2 focus:ring-amber-500"
+                            ${item.cantidad >= maxStock ? 'disabled' : ''}>
+                            +
+                        </button>
                     </div>
                 `;
+                cartList.appendChild(itemDiv);
+            }
 
-                comboList.appendChild(comboCard);
-            });
+            const totalWithDiscount = subtotalWithoutDiscount * (1 - finalDiscountRate);
+
+            if (emptyMessage) {
+                emptyMessage.style.display = cartItemsCount === 0 ? 'block' : 'none';
+            }
+            
+            cartItemCountEl.textContent = cartItemsCount > 0 ? cartItemsCount : '';
+            cartItemCountEl.style.opacity = cartItemsCount > 0 ? 1 : 0;
+
+            cartTotalEl.textContent = formatCurrency(totalWithDiscount);
+
+            // Mostrar el detalle del descuento y subtotal
+            if (finalDiscountRate > 0) {
+                 const discountAmount = subtotalWithoutDiscount * finalDiscountRate;
+                 
+                 const discountDisplay = document.createElement('p');
+                 discountDisplay.className = "text-sm text-red-600 font-semibold mt-1";
+                 discountDisplay.textContent = `Descuento Total (${(finalDiscountRate * 100).toFixed(0)}%): -${formatCurrency(discountAmount)}`;
+                 cartList.appendChild(discountDisplay);
+
+                 const subtotalDisplay = document.createElement('p');
+                 subtotalDisplay.className = "text-sm text-stone-500 font-medium";
+                 subtotalDisplay.textContent = `Subtotal sin Descuento: ${formatCurrency(subtotalWithoutDiscount)}`;
+                 cartList.appendChild(subtotalDisplay);
+            }
+            
+            renderPrintView(subtotalWithoutDiscount, totalWithDiscount, finalDiscountRate);
         }
 
         window.changeQuantity = function(id, delta) {
-            if (!cart[id]) return;
-
-            const usage = getCartProductUsage();
-            const line = cart[id];
-
+            
+            // Chequeo de stock
             if (delta > 0) {
-                if (line.tipo === 'combo') {
-                    const comboItems = line.items || [];
-                    const exceedsStock = comboItems.some(item => {
-                        const product = productData.find(p => p.id === item.productId);
-                        if (!product) return false;
-                        const reservedOther = (usage[item.productId] || 0) - (item.cantidad * line.cantidad);
-                        return (reservedOther + (item.cantidad * (line.cantidad + delta))) > product.stock;
-                    });
-                    if (exceedsStock) {
-                        showToast('⚠️ El combo supera el stock disponible de alguno de sus productos.');
-                        return;
-                    }
-                } else {
-                    const product = productData.find(p => p.id === id);
-                    if (product && ((usage[id] || 0) + delta) > product.stock) {
+                const product = productData.find(p => p.id === id);
+                if (cart[id] && product) {
+                    if (cart[id].cantidad + delta > product.stock) {
                         showToast(`⚠️ No hay más stock disponible de ${product.nombre}`);
                         return;
                     }
                 }
             }
 
-            line.cantidad += delta;
-            if (line.cantidad <= 0) {
-                delete cart[id];
+            if (cart[id]) {
+                cart[id].cantidad += delta;
+                if (cart[id].cantidad <= 0) {
+                    delete cart[id];
+                }
             }
-            saveCart();
-            renderCart();
+            saveCart(); 
+            renderCart(); 
         };
 
         window.addToCart = function(id) {
-            
             const product = productData.find(p => p.id === id);
-            const combo = comboData.find(c => c.id === id); // Chequear si es un combo accidentalmente marcado como producto
             
-            if (!product && !combo) return;
-
-            if (combo) {
-                window.addComboToCart(combo.id);
-                return;
-            }
-            
-            const usage = getCartProductUsage();
+            if (!product) return;
 
             if (product.stock <= 0) {
                 showToast(`🚫 Sin stock: ${product.nombre}`);
                 return;
             }
 
-            if ((usage[id] || 0) + 1 > product.stock) {
-                showToast(`⚠️ Stock máximo alcanzado para ${product.nombre}`);
-                return;
-            }
-
             if (cart[id]) {
+                if (cart[id].cantidad + 1 > product.stock) {
+                    showToast(`⚠️ Stock máximo alcanzado para ${product.nombre}`);
+                    return;
+                }
                 cart[id].cantidad += 1;
-                cart[id].tipo = 'producto';
                 showToast(`¡Agregado! ${cart[id].nombre}`);
             } else {
-                cart[id] = {
-                    id: id,
+                cart[id] = { 
+                    id: id, 
                     nombre: product.nombre,
                     precio: product.precio,
-                    cantidad: 1,
-                    tipo: 'producto'
+                    cantidad: 1 
                 };
                 showToast(`¡Agregado! ${product.nombre}`);
             }
-            saveCart();
-            renderCart();
-        };
-        
-        window.addComboToCart = function(comboId) {
-            const combo = comboData.find(c => c.id === comboId);
-            if (!combo) {
-                showToast('No se encontró el combo seleccionado.');
-                return;
-            }
-
-            if (combo.visible === false) {
-                showToast('El combo no está disponible en este momento.');
-                return;
-            }
-
-            const usage = getCartProductUsage();
-            const items = combo.items || [];
-            const cartKey = `combo_${comboId}`;
-            const currentComboCount = cart[cartKey] ? cart[cartKey].cantidad : 0;
-
-            // Chequeo de stock: verificar si agregar una unidad más supera el stock individual
-            const insufficient = items.find(item => {
-                const product = productData.find(p => p.id === item.productId);
-                if (!product) return false;
-                
-                // La cantidad total del producto individual que se necesitará si agregamos una unidad más del combo
-                const neededTotal = (usage[item.productId] || 0) + item.cantidad; 
-                
-                return neededTotal > product.stock;
-            });
-
-            if (insufficient) {
-                const product = productData.find(p => p.id === insufficient.productId);
-                showToast(`⚠️ Sin stock suficiente para ${product ? product.nombre : insufficient.productId}.`);
-                return;
-            }
-
-            if (cart[cartKey]) {
-                cart[cartKey].cantidad += 1;
-            } else {
-                cart[cartKey] = {
-                    id: cartKey,
-                    comboId: comboId,
-                    nombre: combo.nombre,
-                    precio: getComboPrice(combo),
-                    cantidad: 1,
-                    items: items,
-                    tipo: 'combo'
-                };
-            }
-            saveCart();
-            renderCart();
-            showToast(`Combo "${combo.nombre}" agregado al carrito.`);
+            saveCart(); 
+            renderCart(); 
         };
 
         function showToast(message) {
@@ -1810,7 +1221,7 @@
 
             const subtotalWithoutDiscount = calculateSubtotalWithoutDiscount();
             const finalDiscountRate = getApplicableDiscountRate(subtotalWithoutDiscount); 
-
+            
             let subtotal = 0;
             const items = [];
 
@@ -1818,11 +1229,7 @@
                 const item = cart[id];
                 const itemSubtotal = item.precio * item.cantidad;
                 subtotal += itemSubtotal;
-                const detail = item.tipo === 'combo' && item.items ? item.items.map(it => {
-                    const product = productData.find(p => p.id === it.productId);
-                    return `${product ? product.nombre : it.productId} x${it.cantidad}`;
-                }) : null;
-                items.push({ nombre: item.tipo === 'combo' ? `Combo: ${item.nombre}` : item.nombre, cantidad: item.cantidad, subtotal: itemSubtotal, detalle: detail });
+                items.push({ nombre: item.nombre, cantidad: item.cantidad, subtotal: itemSubtotal });
             }
 
             const totalWithDiscount = subtotal * (1 - finalDiscountRate);
@@ -1839,9 +1246,6 @@
 
             items.forEach((item) => {
                 summaryLines.push(` • ${item.nombre} x ${item.cantidad}: ${formatCurrency(item.subtotal)}`);
-                if (item.detalle) {
-                    item.detalle.forEach(line => summaryLines.push(`    - ${line}`));
-                }
             });
 
             summaryLines.push('');
@@ -1901,10 +1305,10 @@
                 const item = cart[id];
                 const itemSubtotal = item.precio * item.cantidad;
                 subtotal += itemSubtotal;
-                items.push({ 
-                    nombre: item.tipo === 'combo' ? `Combo: ${item.nombre}` : item.nombre, 
-                    cantidad: item.cantidad, 
-                    subtotal: itemSubtotal 
+                items.push({
+                    nombre: item.nombre,
+                    cantidad: item.cantidad,
+                    subtotal: itemSubtotal
                 });
             }
 
@@ -2046,15 +1450,10 @@
             for (const id in cart) {
                 const item = cart[id];
                 const itemSubtotal = item.precio * item.cantidad;
-                const displayName = item.tipo === 'combo' ? `Combo: ${item.nombre}` : item.nombre;
-                const detail = item.tipo === 'combo' && item.items ? item.items.map(it => {
-                    const product = productData.find(p => p.id === it.productId);
-                    return `${product ? product.nombre : it.productId} x${it.cantidad}`;
-                }).join(', ') : '';
-
+                
                 printContent += `
                     <div class="cart-item-print flex justify-between">
-                        <span style="font-weight: 500;">${displayName}${detail ? ` — ${detail}` : ''}</span>
+                        <span style="font-weight: 500;">${item.nombre}</span>
                         <span>${item.cantidad} x ${formatCurrency(item.precio)} = ${formatCurrency(itemSubtotal)}</span>
                     </div>
                 `;
@@ -2080,60 +1479,35 @@
             printView.innerHTML = printContent;
         }
 
-        function renderProductList(categoryValue, searchValue) {
+        function renderProductList(data) {
             const productList = document.getElementById('product-list');
             productList.innerHTML = ''; 
 
-            // Verificar si productData o comboData están vacíos/indefinidos
-            if (!productData || productData.length === 0) {
-                 if (!comboData || comboData.length === 0) {
-                     productList.innerHTML = '<p class="text-stone-500">No se encontraron productos disponibles. Conectando o esperando datos de la nube...</p>';
-                     return;
-                 }
+            if (data.length === 0) {
+                productList.innerHTML = '<p class="text-stone-500">No se encontraron productos que coincidan con su búsqueda.</p>';
+                return;
             }
 
-            // Unir productos individuales y combos para la vista del catálogo
-            const allItems = [...productData];
-            const comboItems = comboData.map(c => ({
-                id: c.id,
-                nombre: c.nombre,
-                categoria: c.categoria,
-                precio: getComboPrice(c),
-                stock: 999, // Stock infinito virtual para combos
-                isCombo: true,
-                visible: c.visible !== false,
-                descripcion: c.descripcion
-            })).filter(c => c.visible); // Solo mostrar combos visibles
-            
-            let combinedData = [...allItems, ...comboItems].filter(item => {
-                 const matchesCategory = (categoryValue === 'all') || (item.categoria === categoryValue);
-                 const matchesSearch = item.nombre.toLowerCase().includes(searchValue);
-                 return matchesCategory && matchesSearch;
-            }).sort((a, b) => a.nombre.localeCompare(b.nombre));
-
-            
-            // Renderizar los productos/combos filtrados y ordenados
-            combinedData.forEach(item => {
-                const itemDiv = document.createElement('div');
-                const isOutOfStock = item.stock <= 0 && !item.isCombo;
+            data.forEach(product => {
+                const item = document.createElement('div');
+                const isOutOfStock = product.stock <= 0;
                 const opacityClass = isOutOfStock ? 'opacity-60' : '';
                 
                 // --- LÓGICA DEL SEMÁFORO DE STOCK ---
-                const stock = item.stock;
+                const stock = product.stock;
                 let stockBadgeClass;
                 let stockMessage;
-                const icon = item.isCombo ? '✨' : '📦';
 
-                if (item.isCombo) {
-                    stockBadgeClass = 'bg-amber-100 text-amber-800';
-                    stockMessage = 'Combo';
-                } else if (stock > 3) {
+                if (stock > 3) {
+                    // VERDE: Stock saludable (> 3)
                     stockBadgeClass = 'bg-green-100 text-green-800';
                     stockMessage = 'Stock: ' + stock;
                 } else if (stock >= 1) {
+                    // AMARILLO: Stock bajo (1 a 3)
                     stockBadgeClass = 'bg-yellow-100 text-yellow-800';
                     stockMessage = 'Stock: ' + stock;
                 } else {
+                    // ROJO: Sin Stock (0)
                     stockBadgeClass = 'bg-red-400 text-white';
                     stockMessage = 'Sin Stock';
                 }
@@ -2141,27 +1515,26 @@
                 // ----------------------------------------
 
 
-                itemDiv.className = `bg-white p-4 rounded-xl border border-stone-100 flex justify-between items-center item-card ${opacityClass}`;
-                itemDiv.innerHTML = `
+                item.className = `bg-white p-4 rounded-xl border border-stone-100 flex justify-between items-center item-card ${opacityClass}`;
+                item.innerHTML = `
                     <div>
-                        <p class="font-semibold text-lg text-stone-800">${icon} ${item.nombre}</p>
+                        <p class="font-semibold text-lg text-stone-800">${product.nombre}</p>
                         <div class="flex gap-2 items-center">
-                            <p class="text-xs text-stone-500">${item.categoria}</p>
+                            <p class="text-xs text-stone-500">${product.categoria}</p>
                             <span class="text-xs px-2 py-0.5 rounded-full font-medium ${stockBadgeClass}">
-                                ${stockMessage}
+                                📦 ${stockMessage}
                             </span>
                         </div>
-                         ${item.isCombo ? `<p class="text-xs text-stone-500 italic mt-1">${item.descripcion}</p>` : ''}
                     </div>
                     <div class="flex items-center space-x-3">
-                        <span class="text-xl font-extrabold text-amber-800">${formatCurrency(item.precio)}</span>
-                        <button onclick="addToCart('${item.id}')" class="p-2 ${isOutOfStock ? 'bg-stone-300 cursor-not-allowed' : 'amber-gradient hover:opacity-90'} text-white rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
+                        <span class="text-xl font-extrabold text-amber-800">${formatCurrency(product.precio)}</span>
+                        <button onclick="addToCart('${product.id}')" class="p-2 ${isOutOfStock ? 'bg-stone-300 cursor-not-allowed' : 'amber-gradient hover:opacity-90'} text-white rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
                             ${isOutOfStock ? 'disabled' : ''}>
                             <span class="text-xl">🛒</span>
                         </button>
                     </div>
                 `;
-                productList.appendChild(itemDiv);
+                productList.appendChild(item);
             });
         }
 
@@ -2169,12 +1542,16 @@
             const categoryFilter = document.getElementById('category-filter');
             const searchBox = document.getElementById('search-box');
             
-            // Obtener los valores de los filtros ANTES de llamar a renderProductList
-            const selectedCategory = categoryFilter ? categoryFilter.value : 'all';
-            const searchTerm = searchBox ? searchBox.value.toLowerCase() : '';
-            
-            // Pasar los valores de los filtros a renderProductList
-            renderProductList(selectedCategory, searchTerm);
+            const selectedCategory = categoryFilter.value;
+            const searchTerm = searchBox.value.toLowerCase();
+
+            const filteredData = productData.filter(product => {
+                const matchesCategory = (selectedCategory === 'all') || (product.categoria === selectedCategory);
+                const matchesSearch = product.nombre.toLowerCase().includes(searchTerm);
+                return matchesCategory && matchesSearch;
+            });
+
+            renderProductList(filteredData);
             renderCart(); 
         }
 
@@ -2183,17 +1560,12 @@
             loadCart(); 
             
             try {
-                // 1. Inicializar Productos (solo si DB está vacía)
+                // 1. Inicializar y subir datos si es necesario
                 await initDatabaseIfNeeded();
-                
-                // 2. Inicializar Combos (solo si la colección de combos está vacía)
-                await initCombosIfNeeded();
-                
-                // 3. Conectarse a la sincronización en tiempo real
-                window.subscribeToProducts(); 
-                window.subscribeToCombos();
-                window.subscribeToPendingOrders();
-                
+                // 2. Conectarse a la sincronización en tiempo real (Stock y Ventas)
+                subscribeToProducts(); 
+                // 3. Conectarse a pedidos pendientes
+                subscribeToPendingOrders();
             } catch (e) {
                 console.error("Error al conectar Firebase:", e);
                 document.getElementById('connection-status').textContent = "ERROR: Conexión a Firebase fallida 🔴";
@@ -2240,22 +1612,31 @@
             document.getElementById('print-button').addEventListener('click', printQuote);
             document.getElementById('download-sales-report-button').addEventListener('click', downloadSalesReport); // Botón de Reporte
 
-            document.getElementById('save-combo-button').addEventListener('click', saveComboFromForm);
-            document.getElementById('cancel-combo-edit').addEventListener('click', () => resetComboForm('Edición cancelada.'));
-            document.getElementById('clear-combo-form').addEventListener('click', () => resetComboForm('Formulario limpio.'));
-            document.getElementById('combo-product-search').addEventListener('input', () => renderComboProductSelector());
-            
-            // CORRECCIÓN: Usar window.savePendingOrder
-            document.getElementById('save-pending-button').addEventListener('click', window.savePendingOrder); // Botón Guardar Pendiente
+            // EVENTO DE VENTA MANUAL (¡SOLUCIÓN PARA NO USAR LA CONSOLA!)
+            document.getElementById('add-manual-sale-button').addEventListener('click', () => {
+                // Parámetros: productName, quantity, salePrice, clientName, paymentMethod, deductStock (FALSE)
+                addManualSale(
+                    "Calendario de adviento", 
+                    1, 
+                    20000, 
+                    "Nati Giordana (Venta Externa)", 
+                    "Otro", // Método de Pago
+                    false // <--- ¡AQUÍ DECIMOS NO DESCONTAR STOCK!
+                );
+            });
+            // ----------------------------------------------------
+
+            document.getElementById('save-pending-button').addEventListener('click', savePendingOrder); // Botón Guardar Pendiente
             
             const isMobile = window.innerWidth < 768;
             if (isMobile) {
                 showView('catalog');
             } else {
-                // Forzamos la visualización en escritorio a través de CSS puro y evitamos JS conflictivo
+                document.getElementById('catalog-panel').style.display = 'block';
+                document.getElementById('cart-panel').style.display = 'flex';
+                document.getElementById('filters-container').style.display = 'grid';
             }
 
-            // Llamada inicial a updateDashboard después de que se cargan los datos.
             updateDashboard();
         });
     </script>
