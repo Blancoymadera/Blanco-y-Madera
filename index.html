@@ -191,7 +191,7 @@
 
     <!-- HEADER FIJO (SOLO LOGO) -->
     <header class="bg-white shadow-lg sticky top-0 z-10 no-print">
-        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-2 header-content">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-4 header-content">
             <div class="logo-container">
                 <div class="flex flex-col items-center">
                     <span class="logo-text">blanco&madera</span>
@@ -199,38 +199,15 @@
                     <span class="deco-home">DECO HOME</span>
                 </div>
             </div>
-            <!-- NOTA: El título y la conexión a la nube están ahora DENTRO de MAIN (se desplazan) -->
         </div>
     </header>
 
-    <main class="container mx-auto p-4 sm:p-6 lg:p-8 pt-0"> 
-        <!-- CONTENIDO QUE SE DESPLAZA -->
-        
-        <!-- BLOQUE DE TÍTULO Y ESTADO (Desplazable) -->
-        <div class="header-title-block bg-white pb-2 text-center">
+    <main class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <!-- TÍTULO Y ESTADO (SE DESPLAZAN) -->
+        <div class="header-title-block text-center mb-6">
             <h1 class="main-title text-4xl font-extrabold text-amber-800 tracking-wide">CATÁLOGO</h1>
             <p class="text-stone-600 mt-1">Selecciona productos para generar la cotización del cliente.</p>
             <div id="connection-status" class="text-xs text-stone-400 mt-1">Conectando a la nube...</div>
-        </div>
-        
-        <div class="bg-white p-6 rounded-xl shadow-lg mb-8 no-print" id="filters-container">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                    <label for="category-filter" class="block text-sm font-semibold text-stone-700 mb-1">Filtrar por Categoría</label>
-                    <select id="category-filter" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
-                        <option value="all">Todas las Categorías</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="search-box" class="block text-sm font-semibold text-stone-700 mb-1">Buscar por Nombre</label>
-                    <input type="text" id="search-box" placeholder="Escribe el nombre del producto..." class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
-                </div>
-                <div class="md:self-end">
-                    <button id="reset-button" class="w-full md:w-auto bg-stone-500 text-white font-bold py-2.5 px-6 rounded-lg shadow-xl hover:bg-stone-600 transition duration-300 focus:outline-none focus:ring-4 focus:ring-stone-400 focus:ring-offset-2">
-                        Mostrar Todos
-                    </button>
-                </div>
-            </div>
         </div>
 
         <div id="print-view" class="hidden print-header"></div>
@@ -240,52 +217,68 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             
-            <!-- PANEL IZQUIERDO: CATÁLOGO, PENDIENTES Y REPORTES -->
+            <!-- PANEL IZQUIERDO: CONTENIDO DINÁMICO (CATÁLOGO / PENDIENTES / REPORTES) -->
             <div class="space-y-6">
-                
-                <!-- CATÁLOGO -->
-                <div id="catalog-panel" class="bg-white p-6 rounded-xl shadow-lg relative min-h-[400px]" data-view="catalog">
+                <!-- PANEL PRINCIPAL (CATÁLOGO Y FILTROS UNIFICADOS) -->
+                <div id="catalog-view" class="bg-white p-6 rounded-xl shadow-lg relative min-h-[400px]">
                     <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">Catálogo de Productos Disponibles</h2>
                     
-                    <!-- Overlay de Carga -->
+                    <!-- FILTROS UNIFICADOS AHORA DENTRO DEL PANEL -->
+                    <div id="filter-search-buttons" class="mb-4">
+                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div id="category-filter-container" class="sm:col-span-1">
+                                <label for="category-filter" class="block text-sm font-semibold text-stone-700 mb-1">Filtrar Categoría</label>
+                                <select id="category-filter" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
+                                    <option value="all">Todas las Categorías</option>
+                                </select>
+                            </div>
+                            <div id="search-box-container" class="sm:col-span-2">
+                                <label for="search-box" class="block text-sm font-semibold text-stone-700 mb-1">Buscar Producto</label>
+                                <input type="text" id="search-box" placeholder="Escribe el nombre del producto..." class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
+                            </div>
+                         </div>
+                         <div class="flex justify-between items-center mt-3">
+                             <p class="text-sm text-stone-500">Muestra resultados en tiempo real.</p>
+                             <button id="reset-button" class="md:w-auto bg-stone-500 text-white font-bold py-2 px-6 rounded-lg shadow-xl hover:bg-stone-600 transition duration-300 focus:outline-none focus:ring-4 focus:ring-stone-400 focus:ring-offset-2">
+                                Mostrar Todos
+                             </button>
+                         </div>
+                    </div>
+                    
+                    <!-- Overlay de Carga (para el catálogo) -->
                     <div id="catalog-loading" class="loading-overlay">
                         <div class="text-amber-600 font-bold animate-pulse">Cargando productos de la nube...</div>
                     </div>
-                    
-                    <div id="product-list" class="overflow-y-auto h-[60vh] md:h-[70vh] pr-4 space-y-2">
+
+                    <!-- LISTA DE PRODUCTOS (CATÁLOGO) -->
+                    <div id="product-list" class="overflow-y-auto h-[60vh] md:h-[70vh] pr-4 space-y-2 mt-4 border-t pt-4 border-stone-200">
                         <p class="text-stone-500">Conectando...</p>
                     </div>
                 </div>
-
-                <!-- PEDIDOS PENDIENTES (NUEVO) -->
-                <div class="bg-white p-6 rounded-xl shadow-lg no-print">
-                    <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">⏳ Pedidos Pendientes</h2>
-                    <div id="pending-list" class="space-y-2 max-h-60 overflow-y-auto">
-                        <p id="pending-loading" class="text-stone-500">Cargando pedidos guardados...</p>
+                
+                <!-- VISTA PEDIDOS PENDIENTES (SEGUNDO BLOQUE - MANTENIDO) -->
+                <div id="pending-orders-content" class="bg-white p-6 rounded-xl shadow-lg">
+                     <h2 class="text-xl font-semibold mb-4 text-stone-700 border-b pb-2 border-stone-200">Listado de Pedidos Guardados</h2>
+                    <div id="pending-orders-list" class="max-h-[60vh] overflow-y-auto space-y-2">
+                        <p class="text-sm text-stone-400 text-center">Cargando pedidos pendientes...</p>
                     </div>
                 </div>
-                
+
                 <!-- PANEL DE REPORTES -->
                 <div class="bg-white p-6 rounded-xl shadow-lg no-print">
                     <h2 class="text-xl font-semibold mb-4 text-stone-700 border-b pb-2 border-stone-200">📊 Reportes y Gestión</h2>
                     <div class="flex flex-col space-y-3">
-                        <button id="download-sales-report-button" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-blue-700 transition duration-300 focus:outline-none focus:ring-4 focus:ring-blue-400 focus:ring-offset-2 mb-3">
+                        <button id="download-sales-report-button" onclick="downloadSalesReport()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-blue-700 transition duration-300 focus:outline-none focus:ring-4 focus:ring-blue-400 focus:ring-offset-2">
                             ⬇️ Descargar Historial de Ventas (CSV)
                         </button>
-                        
-                        <!-- NUEVO BOTÓN PARA REGISTRAR VENTA MANUAL -->
-                        <button id="add-manual-sale-button" class="w-full bg-red-500 text-white font-bold py-3 rounded-lg shadow-md hover:bg-red-600 transition duration-300 focus:outline-none focus:ring-4 focus:ring-red-400 focus:ring-offset-2">
-                             ➕ Registrar Venta Manual (SIN Descontar Stock)
-                        </button>
-                        <p class="text-xs text-red-500 text-center mt-1">
-                            * Presiona el botón de arriba para registrar una venta manual SIN DESCONTAR STOCK
+                        <p class="text-sm text-stone-500">
+                            Esto descarga un archivo que puedes abrir en Excel o Google Sheets con todas tus ventas registradas.
                         </p>
-                        
                     </div>
                 </div>
             </div>
             
-            <!-- PANEL DERECHO: COTIZACIÓN (CARRITO) -->
+            <!-- PANEL DERECHO: COTIZACIÓN (CARRITO) - Siempre visible -->
             <div id="cart-panel" class="hidden md:flex flex-col bg-white p-6 rounded-xl shadow-lg" data-view="cart">
                 <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">Cotización Actual</h2>
                 
@@ -298,8 +291,7 @@
                     <label for="whatsapp-number" class="block text-sm font-semibold text-stone-700 mb-1">Número de WhatsApp del Cliente (Formato: 549...):</label>
                     <input type="tel" id="whatsapp-number" placeholder="Ej: 5493415551234" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
                 </div>
-                
-                <!-- NUEVO: MÉTODO DE PAGO -->
+
                 <div class="mb-4 no-print">
                     <label for="payment-method" class="block text-sm font-semibold text-stone-700 mb-1">Método de Pago:</label>
                     <select id="payment-method" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
@@ -309,7 +301,6 @@
                         <option value="Otro">Otro/No especificado</option>
                     </select>
                 </div>
-                <!------------------------->
 
                 <div id="cart-list" class="overflow-y-auto flex-grow pr-4 space-y-2">
                     <p id="empty-cart-message" class="text-stone-500 text-center mt-8">El carrito está vacío. Agrega productos del catálogo.</p>
@@ -341,12 +332,12 @@
                     <div class="space-y-3 no-print">
                         
                         <!-- Botón: GUARDAR PEDIDO PENDIENTE -->
-                        <button id="save-pending-button" class="w-full bg-stone-700 text-white font-bold py-3 rounded-lg shadow-xl hover:bg-stone-800 transition duration-300 focus:outline-none focus:ring-4 focus:ring-stone-600 focus:ring-offset-2 flex justify-center items-center gap-2 mb-2">
+                        <button id="save-pending-button" onclick="savePendingOrder()" class="w-full bg-stone-700 text-white font-bold py-3 rounded-lg shadow-xl hover:bg-stone-800 transition duration-300 focus:outline-none focus:ring-4 focus:ring-stone-600 focus:ring-offset-2 flex justify-center items-center gap-2 mb-2">
                             💾 Guardar Pedido Pendiente
                         </button>
                         
                         <!-- Botón: GESTIÓN INTERNA (Descuenta Stock y Registra Venta) -->
-                        <button id="confirm-sale-button" class="w-full bg-red-700 text-white font-bold py-3 rounded-lg shadow-xl hover:bg-red-800 transition duration-300 focus:outline-none focus:ring-4 focus:ring-red-600 focus:ring-offset-2 flex justify-center items-center gap-2 mb-2">
+                        <button id="confirm-sale-button" onclick="confirmSaleAndDeductStock()" class="w-full bg-red-700 text-white font-bold py-3 rounded-lg shadow-xl hover:bg-red-800 transition duration-300 focus:outline-none focus:ring-4 focus:ring-red-600 focus:ring-offset-2 flex justify-center items-center gap-2 mb-2">
                             ❌ Registrar Venta y Descontar Stock
                         </button>
                         <p class="text-xs text-red-500 text-center mt-1">
@@ -355,20 +346,20 @@
 
                         <div class="grid grid-cols-2 gap-3 mt-4">
                             <!-- Botón que abre WhatsApp directo (solo texto) -->
-                            <button id="send-whatsapp-text-button" class="bg-green-600 text-white font-bold py-2 rounded-lg shadow-md hover:bg-green-700 transition duration-300 focus:outline-none flex justify-center items-center gap-1 text-sm">
+                            <button id="send-whatsapp-text-button" onclick="sendQuoteViaWhatsAppText()" class="bg-green-600 text-white font-bold py-2 rounded-lg shadow-md hover:bg-green-700 transition duration-300 focus:outline-none flex justify-center items-center gap-1 text-sm">
                                 💬 Enviar Cotización (Texto)
                             </button>
                             <!-- Botón que Comparte la imagen de forma nativa -->
-                            <button id="share-image-button" class="bg-amber-500 text-white font-bold py-2 rounded-lg shadow-md hover:bg-amber-600 transition duration-300 focus:outline-none flex justify-center items-center gap-1 text-sm">
+                            <button id="share-image-button" onclick="shareQuoteAsImage()" class="bg-amber-500 text-white font-bold py-2 rounded-lg shadow-md hover:bg-amber-600 transition duration-300 focus:outline-none flex justify-center items-center gap-1 text-sm">
                                 🖼️ Compartir (Imagen)
                             </button>
                         </div>
 
                         <div class="grid grid-cols-2 gap-3 mt-2">
-                            <button id="print-button" class="bg-stone-500 text-white font-bold py-2 rounded-lg shadow-md hover:bg-stone-600 transition duration-300 focus:outline-none text-sm">
+                            <button id="print-button" onclick="printQuote()" class="bg-stone-500 text-white font-bold py-2 rounded-lg shadow-md hover:bg-stone-600 transition duration-300 focus:outline-none text-sm">
                                 🖨️ Imprimir / PDF
                             </button>
-                            <button id="clear-cart-button" class="bg-red-500/50 text-white font-bold py-2 rounded-lg shadow-md hover:bg-red-600/50 transition duration-300 focus:outline-none text-sm">
+                            <button id="clear-cart-button" onclick="clearCart()" class="bg-red-500/50 text-white font-bold py-2 rounded-lg shadow-md hover:bg-red-600/50 transition duration-300 focus:outline-none text-sm">
                                 🗑️ Vaciar
                             </button>
                         </div>
@@ -399,12 +390,661 @@
         </div>
     </div>
 
-    <script type="module">
-        // --- CONFIGURACIÓN DE FIREBASE ---
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc, onSnapshot, setDoc, addDoc, writeBatch, deleteDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+    <!-- CÓDIGO JavaScript Principal (Renderizado, Utilidades, Eventos) -->
+    <script>
+        // --- VARIABLES GLOBALES DEL NAVEGADOR ---
+        let productData = []; 
+        let cart = {}; 
+        let categories = new Set();
+        const STORAGE_KEY_CART = 'bm_cart';
 
-        // 🔥🔥🔥 CONFIGURACIÓN COPIADA DE TU CONSOLA DE FIREBASE 🔥🔥🔥
+        // --- FUNCIONES UTILITARIAS BÁSICAS ---
+        
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('es-AR', {
+                style: 'currency',
+                currency: 'ARS',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(value);
+        }
+
+        function calculateSubtotalWithoutDiscount() {
+            let subtotal = 0;
+            for (const id in cart) {
+                const item = cart[id];
+                subtotal += Number(item.precio) * item.cantidad;
+            }
+            return subtotal;
+        }
+        
+        function getApplicableDiscountRate(subtotal) {
+            const discountSelect = document.getElementById('discount-select');
+            return parseFloat(discountSelect.value);
+        }
+
+        function saveCart() {
+            localStorage.setItem(STORAGE_KEY_CART, JSON.stringify(cart));
+        }
+
+        function loadCart() {
+            const saved = localStorage.getItem(STORAGE_KEY_CART);
+            if (saved) {
+                cart = JSON.parse(saved);
+            }
+        }
+        
+        function populateCategoryFilter() {
+            const categoryFilter = document.getElementById('category-filter');
+            const currentSelection = categoryFilter.value;
+            
+            categoryFilter.innerHTML = '<option value="all">Todas las Categorías</option>';
+            
+            const sortedCategories = Array.from(categories).sort();
+            sortedCategories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = category;
+                categoryFilter.appendChild(option);
+            });
+
+            if (categories.has(currentSelection)) {
+                categoryFilter.value = currentSelection;
+            }
+        }
+        
+        window.showToast = function(message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => container.removeChild(toast), 300);
+            }, 2000);
+        }
+
+        // --- RENDERING FUNCTIONS (Need global access to cart/productData) ---
+
+        function renderCart() {
+            const cartList = document.getElementById('cart-list');
+            const cartTotalEl = document.getElementById('cart-total');
+            const emptyMessage = document.getElementById('empty-cart-message');
+            const discountSelect = document.getElementById('discount-select');
+            const cartItemCountEl = document.getElementById('cart-item-count');
+            const discountMessageArea = document.getElementById('discount-message-area'); 
+
+            cartList.innerHTML = ''; 
+            let subtotalWithoutDiscount = 0;
+            let cartItemsCount = 0;
+            
+            subtotalWithoutDiscount = calculateSubtotalWithoutDiscount();
+            let finalDiscountRate = parseFloat(discountSelect.value);
+
+            // 1. Mensaje de Descuento
+            if (finalDiscountRate > 0) {
+                 discountMessageArea.innerHTML = `<span class="bg-red-100 px-3 py-1 rounded-lg text-red-800">Descuento Manual (${(finalDiscountRate * 100).toFixed(0)}%) Aplicado</span>`;
+            } else {
+                discountMessageArea.innerHTML = '';
+            }
+
+            // 2. Renderizar lista de ítems
+            for (const id in cart) {
+                const item = cart[id];
+                const numericPrice = Number(item.precio); 
+                const subtotal = numericPrice * item.cantidad;
+                cartItemsCount += item.cantidad;
+
+                const productReal = productData.find(p => p.id == id);
+                const maxStock = productReal ? productReal.stock : 0;
+
+                const itemDiv = document.createElement('div');
+                itemDiv.className = "bg-white p-3 rounded-lg border border-stone-200 flex justify-between items-center item-card";
+                itemDiv.innerHTML = `
+                    <div class="flex flex-col flex-grow">
+                        <p class="font-bold text-stone-700">${item.nombre}</p>
+                        <p class="text-sm text-amber-700">${formatCurrency(item.precio)} x ${item.cantidad}</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="font-extrabold text-lg text-amber-800">${formatCurrency(subtotal)}</span>
+                        <button onclick="changeQuantity('${id}', -1)" class="p-1 bg-stone-300 text-stone-800 rounded-full w-6 h-6 flex items-center justify-center text-xl font-bold leading-none hover:bg-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-500">
+                            -
+                        </button>
+                        <button onclick="changeQuantity('${id}', 1)" 
+                            class="p-1 ${item.cantidad >= maxStock ? 'bg-gray-300 cursor-not-allowed' : 'amber-gradient hover:opacity-90'} text-white rounded-full w-6 h-6 flex items-center justify-center text-xl font-bold leading-none focus:outline-none focus:ring-2 focus:ring-amber-500"
+                            ${item.cantidad >= maxStock ? 'disabled' : ''}>
+                            +
+                        </button>
+                    </div>
+                `;
+                cartList.appendChild(itemDiv);
+            }
+
+            const totalWithDiscount = subtotalWithoutDiscount * (1 - finalDiscountRate);
+
+            if (emptyMessage) {
+                emptyMessage.style.display = cartItemsCount === 0 ? 'block' : 'none';
+            }
+            
+            cartItemCountEl.textContent = cartItemsCount > 0 ? cartItemCountEl.textContent : '0';
+            cartItemCountEl.style.opacity = cartItemsCount > 0 ? 1 : 0;
+
+            cartTotalEl.textContent = formatCurrency(totalWithDiscount);
+
+            // Mostrar el detalle del descuento y subtotal
+            if (finalDiscountRate > 0) {
+                 const discountAmount = subtotalWithoutDiscount * finalDiscountRate;
+                 
+                 const discountDisplay = document.createElement('p');
+                 discountDisplay.className = "text-sm text-red-600 font-semibold mt-1";
+                 discountDisplay.textContent = `Descuento Total (${(finalDiscountRate * 100).toFixed(0)}%): -${formatCurrency(discountAmount)}`;
+                 cartList.appendChild(discountDisplay);
+
+                 const subtotalDisplay = document.createElement('p');
+                 subtotalDisplay.className = "text-sm text-stone-500 font-medium";
+                 subtotalDisplay.textContent = `Subtotal sin Descuento: ${formatCurrency(subtotalWithoutDiscount)}`;
+                 cartList.appendChild(subtotalDisplay);
+            }
+            
+            renderPrintView(subtotalWithoutDiscount, totalWithDiscount, finalDiscountRate);
+        }
+
+        function renderProductList(data) {
+            const productList = document.getElementById('product-list');
+            productList.innerHTML = ''; 
+
+            if (data.length === 0) {
+                productList.innerHTML = '<p class="text-stone-500">No se encontraron productos que coincidan con su búsqueda.</p>';
+                return;
+            }
+
+            data.forEach(product => {
+                const item = document.createElement('div');
+                const isOutOfStock = product.stock <= 0;
+                const opacityClass = isOutOfStock ? 'opacity-60' : '';
+                
+                // --- LÓGICA DEL SEMÁFORO DE STOCK ---
+                const stock = product.stock;
+                let stockBadgeClass;
+                let stockMessage;
+
+                if (stock > 3) {
+                    stockBadgeClass = 'bg-green-100 text-green-800';
+                    stockMessage = 'Stock: ' + stock;
+                } else if (stock >= 1) {
+                    stockBadgeClass = 'bg-yellow-100 text-yellow-800';
+                    stockMessage = 'Stock: ' + stock;
+                } else {
+                    stockBadgeClass = 'bg-red-400 text-white';
+                    stockMessage = 'Sin Stock';
+                }
+                
+                // ----------------------------------------
+
+
+                item.className = `bg-white p-4 rounded-xl border border-stone-100 flex justify-between items-center item-card ${opacityClass}`;
+                item.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <!-- Placeholder de Imagen (Si existe la URL en el futuro) -->
+                        <div class="w-16 h-16 bg-stone-100 rounded-lg flex items-center justify-center overflow-hidden">
+                            ${product.imageUrl ? `<img src="${product.imageUrl}" alt="${product.nombre}" class="object-cover w-full h-full">` : `<span class="text-xs text-stone-400">🖼️</span>`}
+                        </div>
+
+                        <!-- Info del Producto -->
+                        <div>
+                            <p class="font-semibold text-lg text-stone-800">${product.nombre}</p>
+                            <div class="flex gap-2 items-center">
+                                <p class="text-xs text-stone-500">${product.categoria}</p>
+                                <span class="text-xs px-2 py-0.5 rounded-full font-medium ${stockBadgeClass}">
+                                    📦 ${stockMessage}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <span class="text-xl font-extrabold text-amber-800">${formatCurrency(product.precio)}</span>
+                        <button onclick="addToCart('${product.id}')" class="p-2 ${isOutOfStock ? 'bg-stone-300 cursor-not-allowed' : 'amber-gradient hover:opacity-90'} text-white rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
+                            ${isOutOfStock ? 'disabled' : ''}>
+                            <span class="text-xl">🛒</span>
+                        </button>
+                    </div>
+                `;
+                productList.appendChild(item);
+            });
+        }
+
+        function renderPrintView(subtotalWithoutDiscount, totalWithDiscount, discountRate) {
+             // Lógica para generar la vista de impresión
+            const printView = document.getElementById('print-view');
+            const clientName = document.getElementById('client-name').value.trim();
+            const clientNameHtml = clientName ? `<p class="print-name-field">Nombre y Apellido: ${clientName}</p>` : '';
+            
+            let printContent = `
+                <div style="margin-bottom: 25px;">
+                    <span class="print-logo-text">blanco&madera</span>
+                    <hr style="width: 100%; border: 1px solid #ddd; margin: 5px 0;">
+                    <span class="print-deco-home">DECO HOME</span>
+                    <h1 class="print-title">COTIZACIÓN</h1>
+                    ${clientNameHtml}
+                </div>
+                
+                <h2 style="font-size: 14pt; margin-bottom: 10px; color: #555;">Detalle de Productos:</h2>
+            `;
+
+            for (const id in cart) {
+                const item = cart[id];
+                const itemSubtotal = item.precio * item.cantidad;
+                
+                printContent += `
+                    <div class="cart-item-print flex justify-between">
+                        <span style="font-weight: 500;">${item.nombre}</span>
+                        <span>${item.cantidad} x ${formatCurrency(item.precio)} = ${formatCurrency(itemSubtotal)}</span>
+                    </div>
+                `;
+            }
+
+            if (discountRate > 0) {
+                const discountAmount = subtotalWithoutDiscount * discountRate;
+                printContent += `
+                    <div class="discount-print-summary" style="text-align: right; margin-top: 15px;">
+                        <p style="font-size: 10pt; color: #777;">Subtotal: ${formatCurrency(subtotalWithoutDiscount)}</p>
+                        <p style="font-size: 10pt; color: #c00;">Descuento (${(discountRate * 100).toFixed(0)}%): -${formatCurrency(discountAmount)}</p>
+                    </div>
+                `;
+            }
+
+            printContent += `
+                <div class="cart-total-print flex justify-between" style="text-align: right;">
+                    <span style="font-weight: 700; color: #333;">TOTAL FINAL:</span>
+                    <span style="font-weight: 800; color: #d4a753;">${formatCurrency(totalWithDiscount)}</span>
+                </div>
+            `;
+            
+            printView.innerHTML = printContent;
+        }
+
+        // --- CORE LOGIC HANDLERS (EXPOSED TO WINDOW) ---
+
+        window.updateDashboard = function() {
+            const categoryFilter = document.getElementById('category-filter');
+            const searchBox = document.getElementById('search-box');
+            
+            const selectedCategory = categoryFilter.value;
+            const searchTerm = searchBox.value.toLowerCase();
+
+            const filteredData = productData.filter(product => {
+                const matchesCategory = (selectedCategory === 'all') || (product.categoria === selectedCategory);
+                const matchesSearch = product.nombre.toLowerCase().includes(searchTerm);
+                return matchesCategory && matchesSearch;
+            });
+
+            renderProductList(filteredData);
+            renderCart(); 
+        }
+
+        window.showToast = function(message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => container.removeChild(toast), 300);
+            }, 2000);
+        }
+
+        window.changeQuantity = function(id, delta) {
+            // Lógica de cambio de cantidad (se mantiene igual)
+            if (delta > 0) {
+                const product = productData.find(p => p.id === id);
+                if (cart[id] && product) {
+                    if (cart[id].cantidad + delta > product.stock) {
+                        showToast(`⚠️ No hay más stock disponible de ${product.nombre}`);
+                        return;
+                    }
+                }
+            }
+
+            if (cart[id]) {
+                cart[id].cantidad += delta;
+                if (cart[id].cantidad <= 0) {
+                    delete cart[id];
+                }
+            }
+            saveCart(); 
+            renderCart(); 
+        };
+
+        window.addToCart = function(id) {
+            // Lógica de añadir al carrito (se mantiene igual)
+            const product = productData.find(p => p.id === id);
+            
+            if (!product) return;
+
+            if (product.stock <= 0) {
+                showToast(`🚫 Sin stock: ${product.nombre}`);
+                return;
+            }
+
+            if (cart[id]) {
+                if (cart[id].cantidad + 1 > product.stock) {
+                    showToast(`⚠️ Stock máximo alcanzado para ${product.nombre}`);
+                    return;
+                }
+                cart[id].cantidad += 1;
+                showToast(`¡Agregado! ${cart[id].nombre}`);
+            } else {
+                cart[id] = { 
+                    id: id, 
+                    nombre: product.nombre,
+                    precio: product.precio,
+                    cantidad: 1 
+                };
+                showToast(`¡Agregado! ${product.nombre}`);
+            }
+            saveCart(); 
+            renderCart(); 
+        };
+        
+        // --- FUNCIÓN DE WHATSAPP (TEXTO) ---
+        window.sendQuoteViaWhatsAppText = function() {
+            const clientName = document.getElementById('client-name').value.trim();
+            const whatsappNumber = document.getElementById('whatsapp-number').value.trim().replace(/\D/g, ''); 
+
+            const subtotalWithoutDiscount = calculateSubtotalWithoutDiscount();
+            const finalDiscountRate = getApplicableDiscountRate(subtotalWithoutDiscount); 
+            
+            let subtotal = 0;
+            const items = [];
+
+            for (const id in cart) {
+                const item = cart[id];
+                const itemSubtotal = item.precio * item.cantidad;
+                subtotal += itemSubtotal;
+                items.push({ nombre: item.nombre, cantidad: item.cantidad, subtotal: itemSubtotal });
+            }
+
+            const totalWithDiscount = subtotal * (1 - finalDiscountRate);
+            const discountApplied = subtotal * finalDiscountRate;
+            const formattedDate = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+
+            // Mensaje sin emojis y detalle directo
+            const summaryLines = [
+                `Hola, ${clientName || 'Cliente'}!`,
+                '',
+                `Te envío el detalle de tu compra en Blanco & Madera el ${formattedDate}`,
+                ''
+            ];
+
+            items.forEach((item) => {
+                summaryLines.push(` • ${item.nombre} x ${item.cantidad}: ${formatCurrency(item.subtotal)}`);
+            });
+
+            summaryLines.push('');
+            summaryLines.push('--------------------------');
+
+            if (finalDiscountRate > 0) {
+                summaryLines.push(`Subtotal: ${formatCurrency(subtotal)}`);
+                summaryLines.push(`Descuento (${(finalDiscountRate * 100).toFixed(0)}%): -${formatCurrency(discountApplied)}`);
+            }
+
+            summaryLines.push(`TOTAL FINAL: ${formatCurrency(totalWithDiscount)}`); 
+            summaryLines.push('');
+            summaryLines.push('Alias para transferencia: *sofiricca*'); // Alias añadido aquí
+            summaryLines.push('');
+            summaryLines.push('¡Muchas gracias por confiar en Blanco & Madera!'); 
+
+            // Abre WhatsApp con el número ingresado
+            if (whatsappNumber) {
+                const whatsappText = encodeURIComponent(summaryLines.join('\n'));
+                const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappText}`;
+                window.open(whatsappUrl, '_blank');
+            }
+        }
+        
+        // --- FUNCIÓN DE WHATSAPP (IMAGEN) ---
+        window.shareQuoteAsImage = async function() {
+            const clientName = document.getElementById('client-name').value.trim();
+            const whatsappNumber = document.getElementById('whatsapp-number').value.trim().replace(/\D/g, ''); 
+            
+            if (Object.keys(cart).length === 0) {
+                showToast("El carrito está vacío.");
+                return;
+            }
+
+            showToast("Generando imagen para compartir...");
+
+            const subtotalWithoutDiscount = calculateSubtotalWithoutDiscount();
+            const finalDiscountRate = getApplicableDiscountRate(subtotalWithoutDiscount); 
+            
+            let subtotal = 0;
+            const items = [];
+
+            for (const id in cart) {
+                const item = cart[id];
+                const itemSubtotal = item.precio * item.cantidad;
+                subtotal += itemSubtotal;
+                items.push({
+                    nombre: item.nombre,
+                    cantidad: item.cantidad,
+                    subtotal: itemSubtotal
+                });
+            }
+
+            const totalWithDiscount = subtotal * (1 - finalDiscountRate);
+            const discountApplied = subtotal * finalDiscountRate;
+            const formattedDate = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+
+            const headerHeight = 260;
+            const itemHeight = 42;
+            const totalsHeight = finalDiscountRate > 0 ? 190 : 150;
+            const footerHeight = 120;
+            const canvasHeight = headerHeight + (items.length * itemHeight) + totalsHeight + footerHeight;
+            const canvasWidth = 900;
+
+            const canvas = document.createElement('canvas');
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+            const ctx = canvas.getContext('2d');
+
+            // [LÓGICA DEL CANVAS: DIBUJO DE LA IMAGEN]
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+            const logoCenterX = canvasWidth / 2;
+            const headerTop = 35;
+            ctx.fillStyle = '#0b0b0b';
+            ctx.textAlign = 'center';
+            ctx.font = '700 48px "Inter", serif';
+            ctx.fillText('blanco&madera', logoCenterX, headerTop + 55);
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#0b0b0b';
+            ctx.beginPath();
+            ctx.moveTo(logoCenterX - 120, headerTop + 63);
+            ctx.lineTo(logoCenterX + 120, headerTop + 63);
+            ctx.stroke();
+            ctx.font = '600 16px Inter, sans-serif';
+            ctx.fillText('DECO HOME', logoCenterX, headerTop + 88);
+            ctx.font = 'bold 24px Inter, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('detalle de compra', 40, headerTop + 122);
+            let cursorY = 200;
+            ctx.fillStyle = '#0b0b0b';
+            ctx.font = '20px Inter, sans-serif';
+            ctx.fillText(`Fecha: ${formattedDate}`, 40, cursorY);
+            cursorY += 32;
+            ctx.fillText(`Cliente: ${clientName || 'No especificado'}`, 40, cursorY);
+            cursorY += 32;
+            cursorY += 16; 
+            ctx.font = 'bold 22px Inter, sans-serif';
+            ctx.fillText('Detalle de productos', 40, cursorY);
+            cursorY += 24;
+            ctx.font = '18px Inter, sans-serif';
+            items.forEach((item) => {
+                ctx.fillStyle = '#0b0b0b';
+                ctx.textAlign = 'left';
+                let displayName = item.nombre;
+                if (displayName.length > 60) displayName = displayName.substring(0, 57) + '...';
+                ctx.fillText(`${displayName} x${item.cantidad}`, 40, cursorY + 22);
+                ctx.textAlign = 'right';
+                ctx.fillText(`${formatCurrency(item.subtotal)}`, canvasWidth - 40, cursorY + 22);
+                cursorY += itemHeight;
+            });
+            ctx.textAlign = 'left';
+            ctx.fillStyle = '#78716c';
+            ctx.font = '18px Inter, sans-serif';
+            ctx.fillText('-------------------------------------------', 40, cursorY);
+            cursorY += 28;
+            if (finalDiscountRate > 0) {
+                ctx.fillStyle = '#0b0b0b';
+                ctx.fillText(`Subtotal sin descuento: ${formatCurrency(subtotal)}`, 40, cursorY);
+                cursorY += 26;
+                ctx.fillStyle = '#c1121f';
+                ctx.fillText(`Descuento (${(finalDiscountRate * 100).toFixed(0)}%): -${formatCurrency(discountApplied)}`, 40, cursorY);
+                cursorY += 32;
+            }
+            ctx.fillStyle = '#0b0b0b';
+            ctx.font = 'bold 24px Inter, sans-serif';
+            ctx.fillText('TOTAL FINAL:', 40, cursorY);
+            ctx.font = 'bold 32px Inter, sans-serif'; 
+            ctx.fillStyle = '#d4a753';
+            ctx.fillText(`${formatCurrency(totalWithDiscount)}`, 230, cursorY);
+            cursorY += 50;
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#0b0b0b';
+            ctx.font = '18px "Inter", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif';
+            ctx.fillText('Alias para transferencia: sofiricca', canvasWidth / 2, cursorY + 15); // Alias añadido
+            ctx.fillText('Muchas gracias por confiar en Blanco & Madera! 🫶🏼', canvasWidth / 2, cursorY + 45); // Mensaje final
+
+            // [FIN LÓGICA DEL CANVAS]
+
+            // --- LÓGICA DE COMPARTIR NATIVA (COMPORTAMIENTO DESEADO) ---
+            canvas.toBlob(async (blob) => {
+                if (!blob) {
+                    showToast('Error generando la imagen.');
+                    return;
+                }
+                const file = new File([blob], 'cotizacion_blanco_madera.png', { type: 'image/png' });
+
+                // USAR EL MÉTODO NATIVO QUE ABRE EL MENÚ COMPARTIR (COMPORTAMIENTO DESEADO)
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    try {
+                        await navigator.share({
+                            files: [file],
+                            title: 'Cotización Blanco & Madera',
+                            text: `Hola ${clientName}! Te envío el detalle de tu compra en Blanco & Madera el día ${formattedDate}`
+                        });
+                    } catch (err) {
+                        console.error('Error al compartir:', err);
+                    }
+                } else {
+                    // FALLBACK: Sigue descargando si el navegador no lo soporta
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = 'cotizacion_blanco_madera.png';
+                    link.click();
+                    window.showToast("Tu dispositivo no soporta compartir nativamente. La imagen se ha descargado.");
+                }
+            }, 'image/png');
+        }
+
+        window.printQuote = function() {
+            window.print();
+        }
+        
+        window.clearCart = function() {
+            // Función llamada por el botón Vaciar
+            window.cart = {};
+            window.saveCart();
+            window.updateDashboard();
+        }
+        
+        window.showView = function(viewName) {
+            const isMobile = window.innerWidth < 768;
+            if (!isMobile) return;
+
+            const catalogPanel = document.getElementById('catalog-panel');
+            const cartPanel = document.getElementById('cart-panel');
+            const filtersContainer = document.getElementById('filters-container');
+            const tabCatalog = document.getElementById('tab-catalog');
+            const tabCart = document.getElementById('tab-cart');
+            
+            // Note: En móvil, solo mostramos el catálogo o el carrito. La lista de pendientes queda abajo.
+            if (viewName === 'catalog') {
+                catalogPanel.style.display = 'block';
+                filtersContainer.style.display = 'grid';
+                cartPanel.style.display = 'none';
+                
+                tabCatalog.classList.add('text-amber-800');
+                tabCart.classList.remove('text-amber-800');
+                tabCart.classList.add('text-stone-500');
+                tabCatalog.classList.remove('text-stone-500');
+            } else {
+                catalogPanel.style.display = 'none';
+                filtersContainer.style.display = 'none';
+                cartPanel.style.display = 'flex';
+                
+                tabCart.classList.add('text-amber-800');
+                tabCatalog.classList.remove('text-amber-800');
+                tabCatalog.classList.add('text-stone-500');
+                tabCart.classList.remove('text-stone-500');
+            }
+        };
+
+        
+        document.addEventListener('DOMContentLoaded', async () => {
+            // CARGAR DATOS Y STOCK AL INICIAR
+            loadCart(); 
+            
+            // Eventos que llaman a funciones expuestas
+            document.getElementById('download-sales-report-button').addEventListener('click', window.downloadSalesReport);
+            document.getElementById('category-filter').addEventListener('change', window.updateDashboard);
+            document.getElementById('search-box').addEventListener('input', window.updateDashboard);
+            document.getElementById('reset-button').addEventListener('click', () => {
+                document.getElementById('category-filter').value = 'all';
+                document.getElementById('search-box').value = '';
+                document.getElementById('client-name').value = '';
+                document.getElementById('whatsapp-number').value = '';
+                document.getElementById('payment-method').value = 'Efectivo';
+                window.updateDashboard();
+            });
+            document.getElementById('clear-cart-button').addEventListener('click', window.clearCart); 
+            
+            document.getElementById('discount-select').addEventListener('change', renderCart); 
+            document.getElementById('payment-method').addEventListener('change', renderCart);
+            document.getElementById('client-name').addEventListener('input', renderCart); 
+            document.getElementById('whatsapp-number').addEventListener('input', renderCart); 
+            
+            // EVENTOS BOTONES PRINCIPALES
+            document.getElementById('confirm-sale-button').addEventListener('click', confirmSaleAndDeductStock);
+            document.getElementById('send-whatsapp-text-button').addEventListener('click', sendQuoteViaWhatsAppText);
+            document.getElementById('share-image-button').addEventListener('click', shareQuoteAsImage);
+            document.getElementById('print-button').addEventListener('click', printQuote);
+            document.getElementById('save-pending-button').addEventListener('click', savePendingOrder); 
+            
+            const isMobile = window.innerWidth < 768;
+            if (isMobile) {
+                showView('catalog'); // Mantener la lógica móvil de pestañas
+            } else {
+                document.getElementById('catalog-panel').style.display = 'block';
+                document.getElementById('cart-panel').style.display = 'flex';
+                document.getElementById('filters-container').style.display = 'grid';
+            }
+
+            // La primera llamada a updateDashboard se hace dentro de subscribeToProducts (en el módulo)
+        });
+    </script>
+    
+    <!-- MÓDULO DE FIREBASE (Se mantiene limpio) -->
+    <script type="module">
+        // Importaciones de Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, onSnapshot, setDoc, addDoc, writeBatch, deleteDoc, query, getDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+        // CONFIGURACIÓN DE FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyBeaZnBmmqd2kmgLjxaJvG33VYlAdKU5Y",
             authDomain: "blanco-y-madera-17214.firebaseapp.com",
@@ -419,17 +1059,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         
-        // --- VARIABLES GLOBALES Y DATOS MAESTROS ---
-        let productData = []; // Se llenará desde Firebase
-        let cart = {}; // Se llenará desde LocalStorage
-        let categories = new Set();
-        const STORAGE_KEY_CART = 'bm_cart';
-        
-        // Almacena pedidos pendientes para su visualización
-        let pendingOrders = []; 
-
         // DATOS MAESTROS (Se usan SOLAMENTE para la subida inicial a Firebase)
-        // **IMPORTANTE**: Este listado solo se usa si la base de datos está VACÍA al iniciar (función initDatabaseIfNeeded).
         const rawData = [
             // ALZAPAÑOS
             {"Product Name":"ALZAPAÑOS","Price":"NaN", "Stock": "10"},
@@ -560,6 +1190,7 @@
             {"Product Name":"Envase Suecia","Price":"6600", "Stock": "2"},
             {"Product Name":"Envase Soleil","Price":"6300", "Stock": "2"},
             {"Product Name":"Envase Esperanza","Price":"5100", "Stock": "4"},
+            {"Product Name":"Hornito cerámica","Price":"4000", "Stock": "1"}, // NUEVO: Hornito Cerámica
             // CESTERIA
             {"Product Name":"CESTERIA","Price":"NaN", "Stock": "10"},
             {"Product Name":"Panera De Junco N°1","Price":"14200", "Stock": "2"},
@@ -581,6 +1212,7 @@
             {"Product Name":"Aromatizador Textil Charming","Price":"8000", "Stock": "3"},
             {"Product Name":"Esencia Massala","Price":"1700", "Stock": "4"},
             {"Product Name":"Difusor Auto Iluminarte","Price":"5100", "Stock": "2"},
+            {"Product Name":"Difusor Real Essenze 300 ml","Price":"12000", "Stock": "2"}, // NUEVO: Difusor Real Essenze
             // SAHUMERIOS AROM.
             {"Product Name":"SAHUMERIOS AROM.","Price":"NaN", "Stock": "10"},
             {"Product Name":"Tibetano Slim","Price":"2200", "Stock": "4"},
@@ -616,7 +1248,7 @@
             {"Product Name":"Bandeja Noche De Paz","Price":"4200", "Stock": "2"},
             {"Product Name":"Bandeja Felices Fiestas","Price":"4200", "Stock": "4"},
             {"Product Name":"Pino Alaska","Price":"8000", "Stock": "4"},
-            {"Product Name":"Posa vela Navidad","Price":"2900", "Stock": "24"}, 
+            {"Product Name":"Posa vela Navidad","Price":"2900", "Stock": "24"}, // STOCK MODIFICADO
             {"Product Name":"Servilletero Star","Price":"6800", "Stock": "6"},
             {"Product Name":"Puertero Gabriel","Price":"3600", "Stock": "6"},
             {"Product Name":"Corona Paris","Price":"8200", "Stock": "1"},
@@ -642,7 +1274,7 @@
             {"Product Name":"CUENCO MINI CRUDO","Price":"5900", "Stock": "1"},
             {"Product Name":"PORTA MACETA LUREX","Price":"10200", "Stock": "1"},
             {"Product Name":"PORTA MACETA MINI CRUDO","Price":"7800", "Stock": "1"},
-            // NUEVOS PRODUCTOS - STOCK BASE
+            // NUEVOS PRODUCTOS
             {"Product Name":"Flor seca carqueja","Price":"4300", "Stock": "1"},
             {"Product Name":"Flor seca eucaliptus","Price":"4300", "Stock": "2"},
             {"Product Name":"Alfombra marrón","Price":"17600", "Stock": "1"},
@@ -650,12 +1282,10 @@
             {"Product Name":"Velas de noche x6","Price":"3000", "Stock": "5"},
             {"Product Name":"Velas de noche x12","Price":"3200", "Stock": "2"},
             {"Product Name":"Cesto con tapa crudo","Price":"36300", "Stock": "1"},
-            {"Product Name":"Florero","Price":"20000", "Stock": "2"},
-            {"Product Name":"Hornito cerámica","Price":"4000", "Stock": "1"},
-            {"Product Name":"Difusor Real Essenze 300 ml","Price":"12000", "Stock": "2"},
+            {"Product Name":"Florero","Price":"20000", "Stock": "2"}, 
             {"Product Name":"Calendario de adviento","Price":"22000", "Stock": "4"},
-            {"Product Name":"Tarjetones","Price":"300", "Stock": "50"},
-            {"Product Name":"Tarjetitas","Price":"150", "Stock": "26"},
+            {"Product Name":"Tarjetones","Price":"300", "Stock": "50"}, 
+            {"Product Name":"Tarjetitas","Price":"150", "Stock": "26"}, 
         ];
 
         // --- FUNCIONES DE BASE DE DATOS ---
@@ -667,7 +1297,6 @@
             const statusElement = document.getElementById('connection-status');
             const loadingElement = document.getElementById('catalog-loading');
             
-            // Si la base de datos está VACÍA, cargamos los productos desde rawData.
             if (snapshot.empty) {
                 statusElement.textContent = "Base de datos vacía. Subiendo productos...";
                 console.log("Base de datos vacía. Subiendo productos...");
@@ -682,7 +1311,6 @@
                     const name = item["Product Name"].trim();
                     const stock = item.Stock ? parseInt(item.Stock) : 10;
 
-                    // Si el precio es NaN o 0, asumimos que es un encabezado de categoría
                     if (isNaN(price) || price === 0) {
                         currentCategory = name; 
                     } else {
@@ -693,9 +1321,9 @@
                             nombre: name,
                             categoria: currentCategory,
                             precio: price,
-                            stock: stock
+                            stock: stock,
+                            imageUrl: '' // Campo para futura imagen
                         });
-                        categories.add(currentCategory);
                     }
                 });
 
@@ -716,19 +1344,22 @@
             const loadingElement = document.getElementById('catalog-loading');
             
             onSnapshot(q, (querySnapshot) => {
-                productData = [];
-                categories = new Set();
+                window.productData = []; 
+                window.categories = new Set(); 
                 
                 querySnapshot.forEach((doc) => {
                     const data = doc.data();
                     if (!data.id) data.id = doc.id; 
-                    productData.push(data);
-                    categories.add(data.categoria);
+                    window.productData.push(data);
+                    window.categories.add(data.categoria);
                 });
 
-                // Actualizar vista
-                populateCategoryFilter();
-                updateDashboard();
+                // Inicializamos la vista de pedidos pendientes
+                window.subscribeToPendingOrders();
+
+                // Actualizar vista del catálogo
+                window.populateCategoryFilter();
+                window.updateDashboard(); 
                 loadingElement.style.display = 'none'; 
                 document.getElementById('connection-status').textContent = "Sincronizado y Listo 🟢";
                 document.getElementById('connection-status').classList.remove('text-stone-400');
@@ -736,73 +1367,12 @@
             }, (error) => {
                 console.error("Error al suscribirse a la DB:", error);
                 document.getElementById('connection-status').textContent = "ERROR: Conexión a Firebase fallida 🔴";
-                document.getElementById('catalog-loading').innerHTML = `<div class="text-red-600 font-bold">¡ERROR! Revisa tu clave de Firebase.</div>`;
+                loadingElement.innerHTML = `<div class="text-red-600 font-bold">¡ERROR! Revisa tu clave de Firebase.</div>`;
             });
         }
-
-        // --- FUNCIÓN PARA REGISTRAR VENTA MANUAL (SIN USAR EL CARRITO) ---
-        async function addManualSale(productName, quantity, salePrice, clientName, paymentMethod, deductStock = true) {
-            
-            const product = productData.find(p => p.nombre === productName);
-
-            if (!product) {
-                showToast(`🚫 Producto no encontrado en el stock: ${productName}`);
-                return;
-            }
-
-            const quantityToDeduct = parseInt(quantity);
-            const currentStock = product.stock;
-            
-            if (deductStock && currentStock < quantityToDeduct) {
-                showToast(`🚫 No hay suficiente stock de ${productName}. Quedan ${currentStock}.`);
-                return;
-            }
-            
-            let confirmationMessage = `⚠️ REGISTRAR VENTA MANUAL: ${productName} (x${quantityToDeduct}) a ${clientName} por ${formatCurrency(salePrice)}.`;
-            
-            if (deductStock) {
-                confirmationMessage += ` ¿Deseas descontar stock?`;
-            } else {
-                confirmationMessage += ` El stock NO será descontado. ¿Confirmar solo el registro de venta?`;
-            }
-
-            if (!window.confirm(confirmationMessage)) {
-                 return;
-            }
-
-            const subtotal = salePrice * quantityToDeduct; 
-            const itemsToRecord = [{
-                nombre: productName,
-                cantidad: quantityToDeduct,
-                precio: salePrice, // El precio al que se vendió
-                subtotal: subtotal
-            }];
-
-            try {
-                const batch = writeBatch(db);
-
-                // 1. Descontar Stock (SOLO si deductStock es TRUE)
-                if (deductStock) {
-                    const newStock = currentStock - quantityToDeduct;
-                    const docRef = doc(db, "products", product.id);
-                    batch.update(docRef, { stock: newStock });
-                    await batch.commit();
-                }
-                
-                // 2. Registrar la venta
-                await recordSale(clientName, "No especificado", subtotal, 0, paymentMethod, itemsToRecord);
-                
-                const stockMsg = deductStock ? "y stock actualizado" : "sin modificar stock";
-                showToast(`✅ Venta manual registrada ${stockMsg} para ${productName}.`);
-
-            } catch (e) {
-                console.error("Error al completar la transacción de venta manual:", e);
-                showToast("Hubo un error al registrar la venta manual.");
-            }
-        }
         
-        // --- FUNCIÓN DE REGISTRO DE VENTA (EXISTENTE) ---
-        async function recordSale(clientName, whatsappNumber, total, discountRate, paymentMethod, items) {
+        // --- FUNCIÓN DE REGISTRO DE VENTA ---
+        async function recordSale(clientName, whatsappNumber, paymentMethod, total, discountRate, items) {
             const formattedDate = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
             
             try {
@@ -811,7 +1381,7 @@
                     fecha_venta: formattedDate,
                     cliente_nombre: clientName || 'No especificado',
                     cliente_whatsapp: whatsappNumber || 'No especificado',
-                    metodo_pago: paymentMethod, // NUEVO CAMPO
+                    metodo_pago: paymentMethod || 'No especificado',
                     total_final: total,
                     descuento_aplicado: discountRate,
                     items: items.map(item => ({
@@ -824,28 +1394,30 @@
                 console.log("Venta registrada en la colección 'ventas'.");
             } catch (e) {
                 console.error("Error registrando la venta en Firestore:", e);
-                showToast("⚠️ Error al guardar el registro de venta.");
+                window.showToast("⚠️ Error al guardar el registro de venta.");
             }
         }
 
 
-        // 3. Confirmar Venta en la Nube (Desde el Carrito)
-        async function confirmSaleAndDeductStock() {
-            if (Object.keys(cart).length === 0) {
-                showToast("El carrito está vacío. Debes agregar productos antes de registrar una venta.");
+        // 3. Confirmar Venta en la Nube
+        window.confirmSaleAndDeductStock = async function() {
+            if (Object.keys(window.cart).length === 0) {
+                alert("El carrito está vacío. Debes agregar productos antes de registrar una venta.");
                 return;
             }
 
-            if (!window.confirm("⚠️ CONFIRMAR BAJA DE STOCK: ¿Estás seguro de que la venta ha sido cobrada y deseas descontar el stock de estos productos?")) {
-                 return;
+            // Usamos un modal de confirmación más claro
+            if (!confirm("⚠️ CONFIRMAR BAJA DE STOCK: ¿Estás seguro de que la venta ha sido cobrada y deseas descontar el stock de estos productos?")) {
+                return;
             }
-
 
             const clientName = document.getElementById('client-name').value.trim();
             const whatsappNumber = document.getElementById('whatsapp-number').value.trim().replace(/\D/g, ''); 
-            const paymentMethod = document.getElementById('payment-method').value; // Leer el método de pago
+            const paymentMethod = document.getElementById('payment-method').value; // Lee del select
             
-            const discountRate = parseFloat(document.getElementById('discount-select').value); 
+            // Usamos SOLO el descuento manual del select
+            const discountSelect = document.getElementById('discount-select');
+            const discountRate = parseFloat(discountSelect.value); 
 
             let subtotal = 0;
             const itemsToRecord = [];
@@ -853,17 +1425,18 @@
             const batch = writeBatch(db);
             let error = false;
 
-            for (const id in cart) {
-                const item = cart[id];
+            // Preparar actualizaciones y calcular totales para el registro
+            for (const id in window.cart) {
+                const item = window.cart[id];
                 const itemSubtotal = item.precio * item.cantidad;
                 subtotal += itemSubtotal;
                 
-                const productInDb = productData.find(p => p.id === id);
+                const productInDb = window.productData.find(p => p.id === id);
                 
                 if (productInDb) {
                     const newStock = productInDb.stock - item.cantidad;
                     if (newStock < 0) {
-                        showToast(`Error: No hay suficiente stock de ${productInDb.nombre}. Quedan ${productInDb.stock}.`);
+                        alert(`Error: No hay suficiente stock de ${productInDb.nombre}. Quedan ${productInDb.stock}.`);
                         error = true;
                         break;
                     }
@@ -885,28 +1458,21 @@
                     await recordSale(clientName, whatsappNumber, totalWithDiscount, discountRate, paymentMethod, itemsToRecord);
                     
                     // 3. Limpiar y notificar
-                    cart = {};
-                    saveCart(); // Limpiar localstorage
-                    
-                    // Limpiar también los campos de la cotización
-                    document.getElementById('client-name').value = '';
-                    document.getElementById('whatsapp-number').value = '';
-                    document.getElementById('discount-select').value = '0';
-                    document.getElementById('payment-method').value = 'Otro';
-                    
-                    updateDashboard(); 
-                    showToast("✅ Venta registrada y stock descontado.");
+                    window.cart = {};
+                    window.saveCart(); // Limpiar localstorage
+                    window.updateDashboard();
+                    window.showToast("✅ Venta registrada y stock descontado.");
                 } catch (e) {
                     console.error("Error al completar la transacción:", e);
-                    showToast("Hubo un error al actualizar el stock/registrar la venta. Revisa tu conexión y permisos.");
+                    alert("Hubo un error al actualizar el stock/registrar la venta. Revisa tu conexión y permisos.");
                 }
             }
         }
         
         // 4. Función de reinicio de emergencia (Borra todo el stock en la nube y local)
         window.resetLocalData = async function() {
-            if (!window.confirm("⚠️ ADVERTENCIA: Esta acción BORRARÁ TODOS los productos de la base de datos de Firebase y subirá los productos del código actual. ¿Estás absolutamente seguro?")) {
-                 return;
+            if (!confirm("⚠️ ADVERTENCIA: Esta acción BORRARÁ TODOS los productos de la base de datos de Firebase y subirá los productos del código actual. ¿Estás absolutamente seguro?")) {
+                return;
             }
 
             // 1. Borrar datos locales (carrito)
@@ -924,25 +1490,24 @@
                 });
                 await batch.commit();
                 
-                showToast("Base de datos de Firebase borrada. Recargando para inicializar...");
+                window.showToast("Base de datos de Firebase borrada. Recargando para inicializar...");
                 // Forzar la recarga para que initDatabaseIfNeeded suba los datos nuevos
                 window.location.reload(true);
             } catch(e) {
                 console.error("Error al borrar datos de Firebase:", e);
-                showToast("Hubo un error al borrar los datos de Firebase. Revisa tus permisos o conexión.");
+                alert("Hubo un error al borrar los datos de Firebase. Revisa tus permisos o conexión.");
             }
         }
         
         // --- FUNCIÓN DE DESCARGA DE REPORTE (CSV) ---
-        async function downloadSalesReport() {
-            showToast("Preparando descarga del historial...");
+        window.downloadSalesReport = async function() {
+            window.showToast("Preparando descarga del historial...");
             try {
-                // Lee de la colección de ventas
                 const salesSnapshot = await getDocs(collection(db, "ventas"));
                 let csvContent = "data:text/csv;charset=utf-8,";
                 
-                // Ajuste del orden de la cabecera
-                const header = ["ID Venta", "Fecha Venta", "Nombre Cliente", "WhatsApp", "Método Pago", "Total Final", "Descuento", "Detalle Productos"];
+                // HEADER CORREGIDO
+                const header = ["ID Venta", "Fecha Venta", "Nombre Cliente", "WhatsApp", "Metodo Pago", "Total Final", "Descuento", "Detalle Productos"];
                 csvContent += header.join(";") + "\n";
                 
                 salesSnapshot.forEach((doc) => {
@@ -954,10 +1519,9 @@
                     const row = [
                         doc.id,
                         sale.fecha_venta,
-                        `"${sale.cliente_nombre}"`, 
+                        `"${sale.cliente_nombre}"`,
                         sale.cliente_whatsapp,
-                        // Insertamos el método de pago aquí
-                        sale.metodo_pago || 'N/A', 
+                        `"${sale.metodo_pago || 'N/A'}"`, 
                         sale.total_final,
                         (sale.descuento_aplicado * 100) + '%',
                         `"${itemsDetail}"`
@@ -973,220 +1537,168 @@
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
-                showToast("Descarga completada.");
+                window.showToast("Descarga completada.");
                 
             } catch (e) {
                 console.error("Error generando CSV:", e);
-                showToast("⚠️ Falló la descarga. Asegúrate de que las reglas de Firebase permitan la lectura.");
+                window.showToast("⚠️ Falló la descarga. Asegúrate de que las reglas de Firebase permitan la lectura.");
             }
         }
         
-        // --- LÓGICA DE DESCUENTO ---
+        // --- FUNCIÓN GUARDAR/CARGAR PEDIDO PENDIENTE ---
         
-        function calculateSubtotalWithoutDiscount() {
-            let subtotal = 0;
-            for (const id in cart) {
-                const item = cart[id];
-                subtotal += Number(item.precio) * item.cantidad;
-            }
-            return subtotal;
-        }
-
-        function getApplicableDiscountRate() {
-            // AHORA ESTA FUNCIÓN SOLO DEVUELVE EL VALOR DEL DESCUENTO MANUAL SELECCIONADO.
-            const discountSelect = document.getElementById('discount-select');
-            return parseFloat(discountSelect.value);
-        }
-
-        // --- FUNCIONES UTILITARIAS ---
-
-        function populateCategoryFilter() {
-            const categoryFilter = document.getElementById('category-filter');
-            const currentSelection = categoryFilter.value;
-            
-            categoryFilter.innerHTML = '<option value="all">Todas las Categorías</option>';
-            
-            const sortedCategories = Array.from(categories).sort();
-            sortedCategories.forEach(category => {
-                const option = document.createElement('option');
-                option.value = category;
-                option.textContent = category;
-                categoryFilter.appendChild(option);
-            });
-
-            if (categories.has(currentSelection)) {
-                categoryFilter.value = currentSelection;
-            }
-        }
-        
-        function formatCurrency(value) {
-            return new Intl.NumberFormat('es-AR', {
-                style: 'currency',
-                currency: 'ARS',
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0
-            }).format(value);
-        }
-
-        function saveCart() {
-            localStorage.setItem(STORAGE_KEY_CART, JSON.stringify(cart));
-        }
-
-        function loadCart() {
-            const saved = localStorage.getItem(STORAGE_KEY_CART);
-            if (saved) {
-                cart = JSON.parse(saved);
-            }
-        }
-
-        function renderCart() {
-            const cartList = document.getElementById('cart-list');
-            const cartTotalEl = document.getElementById('cart-total');
-            const emptyMessage = document.getElementById('empty-cart-message');
-            const discountSelect = document.getElementById('discount-select');
-            const cartItemCountEl = document.getElementById('cart-item-count');
-            const discountMessageArea = document.getElementById('discount-message-area'); 
-
-            cartList.innerHTML = ''; 
-            let subtotalWithoutDiscount = 0;
-            let cartItemsCount = 0;
-            
-            subtotalWithoutDiscount = calculateSubtotalWithoutDiscount();
-            let finalDiscountRate = getApplicableDiscountRate(subtotalWithoutDiscount);
-
-            if (finalDiscountRate > 0) {
-                 discountMessageArea.innerHTML = `<span class="bg-red-100 px-3 py-1 rounded-lg text-red-800">Descuento Manual (${(finalDiscountRate * 100).toFixed(0)}%) Aplicado</span>`;
-            } else {
-                discountMessageArea.innerHTML = '';
-            }
-
-            for (const id in cart) {
-                const item = cart[id];
-                const numericPrice = Number(item.precio); 
-                const subtotal = numericPrice * item.cantidad;
-                cartItemsCount += item.cantidad;
-
-                const productReal = productData.find(p => p.id === id);
-                const maxStock = productReal ? productReal.stock : 0;
-
-                const itemDiv = document.createElement('div');
-                itemDiv.className = "bg-white p-3 rounded-lg border border-stone-200 flex justify-between items-center item-card";
-                itemDiv.innerHTML = `
-                    <div class="flex flex-col flex-grow">
-                        <p class="font-bold text-stone-700">${item.nombre}</p>
-                        <p class="text-sm text-amber-700">${formatCurrency(item.precio)} x ${item.cantidad}</p>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <span class="font-extrabold text-lg text-amber-800">${formatCurrency(subtotal)}</span>
-                        <button onclick="changeQuantity('${id}', -1)" class="p-1 bg-stone-300 text-stone-800 rounded-full w-6 h-6 flex items-center justify-center text-xl font-bold leading-none hover:bg-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-500">
-                            -
-                        </button>
-                        <button onclick="changeQuantity('${id}', 1)" 
-                            class="p-1 ${item.cantidad >= maxStock ? 'bg-gray-300 cursor-not-allowed' : 'amber-gradient hover:opacity-90'} text-white rounded-full w-6 h-6 flex items-center justify-center text-xl font-bold leading-none focus:outline-none focus:ring-2 focus:ring-amber-500"
-                            ${item.cantidad >= maxStock ? 'disabled' : ''}>
-                            +
-                        </button>
-                    </div>
-                `;
-                cartList.appendChild(itemDiv);
-            }
-
-            const totalWithDiscount = subtotalWithoutDiscount * (1 - finalDiscountRate);
-
-            if (emptyMessage) {
-                emptyMessage.style.display = cartItemsCount === 0 ? 'block' : 'none';
-            }
-            
-            cartItemCountEl.textContent = cartItemsCount > 0 ? cartItemsCount : '';
-            cartItemCountEl.style.opacity = cartItemsCount > 0 ? 1 : 0;
-
-            cartTotalEl.textContent = formatCurrency(totalWithDiscount);
-
-            // Mostrar el detalle del descuento y subtotal
-            if (finalDiscountRate > 0) {
-                 const discountAmount = subtotalWithoutDiscount * finalDiscountRate;
-                 
-                 const discountDisplay = document.createElement('p');
-                 discountDisplay.className = "text-sm text-red-600 font-semibold mt-1";
-                 discountDisplay.textContent = `Descuento Total (${(finalDiscountRate * 100).toFixed(0)}%): -${formatCurrency(discountAmount)}`;
-                 cartList.appendChild(discountDisplay);
-
-                 const subtotalDisplay = document.createElement('p');
-                 subtotalDisplay.className = "text-sm text-stone-500 font-medium";
-                 subtotalDisplay.textContent = `Subtotal sin Descuento: ${formatCurrency(subtotalWithoutDiscount)}`;
-                 cartList.appendChild(subtotalDisplay);
-            }
-            
-            renderPrintView(subtotalWithoutDiscount, totalWithDiscount, finalDiscountRate);
-        }
-
-        window.changeQuantity = function(id, delta) {
-            
-            // Chequeo de stock
-            if (delta > 0) {
-                const product = productData.find(p => p.id === id);
-                if (cart[id] && product) {
-                    if (cart[id].cantidad + delta > product.stock) {
-                        showToast(`⚠️ No hay más stock disponible de ${product.nombre}`);
-                        return;
-                    }
-                }
-            }
-
-            if (cart[id]) {
-                cart[id].cantidad += delta;
-                if (cart[id].cantidad <= 0) {
-                    delete cart[id];
-                }
-            }
-            saveCart(); 
-            renderCart(); 
-        };
-
-        window.addToCart = function(id) {
-            const product = productData.find(p => p.id === id);
-            
-            if (!product) return;
-
-            if (product.stock <= 0) {
-                showToast(`🚫 Sin stock: ${product.nombre}`);
+        window.savePendingOrder = async function() {
+            const clientName = document.getElementById('client-name').value.trim();
+            if (Object.keys(window.cart).length === 0 || !clientName) {
+                alert("El carrito está vacío o falta el nombre del cliente para guardar el pedido.");
                 return;
             }
 
-            if (cart[id]) {
-                if (cart[id].cantidad + 1 > product.stock) {
-                    showToast(`⚠️ Stock máximo alcanzado para ${product.nombre}`);
-                    return;
+            const subtotalWithoutDiscount = calculateSubtotalWithoutDiscount();
+            const finalDiscountRate = getApplicableDiscountRate(subtotalWithoutDiscount); 
+            const totalWithDiscount = subtotalWithoutDiscount * (1 - finalDiscountRate);
+            const paymentMethod = document.getElementById('payment-method').value;
+            
+            try {
+                // Preparamos los items para guardar
+                const itemsToSave = [];
+                for (const id in window.cart) {
+                    const item = window.cart[id];
+                    itemsToSave.push({
+                        nombre: item.nombre,
+                        cantidad: item.cantidad,
+                        precio_unitario: Number(item.precio),
+                    });
                 }
-                cart[id].cantidad += 1;
-                showToast(`¡Agregado! ${cart[id].nombre}`);
-            } else {
-                cart[id] = { 
-                    id: id, 
-                    nombre: product.nombre,
-                    precio: product.precio,
-                    cantidad: 1 
-                };
-                showToast(`¡Agregado! ${product.nombre}`);
-            }
-            saveCart(); 
-            renderCart(); 
-        };
+                
+                await addDoc(collection(db, "pedidos_pendientes"), {
+                    timestamp: new Date(),
+                    fecha_guardado: new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+                    cliente_nombre: clientName,
+                    cliente_whatsapp: document.getElementById('whatsapp-number').value.trim(),
+                    metodo_pago: paymentMethod,
+                    total_final: totalWithDiscount,
+                    descuento_aplicado: finalDiscountRate,
+                    items: itemsToSave
+                });
+                
+                // Limpiar carrito para empezar uno nuevo
+                window.cart = {};
+                window.saveCart();
+                window.updateDashboard();
+                window.showToast(`Pedido pendiente guardado para ${clientName}.`);
 
-        function showToast(message) {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.textContent = message;
-            container.appendChild(toast);
-            setTimeout(() => toast.classList.add('show'), 10);
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => container.removeChild(toast), 300);
-            }, 2000);
+            } catch (e) {
+                console.error("Error al guardar pedido pendiente:", e);
+                window.showToast("⚠️ Falló la conexión al guardar el pedido pendiente.");
+            }
         }
 
-        window.showView = function(viewName) {
+        function subscribeToPendingOrders() {
+            const ordersList = document.getElementById('pending-orders-list');
+            const q = collection(db, "pedidos_pendientes");
+
+            onSnapshot(q, (querySnapshot) => {
+                const pendingOrders = []; // Limpiar la lista interna
+                ordersList.innerHTML = '';
+                
+                querySnapshot.forEach((doc) => {
+                    const order = doc.data();
+                    order.docId = doc.id;
+                    pendingOrders.push(order);
+                });
+                
+                if (pendingOrders.length === 0) {
+                    ordersList.innerHTML = '<p class="text-sm text-stone-500 text-center">No hay pedidos pendientes guardados.</p>';
+                    return;
+                }
+
+                pendingOrders.forEach((order) => {
+                    const orderDiv = document.createElement('div');
+                    orderDiv.className = 'flex justify-between items-center bg-stone-50 p-3 rounded-lg border border-stone-200';
+                    
+                    const timestamp = order.timestamp?.toDate ? order.timestamp.toDate() : new Date(order.timestamp);
+                    const formattedTime = timestamp.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+                    
+                    orderDiv.innerHTML = `
+                        <div>
+                            <p class="font-bold text-stone-700">${order.cliente_nombre}</p>
+                            <p class="text-xs text-stone-500">Guardado a las ${formattedTime}</p>
+                            <p class="text-sm text-amber-700">${formatCurrency(order.total_final)}</p>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button onclick="loadPendingOrderFromList('${order.docId}')" class="text-blue-500 hover:text-blue-700 font-semibold text-sm">
+                                Cargar
+                            </button>
+                            <button onclick="deletePendingOrder('${order.docId}')" class="text-red-500 hover:text-red-700 text-sm">
+                                Borrar
+                            </button>
+                        </div>
+                    `;
+                    ordersList.appendChild(orderDiv);
+                });
+            });
+        }
+        
+        window.loadPendingOrderFromList = function(docId) {
+            const orderDocRef = doc(db, "pedidos_pendientes", docId);
+            
+            // Se realiza la lectura una vez para asegurar que el dato es fresco antes de cargarlo
+            getDoc(orderDocRef).then(docSnapshot => {
+                const orderData = docSnapshot.data();
+                
+                if (orderData) {
+                    // Reconstruir el objeto cart
+                    const newCart = {};
+                    orderData.items.forEach(item => {
+                        const product = productData.find(p => p.nombre === item.nombre);
+                        // Usamos el ID del producto maestro (productData) para que el carrito funcione con los botones
+                        const id = product ? product.id : item.nombre; 
+                        
+                        newCart[id] = {
+                            id: id,
+                            nombre: item.nombre,
+                            precio: item.precio_unitario, // Precio unitario del momento de la cotización
+                            cantidad: item.cantidad
+                        };
+                    });
+                    
+                    window.cart = newCart;
+                    window.saveCart();
+                    
+                    // Rellenar campos del cliente
+                    document.getElementById('client-name').value = orderData.cliente_nombre || '';
+                    document.getElementById('whatsapp-number').value = orderData.cliente_whatsapp || '';
+                    // Usar el descuento guardado
+                    document.getElementById('discount-select').value = orderData.descuento_aplicado || '0';
+                    document.getElementById('payment-method').value = orderData.metodo_pago || 'Otro';
+
+                    // Borrar de la lista de pendientes (asumiendo que se va a cerrar la venta)
+                    window.deletePendingOrder(docId, false);
+                    
+                    window.showToast(`Pedido de ${orderData.cliente_nombre} cargado.`);
+                    window.updateDashboard();
+                }
+            }).catch(e => {
+                 console.error("Error al cargar el pedido:", e);
+                 window.showToast("⚠️ Falló la carga del pedido.");
+            });
+        }
+
+
+        window.deletePendingOrder = async function(docId, shouldConfirm = true) {
+            if (shouldConfirm && !confirm("¿Seguro que quieres borrar este pedido pendiente?")) return;
+            try {
+                await deleteDoc(doc(db, "pedidos_pendientes", docId));
+                window.showToast("Pedido pendiente eliminado.");
+            } catch (e) {
+                console.error("Error eliminando pedido pendiente:", e);
+                window.showToast("⚠️ Falló la eliminación.");
+            }
+        }
+        
+        // --- LÓGICA DE INTERCAMBIO DE VISTAS (Se mantiene para compatibilidad móvil) ---
+        window.changeView = function(viewName) {
             const isMobile = window.innerWidth < 768;
             if (!isMobile) return;
 
@@ -1196,10 +1708,12 @@
             const tabCatalog = document.getElementById('tab-catalog');
             const tabCart = document.getElementById('tab-cart');
             
+            // Note: En móvil, solo mostramos el catálogo o el carrito. La lista de pendientes queda abajo.
             if (viewName === 'catalog') {
                 catalogPanel.style.display = 'block';
-                filtersContainer.style.display = 'block';
+                filtersContainer.style.display = 'grid';
                 cartPanel.style.display = 'none';
+                
                 tabCatalog.classList.add('text-amber-800');
                 tabCart.classList.remove('text-amber-800');
                 tabCart.classList.add('text-stone-500');
@@ -1208,437 +1722,13 @@
                 catalogPanel.style.display = 'none';
                 filtersContainer.style.display = 'none';
                 cartPanel.style.display = 'flex';
+                
                 tabCart.classList.add('text-amber-800');
                 tabCatalog.classList.remove('text-amber-800');
                 tabCatalog.classList.add('text-stone-500');
                 tabCart.classList.remove('text-stone-500');
             }
         };
-
-        async function sendQuoteViaWhatsAppText() {
-            const clientName = document.getElementById('client-name').value.trim();
-            const whatsappNumber = document.getElementById('whatsapp-number').value.trim().replace(/\D/g, ''); 
-
-            const subtotalWithoutDiscount = calculateSubtotalWithoutDiscount();
-            const finalDiscountRate = getApplicableDiscountRate(subtotalWithoutDiscount); 
-            
-            let subtotal = 0;
-            const items = [];
-
-            for (const id in cart) {
-                const item = cart[id];
-                const itemSubtotal = item.precio * item.cantidad;
-                subtotal += itemSubtotal;
-                items.push({ nombre: item.nombre, cantidad: item.cantidad, subtotal: itemSubtotal });
-            }
-
-            const totalWithDiscount = subtotal * (1 - finalDiscountRate);
-            const discountApplied = subtotal * finalDiscountRate;
-            const formattedDate = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
-
-            // Mensaje sin emojis y detalle directo
-            const summaryLines = [
-                `Hola, ${clientName || 'Cliente'}!`,
-                '',
-                `Te envío el detalle de tu compra en Blanco & Madera el ${formattedDate}`,
-                ''
-            ];
-
-            items.forEach((item) => {
-                summaryLines.push(` • ${item.nombre} x ${item.cantidad}: ${formatCurrency(item.subtotal)}`);
-            });
-
-            summaryLines.push('');
-            summaryLines.push('--------------------------');
-
-            if (finalDiscountRate > 0) {
-                summaryLines.push(`Subtotal: ${formatCurrency(subtotal)}`);
-                summaryLines.push(`Descuento (${(finalDiscountRate * 100).toFixed(0)}%): -${formatCurrency(discountApplied)}`);
-            }
-
-            summaryLines.push(`TOTAL FINAL: ${formatCurrency(totalWithDiscount)}`); 
-            summaryLines.push('');
-            summaryLines.push('¡Muchas gracias por confiar en Blanco & Madera!'); 
-
-            // Abre WhatsApp con el número ingresado
-            if (whatsappNumber) {
-                const whatsappText = encodeURIComponent(summaryLines.join('\n'));
-                const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappText}`;
-                window.open(whatsappUrl, '_blank');
-            } else {
-                // Si no hay número, simplemente copia el texto al portapapeles
-                const textToCopy = summaryLines.join('\n');
-                try {
-                    // Usar document.execCommand('copy') como fallback para iframe/sandbox
-                    const textarea = document.createElement('textarea');
-                    textarea.value = textToCopy;
-                    document.body.appendChild(textarea);
-                    textarea.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(textarea);
-                    showToast("Texto de la cotización copiado al portapapeles.");
-                } catch (err) {
-                    showToast("Error al copiar al portapapeles.");
-                    console.error('Error al copiar el texto: ', err);
-                }
-            }
-        }
-
-        async function shareQuoteAsImage() {
-            const clientName = document.getElementById('client-name').value.trim();
-            const whatsappNumber = document.getElementById('whatsapp-number').value.trim().replace(/\D/g, ''); 
-            
-            if (Object.keys(cart).length === 0) {
-                showToast("El carrito está vacío.");
-                return;
-            }
-
-            showToast("Generando imagen para compartir...");
-
-            const subtotalWithoutDiscount = calculateSubtotalWithoutDiscount();
-            const finalDiscountRate = getApplicableDiscountRate(subtotalWithoutDiscount); 
-            
-            let subtotal = 0;
-            const items = [];
-
-            for (const id in cart) {
-                const item = cart[id];
-                const itemSubtotal = item.precio * item.cantidad;
-                subtotal += itemSubtotal;
-                items.push({
-                    nombre: item.nombre,
-                    cantidad: item.cantidad,
-                    subtotal: itemSubtotal
-                });
-            }
-
-            const totalWithDiscount = subtotal * (1 - finalDiscountRate);
-            const discountApplied = subtotal * finalDiscountRate;
-            const formattedDate = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
-
-            const headerHeight = 260;
-            const itemHeight = 42;
-            const totalsHeight = finalDiscountRate > 0 ? 190 : 150;
-            const footerHeight = 120;
-            const canvasHeight = headerHeight + (items.length * itemHeight) + totalsHeight + footerHeight;
-            const canvasWidth = 900;
-
-            const canvas = document.createElement('canvas');
-            canvas.width = canvasWidth;
-            canvas.height = canvasHeight;
-            const ctx = canvas.getContext('2d');
-
-            // [LÓGICA DEL CANVAS: DIBUJO DE LA IMAGEN]
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-            const logoCenterX = canvasWidth / 2;
-            const headerTop = 35;
-            ctx.fillStyle = '#0b0b0b';
-            ctx.textAlign = 'center';
-            ctx.font = '700 48px "Inter", serif';
-            ctx.fillText('blanco&madera', logoCenterX, headerTop + 55);
-            ctx.lineWidth = 2;
-            ctx.strokeStyle = '#0b0b0b';
-            ctx.beginPath();
-            ctx.moveTo(logoCenterX - 120, headerTop + 63);
-            ctx.lineTo(logoCenterX + 120, headerTop + 63);
-            ctx.stroke();
-            ctx.font = '600 16px Inter, sans-serif';
-            ctx.fillText('DECO HOME', logoCenterX, headerTop + 88);
-            ctx.font = 'bold 24px Inter, sans-serif';
-            ctx.textAlign = 'left';
-            ctx.fillText('detalle de compra', 40, headerTop + 122);
-            let cursorY = 200;
-            ctx.fillStyle = '#0b0b0b';
-            ctx.font = '20px Inter, sans-serif';
-            ctx.fillText(`Fecha: ${formattedDate}`, 40, cursorY);
-            cursorY += 32;
-            ctx.fillText(`Cliente: ${clientName || 'No especificado'}`, 40, cursorY);
-            cursorY += 32;
-            cursorY += 16; 
-            ctx.font = 'bold 22px Inter, sans-serif';
-            ctx.fillText('Detalle de productos', 40, cursorY);
-            cursorY += 24;
-            ctx.font = '18px Inter, sans-serif';
-            items.forEach((item) => {
-                ctx.fillStyle = '#0b0b0b';
-                ctx.textAlign = 'left';
-                let displayName = item.nombre;
-                if (displayName.length > 60) displayName = displayName.substring(0, 57) + '...';
-                ctx.fillText(`${displayName} x${item.cantidad}`, 40, cursorY + 22);
-                ctx.textAlign = 'right';
-                ctx.fillText(`${formatCurrency(item.subtotal)}`, canvasWidth - 40, cursorY + 22);
-                cursorY += itemHeight;
-            });
-            ctx.textAlign = 'left';
-            ctx.fillStyle = '#78716c';
-            ctx.font = '18px Inter, sans-serif';
-            ctx.fillText('-------------------------------------------', 40, cursorY);
-            cursorY += 28;
-            if (finalDiscountRate > 0) {
-                ctx.fillStyle = '#0b0b0b';
-                ctx.fillText(`Subtotal sin descuento: ${formatCurrency(subtotal)}`, 40, cursorY);
-                cursorY += 26;
-                ctx.fillStyle = '#c1121f';
-                ctx.fillText(`Descuento (${(finalDiscountRate * 100).toFixed(0)}%): -${formatCurrency(discountApplied)}`, 40, cursorY);
-                cursorY += 32;
-            }
-            ctx.fillStyle = '#0b0b0b';
-            ctx.font = 'bold 24px Inter, sans-serif';
-            ctx.fillText('TOTAL FINAL:', 40, cursorY);
-            ctx.font = 'bold 32px Inter, sans-serif'; 
-            ctx.fillStyle = '#d4a753';
-            ctx.fillText(`${formatCurrency(totalWithDiscount)}`, 230, cursorY);
-            cursorY += 50;
-            ctx.textAlign = 'center';
-            ctx.fillStyle = '#0b0b0b';
-            ctx.font = '18px "Inter", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif';
-            ctx.fillText('Muchas gracias por confiar en Blanco & Madera! 🫶🏼', canvasWidth / 2, cursorY + 30);
-            // [FIN LÓGICA DEL CANVAS]
-
-            // --- LÓGICA DE COMPARTIR NATIVA (COMPORTAMIENTO DESEADO) ---
-            canvas.toBlob(async (blob) => {
-                if (!blob) {
-                    showToast('Error generando la imagen.');
-                    return;
-                }
-                const file = new File([blob], 'cotizacion_blanco_madera.png', { type: 'image/png' });
-
-                // USAR EL MÉTODO NATIVO QUE ABRE EL MENÚ COMPARTIR (SIN FORZAR EL NÚMERO)
-                if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    try {
-                        await navigator.share({
-                            files: [file],
-                            title: 'Cotización Blanco & Madera',
-                            text: `Hola ${clientName}! Te envío el detalle de tu compra en Blanco & Madera el día ${formattedDate}`
-                        });
-                    } catch (err) {
-                        console.error('Error al compartir:', err);
-                    }
-                } else {
-                    // FALLBACK: Sigue descargando si el navegador no lo soporta
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(blob);
-                    link.download = 'cotizacion_blanco_madera.png';
-                    link.click();
-                    showToast("Tu dispositivo no soporta compartir nativamente. La imagen se ha descargado.");
-                }
-            }, 'image/png');
-        }
-
-        function printQuote() {
-            window.print();
-        }
-
-        function renderPrintView(subtotalWithoutDiscount, totalWithDiscount, discountRate) {
-            const printView = document.getElementById('print-view');
-            const clientName = document.getElementById('client-name').value.trim();
-            const clientNameHtml = clientName ? `<p class="print-name-field">Nombre y Apellido: ${clientName}</p>` : '';
-            
-            let printContent = `
-                <div style="margin-bottom: 25px;">
-                    <span class="print-logo-text">blanco&madera</span>
-                    <hr style="width: 100%; border: 1px solid #ddd; margin: 5px 0;">
-                    <span class="print-deco-home">DECO HOME</span>
-                    <h1 class="print-title">COTIZACIÓN</h1>
-                    ${clientNameHtml}
-                </div>
-                
-                <h2 style="font-size: 14pt; margin-bottom: 10px; color: #555;">Detalle de Productos:</h2>
-            `;
-
-            for (const id in cart) {
-                const item = cart[id];
-                const itemSubtotal = item.precio * item.cantidad;
-                
-                printContent += `
-                    <div class="cart-item-print flex justify-between">
-                        <span style="font-weight: 500;">${item.nombre}</span>
-                        <span>${item.cantidad} x ${formatCurrency(item.precio)} = ${formatCurrency(itemSubtotal)}</span>
-                    </div>
-                `;
-            }
-
-            if (discountRate > 0) {
-                const discountAmount = subtotalWithoutDiscount * discountRate;
-                printContent += `
-                    <div class="discount-print-summary" style="text-align: right; margin-top: 15px;">
-                        <p style="font-size: 10pt; color: #777;">Subtotal: ${formatCurrency(subtotalWithoutDiscount)}</p>
-                        <p style="font-size: 10pt; color: #c00;">Descuento (${(discountRate * 100).toFixed(0)}%): -${formatCurrency(discountAmount)}</p>
-                    </div>
-                `;
-            }
-
-            printContent += `
-                <div class="cart-total-print flex justify-between" style="text-align: right;">
-                    <span style="font-weight: 700; color: #333;">TOTAL FINAL:</span>
-                    <span style="font-weight: 800; color: #d4a753;">${formatCurrency(totalWithDiscount)}</span>
-                </div>
-            `;
-            
-            printView.innerHTML = printContent;
-        }
-
-        function renderProductList(data) {
-            const productList = document.getElementById('product-list');
-            productList.innerHTML = ''; 
-
-            if (data.length === 0) {
-                productList.innerHTML = '<p class="text-stone-500">No se encontraron productos que coincidan con su búsqueda.</p>';
-                return;
-            }
-
-            data.forEach(product => {
-                const item = document.createElement('div');
-                const isOutOfStock = product.stock <= 0;
-                const opacityClass = isOutOfStock ? 'opacity-60' : '';
-                
-                // --- LÓGICA DEL SEMÁFORO DE STOCK ---
-                const stock = product.stock;
-                let stockBadgeClass;
-                let stockMessage;
-
-                if (stock > 3) {
-                    // VERDE: Stock saludable (> 3)
-                    stockBadgeClass = 'bg-green-100 text-green-800';
-                    stockMessage = 'Stock: ' + stock;
-                } else if (stock >= 1) {
-                    // AMARILLO: Stock bajo (1 a 3)
-                    stockBadgeClass = 'bg-yellow-100 text-yellow-800';
-                    stockMessage = 'Stock: ' + stock;
-                } else {
-                    // ROJO: Sin Stock (0)
-                    stockBadgeClass = 'bg-red-400 text-white';
-                    stockMessage = 'Sin Stock';
-                }
-                
-                // ----------------------------------------
-
-
-                item.className = `bg-white p-4 rounded-xl border border-stone-100 flex justify-between items-center item-card ${opacityClass}`;
-                item.innerHTML = `
-                    <div>
-                        <p class="font-semibold text-lg text-stone-800">${product.nombre}</p>
-                        <div class="flex gap-2 items-center">
-                            <p class="text-xs text-stone-500">${product.categoria}</p>
-                            <span class="text-xs px-2 py-0.5 rounded-full font-medium ${stockBadgeClass}">
-                                📦 ${stockMessage}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="flex items-center space-x-3">
-                        <span class="text-xl font-extrabold text-amber-800">${formatCurrency(product.precio)}</span>
-                        <button onclick="addToCart('${product.id}')" class="p-2 ${isOutOfStock ? 'bg-stone-300 cursor-not-allowed' : 'amber-gradient hover:opacity-90'} text-white rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
-                            ${isOutOfStock ? 'disabled' : ''}>
-                            <span class="text-xl">🛒</span>
-                        </button>
-                    </div>
-                `;
-                productList.appendChild(item);
-            });
-        }
-
-        function updateDashboard() {
-            const categoryFilter = document.getElementById('category-filter');
-            const searchBox = document.getElementById('search-box');
-            
-            const selectedCategory = categoryFilter.value;
-            const searchTerm = searchBox.value.toLowerCase();
-
-            const filteredData = productData.filter(product => {
-                const matchesCategory = (selectedCategory === 'all') || (product.categoria === selectedCategory);
-                const matchesSearch = product.nombre.toLowerCase().includes(searchTerm);
-                return matchesCategory && matchesSearch;
-            });
-
-            renderProductList(filteredData);
-            renderCart(); 
-        }
-
-        document.addEventListener('DOMContentLoaded', async () => {
-            // CARGAR DATOS Y STOCK AL INICIAR
-            loadCart(); 
-            
-            try {
-                // 1. Inicializar y subir datos si es necesario
-                await initDatabaseIfNeeded();
-                // 2. Conectarse a la sincronización en tiempo real (Stock y Ventas)
-                subscribeToProducts(); 
-                // 3. Conectarse a pedidos pendientes
-                subscribeToPendingOrders();
-            } catch (e) {
-                console.error("Error al conectar Firebase:", e);
-                document.getElementById('connection-status').textContent = "ERROR: Conexión a Firebase fallida 🔴";
-                document.getElementById('catalog-loading').innerHTML = `<div class="text-red-600 font-bold">¡ERROR! Revisa tu clave de Firebase.</div>`;
-            }
-            
-            document.getElementById('category-filter').addEventListener('change', updateDashboard);
-            document.getElementById('search-box').addEventListener('input', updateDashboard);
-            document.getElementById('reset-button').addEventListener('click', () => {
-                document.getElementById('category-filter').value = 'all';
-                document.getElementById('search-box').value = '';
-                document.getElementById('client-name').value = '';
-                document.getElementById('whatsapp-number').value = '';
-                updateDashboard();
-            });
-            
-            // --- BLOQUE MODIFICADO: LIMPIEZA TOTAL DEL CARRITO ---
-            document.getElementById('clear-cart-button').addEventListener('click', () => {
-                cart = {};
-                // Limpiar también los campos de la cotización
-                document.getElementById('client-name').value = '';
-                document.getElementById('whatsapp-number').value = '';
-                document.getElementById('discount-select').value = '0';
-                document.getElementById('payment-method').value = 'Otro';
-                
-                saveCart();
-                updateDashboard(); // Esto llama a renderCart() y renderProductList()
-                showToast("Carrito y datos de cliente vaciados.");
-            });
-            // ----------------------------------------------------
-            
-            // Re-renderizar carrito al cambiar el descuento manual 
-            document.getElementById('discount-select').addEventListener('change', renderCart); 
-            document.getElementById('payment-method').addEventListener('change', renderCart); // NUEVO LISTENER
-            
-            document.getElementById('client-name').addEventListener('input', renderCart); 
-            document.getElementById('whatsapp-number').addEventListener('input', renderCart); 
-            
-            // EVENTOS BOTONES PRINCIPALES
-            document.getElementById('confirm-sale-button').addEventListener('click', confirmSaleAndDeductStock);
-            document.getElementById('send-whatsapp-text-button').addEventListener('click', sendQuoteViaWhatsAppText);
-            document.getElementById('share-image-button').addEventListener('click', shareQuoteAsImage);
-            
-            document.getElementById('print-button').addEventListener('click', printQuote);
-            document.getElementById('download-sales-report-button').addEventListener('click', downloadSalesReport); // Botón de Reporte
-
-            // EVENTO DE VENTA MANUAL (¡SOLUCIÓN PARA NO USAR LA CONSOLA!)
-            document.getElementById('add-manual-sale-button').addEventListener('click', () => {
-                // Parámetros: productName, quantity, salePrice, clientName, paymentMethod, deductStock (FALSE)
-                addManualSale(
-                    "Calendario de adviento", 
-                    1, 
-                    20000, 
-                    "Nati Giordana (Venta Externa)", 
-                    "Otro", // Método de Pago
-                    false // <--- ¡AQUÍ DECIMOS NO DESCONTAR STOCK!
-                );
-            });
-            // ----------------------------------------------------
-
-            document.getElementById('save-pending-button').addEventListener('click', savePendingOrder); // Botón Guardar Pendiente
-            
-            const isMobile = window.innerWidth < 768;
-            if (isMobile) {
-                showView('catalog');
-            } else {
-                document.getElementById('catalog-panel').style.display = 'block';
-                document.getElementById('cart-panel').style.display = 'flex';
-                document.getElementById('filters-container').style.display = 'grid';
-            }
-
-            updateDashboard();
-        });
     </script>
 </body>
 </html>
