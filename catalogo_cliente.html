@@ -81,6 +81,33 @@
             display: none !important;
         }
 
+        /* Estilos para el Toast (Notificación) */
+        #toast-container {
+            position: fixed;
+            bottom: 20px; 
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 60;
+            pointer-events: none;
+        }
+        .toast {
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            margin-bottom: 10px;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+            transform: translateY(20px);
+            text-align: center;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
         /* Botón Flotante para Pedidos */
         #floating-cart-button {
             position: fixed;
@@ -96,7 +123,11 @@
             align-items: center;
             cursor: pointer;
             z-index: 50;
-            transition: background-color 0.3s;
+            transition: background-color 0.3s, transform 0.3s;
+            transform: scale(0); /* Empieza oculto */
+        }
+        #floating-cart-button.visible {
+            transform: scale(1);
         }
         #floating-cart-button:hover {
             background-color: #b18b45; 
@@ -119,7 +150,6 @@
 
     <a class="skip-link" href="#main-content">Saltar al contenido principal</a>
 
-    <!-- HEADER FIJO -->
     <header class="bg-white shadow-lg sticky top-0 z-10">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-4 header-content">
             <div class="logo-container">
@@ -139,9 +169,6 @@
 
     <main id="main-content" class="container mx-auto p-4 sm:p-6 lg:p-8" tabindex="-1">
         
-        <!-- El cliente no necesita filtros ni buscar por nombre en esta versión -->
-        <!-- <div class="bg-white p-6 rounded-xl shadow-lg mb-8 filter-container">... </div> -->
-
         <div id="catalog-panel" class="bg-white p-6 rounded-xl shadow-lg relative min-h-[400px]">
             <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">Productos Disponibles</h2>
             
@@ -155,14 +182,35 @@
         </div>
     </main>
     
-    <!-- Botón Flotante para Enviar Pedido (WhatsApp) -->
-    <div id="floating-cart-button" onclick="sendOrderToWhatsApp()">
+    <div id="floating-cart-button" onclick="openCartDetailModal()">
         <span>Enviar Pedido</span>
         <span id="item-count-badge">0</span>
     </div>
 
-    <!-- Modal de Información de Pedido (para datos de cliente) -->
-    <div id="order-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 items-center justify-center">
+    <div id="cart-detail-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 items-center justify-center">
+        <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-lg mx-4 h-[90vh] flex flex-col">
+            <h3 class="text-xl font-bold mb-4 text-amber-800 border-b pb-2">Tu Pedido</h3>
+            
+            <div id="cart-detail-list" class="flex-grow overflow-y-auto pr-2 space-y-3">
+                <p id="empty-cart-detail-message" class="text-stone-500 text-center mt-8">El carrito está vacío. Agrega productos.</p>
+            </div>
+
+            <div class="mt-4 pt-4 border-t-2 border-stone-200">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-xl font-bold text-stone-700">Total Estimado:</span>
+                    <span id="cart-detail-total" class="text-3xl font-extrabold text-amber-800">$0</span>
+                </div>
+                <div class="flex justify-between space-x-3">
+                    <button onclick="closeCartDetailModal()" class="w-1/2 bg-stone-300 text-stone-800 font-bold py-2 rounded-lg hover:bg-stone-400 transition">Seguir Comprando</button>
+                    <button id="proceed-to-info-button" onclick="openClientInfoModal()" class="w-1/2 bg-green-600 text-white font-bold py-2 rounded-lg hover:bg-green-700 transition">
+                        Continuar con mis datos
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="client-info-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 items-center justify-center">
         <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-md mx-4">
             <h3 class="text-xl font-bold mb-4 text-amber-800">Finalizar Pedido</h3>
             <p id="modal-summary" class="mb-4 text-sm text-stone-600"></p>
@@ -188,14 +236,12 @@
         </div>
     </div>
     
-    <!-- Contenedor de Notificaciones -->
     <div id="toast-container"></div>
 
-    <!-- IMPORTANTE: Módulo para Firebase (SOLO LECTURA) -->
     <script type="module">
         // --- CONFIGURACIÓN DE FIREBASE (MISMA QUE EL CATÁLOGO INTERNO) ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-        import { getFirestore, collection, getDocs, onSnapshot, query } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBeaZnBmmqd2kmgLjxaJvG33VYlAdKU5Y",
@@ -214,7 +260,6 @@
         // --- VARIABLES GLOBALES ---
         let productData = []; // Se llenará desde Firebase
         let cart = {}; 
-        let uniqueIdCounter = 0; // Se usará solo para dar ID local a los ítems del carrito
         
         // --- FUNCIONES DE BASE DE DATOS (SOLO LECTURA) ---
 
@@ -274,6 +319,29 @@
             }
             showToast(`¡Agregado! ${product.nombre}`);
             renderFloatingCart();
+            if (document.getElementById('cart-detail-modal').style.display === 'flex') {
+                 renderCartDetails();
+            }
+        };
+
+        // NUEVA FUNCIÓN PARA CAMBIAR CANTIDAD Y ELIMINAR
+        window.changeQuantity = function(id, delta) {
+            if (!cart[id]) return;
+
+            if (cart[id].cantidad + delta <= 0) {
+                delete cart[id];
+                showToast(`Producto eliminado.`);
+            } else {
+                cart[id].cantidad += delta;
+                if (delta > 0) {
+                     showToast(`Cantidad aumentada.`);
+                } else {
+                     showToast(`Cantidad reducida.`);
+                }
+            }
+
+            renderFloatingCart();
+            renderCartDetails(); // Es crucial re-renderizar la lista de detalles
         };
         
         function calculateSubtotalWithoutDiscount() {
@@ -295,15 +363,14 @@
         
         function renderFloatingCart() {
             const itemCountBadge = document.getElementById('item-count-badge');
+            const floatingButton = document.getElementById('floating-cart-button');
             const count = getCartItemCount();
             itemCountBadge.textContent = count;
             
-            const floatingButton = document.getElementById('floating-cart-button');
             if (count > 0) {
-                floatingButton.style.display = 'flex';
-                floatingButton.style.transform = 'scale(1)';
+                floatingButton.classList.add('visible');
             } else {
-                floatingButton.style.transform = 'scale(0)';
+                floatingButton.classList.remove('visible');
             }
         }
         
@@ -327,17 +394,84 @@
             return true;
         }
 
-        // --- LÓGICA DE COMPARTIR PEDIDO ---
+        // NUEVA FUNCIÓN PARA RENDERIZAR EL DETALLE DEL CARRITO
+        function renderCartDetails() {
+            const cartList = document.getElementById('cart-detail-list');
+            const cartTotalEl = document.getElementById('cart-detail-total');
+            const emptyMessage = document.getElementById('empty-cart-detail-message');
+            const proceedButton = document.getElementById('proceed-to-info-button');
+            
+            cartList.innerHTML = '';
+            let subtotal = 0;
+            let cartItemsCount = 0;
+
+            for (const id in cart) {
+                const item = cart[id];
+                const itemSubtotal = item.precio * item.cantidad;
+                subtotal += itemSubtotal;
+                cartItemsCount += item.cantidad;
+                
+                const itemDiv = document.createElement('div');
+                itemDiv.className = "bg-white p-3 rounded-lg border border-stone-200 flex justify-between items-center";
+                
+                itemDiv.innerHTML = `
+                    <div class="flex flex-col flex-grow">
+                        <p class="font-bold text-stone-700">${item.nombre}</p>
+                        <p class="text-sm text-amber-700">${formatCurrency(item.precio)} c/u</p>
+                    </div>
+                    <div class="flex items-center space-x-2 flex-shrink-0">
+                        <span class="font-extrabold text-lg text-amber-800 min-w-[70px] text-right">${formatCurrency(itemSubtotal)}</span>
+                        
+                        <button onclick="changeQuantity('${id}', -1)" class="p-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xl font-bold leading-none hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400">
+                            -
+                        </button>
+                        
+                        <span class="font-bold text-stone-800 w-4 text-center">${item.cantidad}</span>
+                        
+                        <button onclick="changeQuantity('${id}', 1)" 
+                            class="p-1 bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xl font-bold leading-none hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400">
+                            +
+                        </button>
+                    </div>
+                `;
+                cartList.appendChild(itemDiv);
+            }
+            
+            cartTotalEl.textContent = formatCurrency(subtotal);
+            
+            if (cartItemsCount === 0) {
+                emptyMessage.style.display = 'block';
+                proceedButton.setAttribute('disabled', 'true');
+                proceedButton.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                emptyMessage.style.display = 'none';
+                proceedButton.removeAttribute('disabled');
+                proceedButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
         
-        window.sendOrderToWhatsApp = function() {
-            const total = calculateSubtotalWithoutDiscount();
+        // --- LÓGICA DE COMPARTIR PEDIDO (Actualizado para el flujo de 2 pasos) ---
+        
+        window.openCartDetailModal = function() {
             const count = getCartItemCount();
             
             if (count === 0) {
-                alert("Tu carrito está vacío. Agrega productos para enviar un pedido.");
+                showToast("Tu carrito está vacío. Agrega productos para enviar un pedido.");
                 return;
             }
+            
+            renderCartDetails();
+            document.getElementById('cart-detail-modal').style.display = 'flex';
+        }
 
+        window.closeCartDetailModal = function() {
+            document.getElementById('cart-detail-modal').style.display = 'none';
+        }
+
+        window.openClientInfoModal = function() {
+            const total = calculateSubtotalWithoutDiscount();
+            const count = getCartItemCount();
+            
             // Llenar resumen en el modal
             document.getElementById('modal-summary').textContent =
                 `Tienes ${count} producto(s) en tu pedido con un total estimado de ${formatCurrency(total)}.`;
@@ -345,13 +479,15 @@
             setModalError('modal-client-name', 'modal-client-name-error', '');
             setModalError('modal-whatsapp-number', 'modal-whatsapp-number-error', '');
 
-            document.getElementById('order-modal').style.display = 'flex';
+            document.getElementById('cart-detail-modal').style.display = 'none'; // Cierra el modal de detalle
+            document.getElementById('client-info-modal').style.display = 'flex'; // Abre el modal de info cliente
         }
         
         window.closeOrderModal = function() {
-            document.getElementById('order-modal').style.display = 'none';
+            // La función que se llama para cerrar el antiguo 'order-modal' (ahora 'client-info-modal')
+            document.getElementById('client-info-modal').style.display = 'none';
         }
-        
+
         window.confirmAndSendOrder = function() {
             const clientNameInput = document.getElementById('modal-client-name');
             const clientWhatsAppInput = document.getElementById('modal-whatsapp-number');
@@ -403,8 +539,6 @@
             const whatsappText = encodeURIComponent(summaryLines.join('\n'));
             
             // Abre WhatsApp con TU número (o el número del local, asumido)
-            // Ya que el número de destino debe ser el tuyo y no el del cliente, usaré un número ficticio. 
-            // Si el cliente ingresa su número, se usa solo para el mensaje.
             const yourWhatsAppNumber = '5493415550000'; // <--- REEMPLAZA ESTE NÚMERO POR EL NÚMERO DEL LOCAL
             
             const whatsappUrl = `https://wa.me/${yourWhatsAppNumber}?text=${whatsappText}`;
@@ -450,28 +584,31 @@
                 const isOutOfStock = product.stock <= 0;
                 const opacityClass = isOutOfStock ? 'opacity-60' : '';
                 
+                // --- LÓGICA DE IMAGEN ---
+                const imageUrl = product.imageUrl || '';
+                const imageHtml = imageUrl 
+                    ? `<img src="${imageUrl}" alt="${product.nombre}" class="object-cover w-full h-full">` 
+                    : `<span class="text-xs text-stone-400">🖼️</span>`;
+                // -----------------------------
+                
                 item.className = `bg-white p-4 rounded-xl border border-stone-100 flex justify-between items-center item-card-client ${opacityClass}`;
                 
                 // Estructura de la tarjeta
                 item.innerHTML = `
                     <div class="flex items-center space-x-3">
-                        <!-- Placeholder de Imagen (Si existe la URL en el futuro) -->
-                        <div class="w-16 h-16 bg-stone-100 rounded-lg flex items-center justify-center overflow-hidden">
-                            ${product.imageUrl ? `<img src="${product.imageUrl}" alt="${product.nombre}" class="object-cover w-full h-full">` : `<span class="text-xs text-stone-400">🖼️</span>`}
+                        <div class="w-16 h-16 bg-stone-100 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0 shadow-md">
+                            ${imageHtml}
                         </div>
 
-                        <!-- Info del Producto -->
                         <div>
                             <p class="font-semibold text-lg text-stone-800">${product.nombre}</p>
                             <p class="text-xs text-stone-500">${product.categoria}</p>
-                            <!-- El stock se OCULTA por CSS pero se mantiene la estructura -->
                             <span class="stock-badge text-xs px-2 py-0.5 rounded-full font-medium bg-red-400 text-white">
                                 📦 Sin Stock
                             </span>
                         </div>
                     </div>
 
-                    <!-- Precio y Botón -->
                     <div class="flex items-center space-x-3">
                         <span class="text-xl font-extrabold text-amber-800">${formatCurrency(product.precio)}</span>
                         <button onclick="addToCart('${product.id}')" class="p-2 bg-green-500 text-white rounded-lg shadow-md hover:bg-green-600 transition focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2"
