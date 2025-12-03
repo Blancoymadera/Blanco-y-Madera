@@ -337,9 +337,12 @@
                 // LOGICA MULTIPLE IMAGEN
                 let imagesList = [];
                 if(d.images && Array.isArray(d.images)) imagesList = d.images;
-                else if (d.imageUrl) imagesList = [d.imageUrl];
-                else if (d.ImageUrl) imagesList = [d.ImageUrl];
                 
+                // COVER: Usar imageUrl/ImageUrl explícito si existe, sino la primera de la lista
+                let coverImg = d.imageUrl || d.ImageUrl;
+                if (!coverImg && imagesList.length > 0) coverImg = imagesList[0];
+                if (!coverImg && !imagesList.length) coverImg = null;
+
                 // LOGICA VARIANTES
                 let variantsList = [];
                 if (d.variants && Array.isArray(d.variants)) variantsList = d.variants;
@@ -352,7 +355,7 @@
                     precio: Number(d.precio) || 0,
                     stock: Number(d.stock) || 0,
                     images: imagesList, 
-                    imageUrl: imagesList[0] || null,
+                    imageUrl: coverImg,
                     variants: variantsList
                 });
                 if(d.categoria) categories.add(d.categoria);
@@ -427,6 +430,7 @@
             const img = p.imageUrl || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZTZlNmU2IiBzdHJva2Utd2lkdGg9IjEiPjxyZWN0IHg9IjMiIHk9IjMiIHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCIgcng9IjIiIHJ5PSIyIi8+PC9zdmc+';
             const stock = p.stock > 0;
 
+            // Ajuste clave: aspect-square para forzar 1:1 en el contenedor de la imagen
             div.className = 'bg-white rounded-xl border border-stone-100 shadow-sm product-card overflow-hidden relative group h-full flex flex-col';
             div.innerHTML = `
                 <button class="fav-btn absolute top-2 right-2 z-10 w-8 h-8 bg-white/90 rounded-full shadow flex items-center justify-center text-stone-300 hover:text-red-500 transition ${isFav?'active':''}" onclick="event.stopPropagation(); toggleFav('${p.id}', this)">
@@ -435,7 +439,7 @@
                 <div class="aspect-square w-full p-3 flex items-center justify-center relative bg-white">
                     <img src="${img}" class="max-w-full max-h-full object-contain transition duration-500 group-hover:scale-105">
                     ${!stock ? '<span class="absolute bottom-2 left-2 bg-stone-100 text-stone-400 text-[10px] font-bold px-2 rounded">AGOTADO</span>' : ''}
-                    ${p.images.length > 1 ? '<span class="absolute bottom-2 right-2 bg-black/50 text-white text-[10px] px-1.5 rounded"><i class="fa-regular fa-images"></i></span>' : ''}
+                    ${(p.images && p.images.length > 0) ? '<span class="absolute bottom-2 right-2 bg-black/50 text-white text-[10px] px-1.5 rounded"><i class="fa-regular fa-images"></i></span>' : ''}
                 </div>
                 <div class="p-3 border-t border-stone-50 flex flex-col flex-grow">
                     <p class="text-[10px] text-amber-600 font-bold uppercase mb-1 truncate">${p.categoria}</p>
@@ -524,8 +528,17 @@
             mainImg.src = p.imageUrl || 'data:image/svg+xml;base64,PHN2Zy...';
             thumbs.innerHTML = '';
             
-            if(p.images && p.images.length > 1) {
-                p.images.forEach((img, idx) => {
+            // Si hay una lista de imágenes (variantes), se usa para la galería.
+            // Si NO hay lista 'images' pero sí hay foto de portada, la usamos como única foto.
+            let galleryImages = [];
+            if (p.images && p.images.length > 0) {
+                galleryImages = p.images;
+            } else if (p.imageUrl) {
+                galleryImages = [p.imageUrl];
+            }
+
+            if(galleryImages.length > 1) {
+                galleryImages.forEach((img, idx) => {
                     const t = document.createElement('img');
                     t.src = img;
                     t.className = 'w-12 h-12 object-contain border border-stone-200 rounded cursor-pointer hover:border-amber-500 thumbnail';
@@ -564,7 +577,7 @@
                     
                     currentSelectedVariant = selectedVal;
 
-                    // Cambiar foto si hay coincidencia
+                    // Cambiar foto si hay coincidencia en el array de imágenes
                     if (idx >= 0 && p.images && p.images[idx]) {
                          mainImg.src = p.images[idx];
                          document.querySelectorAll('.thumbnail').forEach(el => el.classList.remove('active'));
@@ -645,11 +658,20 @@
             if(cart[cartKey]) {
                 cart[cartKey].qty++;
             } else {
+                // Intentar usar la imagen de la variante si se seleccionó una, sino la portada
+                let variantImage = p.imageUrl;
+                if (hasVariantsConfigured && currentSelectedVariant && p.images) {
+                    const variantIndex = p.variants.indexOf(currentSelectedVariant);
+                    if (variantIndex >= 0 && p.images[variantIndex]) {
+                        variantImage = p.images[variantIndex];
+                    }
+                }
+
                 cart[cartKey] = {
                     id: p.id,
                     nombre: p.nombre + variant,
                     precio: p.precio,
-                    imageUrl: p.imageUrl,
+                    imageUrl: variantImage,
                     qty: 1
                 };
             }
