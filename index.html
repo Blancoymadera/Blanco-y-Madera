@@ -412,6 +412,38 @@
             </div>
         </div>
     </div>
+    
+    <div id="product-quickview-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 items-center justify-center">
+        <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-xl mx-4">
+            <div class="flex justify-between items-start mb-4">
+                <h3 id="modal-product-name" class="text-2xl font-bold text-amber-800"></h3>
+                <button onclick="closeProductModal()" class="text-stone-500 hover:text-stone-700 text-3xl leading-none">&times;</button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div id="modal-image-container" class="bg-stone-100 rounded-lg overflow-hidden flex items-center justify-center p-2 min-h-[250px]">
+                    <img id="modal-product-image" src="" alt="Imagen del Producto" class="max-h-full max-w-full object-contain shadow-md">
+                </div>
+
+                <div>
+                    <p class="text-sm font-semibold text-stone-600 mb-2">Categoría:</p>
+                    <p id="modal-product-category" class="text-lg font-medium text-stone-800 mb-4"></p>
+                    
+                    <p class="text-sm font-semibold text-stone-600 mb-2">Precio:</p>
+                    <p id="modal-product-price" class="text-2xl font-extrabold text-amber-800 mb-4"></p>
+
+                    <p class="text-sm font-semibold text-stone-600 mb-2">Stock Actual:</p>
+                    <p id="modal-product-stock" class="text-lg font-bold text-stone-700"></p>
+                    
+                    <div class="mt-6">
+                        <button id="modal-add-to-cart-button" class="w-full amber-gradient text-white font-bold py-2 rounded-lg shadow-md hover:opacity-90 transition">
+                            🛒 Agregar al Carrito
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="mobile-nav bg-white shadow-2xl p-3 border-t border-stone-200">
         <div class="flex justify-around">
@@ -1215,6 +1247,96 @@
             return parseFloat(discountSelect.value);
         }
 
+        // --- LÓGICA DEL MODAL DE VISTA RÁPIDA ---
+
+        window.closeProductModal = function() {
+            document.getElementById('product-quickview-modal').style.display = 'none';
+        }
+
+        window.showProductModal = function(id) {
+            const product = productData.find(p => p.id === id);
+            if (!product) return;
+
+            const modal = document.getElementById('product-quickview-modal');
+            const imageEl = document.getElementById('modal-product-image');
+            const stockEl = document.getElementById('modal-product-stock');
+            const addButton = document.getElementById('modal-add-to-cart-button');
+
+            // 1. Cargar Datos
+            document.getElementById('modal-product-name').textContent = product.nombre;
+            document.getElementById('modal-product-category').textContent = product.categoria;
+            document.getElementById('modal-product-price').textContent = formatCurrency(product.precio);
+            
+            // 2. Cargar Imagen
+            imageEl.src = product.imageUrl || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'; // Default transparente
+            imageEl.alt = product.nombre;
+            
+            // 3. Cargar Stock
+            if (product.stock <= 0) {
+                stockEl.textContent = '❌ SIN STOCK';
+                stockEl.classList.add('text-red-600');
+                addButton.setAttribute('disabled', 'true');
+                addButton.classList.replace('amber-gradient', 'bg-stone-300');
+                addButton.classList.remove('hover:opacity-90');
+            } else {
+                stockEl.textContent = `✅ ${product.stock} unidades disponibles`;
+                stockEl.classList.remove('text-red-600');
+                addButton.removeAttribute('disabled');
+                addButton.classList.replace('bg-stone-300', 'amber-gradient');
+                addButton.classList.add('hover:opacity-90');
+            }
+            
+            // 4. Asignar acción al botón "Agregar" dentro del modal
+            addButton.onclick = () => {
+                addToCart(id); 
+                closeProductModal();
+            };
+
+            // 5. Mostrar Modal
+            modal.style.display = 'flex';
+        }
+        // --- FIN LÓGICA DEL MODAL DE VISTA RÁPIDA ---
+
+
+        // --- LÓGICA DEL MODAL DE VENTA MANUAL ---
+        function openManualSaleModal() {
+            // Limpiar campos y predeterminar
+            document.getElementById('manual-sale-product-name').value = '';
+            document.getElementById('manual-sale-quantity').value = 1;
+            document.getElementById('manual-sale-price').value = '';
+            document.getElementById('manual-sale-client-name').value = 'Venta Externa';
+            document.getElementById('manual-sale-payment').value = 'Otro';
+            document.getElementById('manual-sale-deduct-stock').checked = true;
+
+            document.getElementById('manual-sale-modal').style.display = 'flex';
+        }
+
+        window.closeManualSaleModal = function() {
+            document.getElementById('manual-sale-modal').style.display = 'none';
+        }
+
+        window.handleManualSale = function() {
+            const productName = document.getElementById('manual-sale-product-name').value.trim();
+            const quantity = parseInt(document.getElementById('manual-sale-quantity').value);
+            const salePrice = parseInt(document.getElementById('manual-sale-price').value);
+            const clientName = document.getElementById('manual-sale-client-name').value.trim();
+            const paymentMethod = document.getElementById('manual-sale-payment').value;
+            const deductStock = document.getElementById('manual-sale-deduct-stock').checked;
+
+            // Validación básica
+            if (!productName || quantity <= 0 || salePrice <= 0 || !clientName) {
+                showToast("🚫 Error: Completa todos los campos (Producto, Cantidad, Precio y Cliente).");
+                return;
+            }
+
+            // Llamar a la función de registro de venta
+            addManualSale(productName, quantity, salePrice, clientName, paymentMethod, deductStock);
+            
+            closeManualSaleModal();
+        }
+        // ----------------------------------------
+        
+
         // --- FUNCIONES UTILITARIAS ---
 
         function populateCategoryFilter() {
@@ -1752,7 +1874,7 @@
 
                 item.className = `bg-white p-4 rounded-xl border border-stone-100 flex justify-between items-center item-card ${opacityClass}`;
                 item.innerHTML = `
-                    <div class="flex items-start">
+                    <div class="flex items-start flex-grow" onclick="showProductModal('${product.id}')" style="cursor: pointer;">
                         ${imageHtml}
                         <div>
                             <p class="font-semibold text-lg text-stone-800">${product.nombre}</p>
