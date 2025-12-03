@@ -724,6 +724,7 @@
                             categoria: currentCategory,
                             precio: price,
                             stock: stock
+                            // NOTA: Se espera que el campo 'imageUrl' se agregue manualmente en Firebase después.
                         });
                         categories.add(currentCategory);
                     }
@@ -781,6 +782,7 @@
 
             const clientName = document.getElementById('client-name').value.trim() || "Cliente sin nombre";
             const whatsappNumber = document.getElementById('whatsapp-number').value.trim().replace(/\D/g, '') || "N/A";
+            const paymentMethod = document.getElementById('payment-method').value; // Leer el método de pago
             const discountRate = parseFloat(document.getElementById('discount-select').value); 
             const total = calculateSubtotalWithoutDiscount() * (1 - discountRate);
             
@@ -795,6 +797,7 @@
                     timestamp: new Date(),
                     cliente_nombre: clientName,
                     cliente_whatsapp: whatsappNumber,
+                    metodo_pago: paymentMethod,
                     total_estimado: total,
                     descuento_aplicado: discountRate,
                     cart: serializableCart // Guardar el objeto cart
@@ -806,6 +809,7 @@
                 document.getElementById('client-name').value = '';
                 document.getElementById('whatsapp-number').value = '';
                 document.getElementById('discount-select').value = '0';
+                document.getElementById('payment-method').value = 'Otro';
                 saveCart();
                 updateDashboard();
             } catch (e) {
@@ -832,6 +836,7 @@
             document.getElementById('client-name').value = order.cliente_nombre;
             document.getElementById('whatsapp-number').value = order.cliente_whatsapp !== "N/A" ? order.cliente_whatsapp : '';
             document.getElementById('discount-select').value = order.descuento_aplicado.toString();
+            document.getElementById('payment-method').value = order.metodo_pago || 'Otro'; // Cargar método de pago
             
             saveCart();
             updateDashboard();
@@ -893,12 +898,13 @@
 
             pendingOrders.forEach(order => {
                 const orderDate = order.timestamp ? new Date(order.timestamp.toDate()).toLocaleDateString('es-ES') : 'Fecha N/A';
+                const totalText = formatCurrency(order.total_estimado);
                 const item = document.createElement('div');
                 item.className = "bg-stone-50 p-3 rounded-lg border border-stone-200 flex justify-between items-center text-sm hover:bg-stone-100 transition";
                 item.innerHTML = `
                     <div>
                         <p class="font-bold text-stone-700">${order.cliente_nombre}</p>
-                        <p class="text-xs text-stone-500">Total: ${formatCurrency(order.total_estimado)} (${orderDate})</p>
+                        <p class="text-xs text-stone-500">Total: ${totalText} (${orderDate})</p>
                     </div>
                     <div class="flex space-x-2">
                         <button onclick="loadPendingOrder('${order.id}')" class="bg-amber-500 text-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-amber-600 transition">
@@ -1736,21 +1742,29 @@
                     stockMessage = 'Sin Stock';
                 }
                 
-                // ----------------------------------------
+                // --- NUEVA LÓGICA DE IMAGEN ---
+                const imageUrl = product.imageUrl || '';
+                const imageHtml = imageUrl 
+                    ? `<img src="${imageUrl}" alt="${product.nombre}" class="w-12 h-12 object-cover rounded-lg mr-3 shadow-md">` 
+                    : `<div class="w-12 h-12 bg-stone-100 rounded-lg flex items-center justify-center text-stone-400 mr-3">🖼️</div>`;
+                // -----------------------------
 
 
                 item.className = `bg-white p-4 rounded-xl border border-stone-100 flex justify-between items-center item-card ${opacityClass}`;
                 item.innerHTML = `
-                    <div>
-                        <p class="font-semibold text-lg text-stone-800">${product.nombre}</p>
-                        <div class="flex gap-2 items-center">
-                            <p class="text-xs text-stone-500">${product.categoria}</p>
-                            <span class="text-xs px-2 py-0.5 rounded-full font-medium ${stockBadgeClass}">
-                                📦 ${stockMessage}
-                            </span>
+                    <div class="flex items-start">
+                        ${imageHtml}
+                        <div>
+                            <p class="font-semibold text-lg text-stone-800">${product.nombre}</p>
+                            <div class="flex gap-2 items-center">
+                                <p class="text-xs text-stone-500">${product.categoria}</p>
+                                <span class="text-xs px-2 py-0.5 rounded-full font-medium ${stockBadgeClass}">
+                                    📦 ${stockMessage}
+                                </span>
+                            </div>
                         </div>
                     </div>
-                    <div class="flex items-center space-x-3">
+                    <div class="flex items-center space-x-3 flex-shrink-0">
                         <span class="text-xl font-extrabold text-amber-800">${formatCurrency(product.precio)}</span>
                         <button onclick="addToCart('${product.id}')" class="p-2 ${isOutOfStock ? 'bg-stone-300 cursor-not-allowed' : 'amber-gradient hover:opacity-90'} text-white rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
                             ${isOutOfStock ? 'disabled' : ''}>
