@@ -32,6 +32,10 @@
         .fav-btn.active i { color: #ef4444; font-weight: 900; animation: heartPop 0.3s; }
         @keyframes heartPop { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
 
+        /* Thumbnails */
+        .thumbnail { transition: all 0.2s; border: 2px solid transparent; }
+        .thumbnail.active { border-color: #d97706; transform: scale(0.95); }
+
         /* Loader */
         .loader-dots div { animation: loader-dots 0.6s infinite cubic-bezier(0, 1, 1, 0); }
         .loader-dots div:nth-child(1) { left: 8px; animation-delay: -0.24s; }
@@ -209,27 +213,48 @@
         </nav>
     </div>
 
-    <!-- MODAL VISTA RÁPIDA -->
+    <!-- MODAL VISTA RÁPIDA (CON GALERÍA Y SELECCIÓN DE VARIANTE) -->
     <div id="quickview-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-stone-900/70 backdrop-blur-sm transition-opacity duration-300">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative animate-[scaleIn_0.3s_ease-out]">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative animate-[scaleIn_0.3s_ease-out] flex flex-col max-h-[90vh]">
             <button onclick="closeModal('quickview-modal')" class="absolute top-3 right-3 z-10 bg-white/90 rounded-full p-2 text-stone-500 hover:text-stone-900 shadow-sm"><i class="fa-solid fa-xmark text-lg"></i></button>
             
-            <div class="h-64 bg-white flex items-center justify-center p-4">
+            <!-- Imagen Principal -->
+            <div class="h-64 bg-white flex items-center justify-center p-4 shrink-0">
                 <img id="qv-image" src="" class="max-w-full max-h-full object-contain" alt="Producto">
             </div>
+
+            <!-- Galería Miniaturas (se llena si hay fotos) -->
+            <div id="qv-thumbnails" class="px-4 pb-2 flex gap-2 overflow-x-auto hide-scroll shrink-0 h-16"></div>
             
-            <div class="p-6 bg-white">
+            <div class="p-6 bg-white overflow-y-auto">
                 <span id="qv-category" class="text-[10px] font-bold tracking-widest text-amber-600 uppercase bg-amber-50 px-2 py-1 rounded-md"></span>
                 <h3 id="qv-name" class="text-xl font-bold text-stone-800 mt-2 leading-tight"></h3>
+                
                 <div class="my-4 flex items-baseline justify-between border-b border-stone-100 pb-4">
                     <span id="qv-price" class="text-3xl font-extrabold text-stone-900"></span>
                     <div id="qv-stock-status"></div>
                 </div>
+
+                <!-- SELECTOR DE VARIANTES (DESPLEGABLE) -->
+                <div id="variants-container" class="mb-5 hidden">
+                    <label class="block text-xs font-bold text-stone-500 uppercase mb-2">Elige una opción:</label>
+                    <!-- AQUI ESTÁ EL SELECT QUE PEDISTE -->
+                    <select id="variant-select" class="w-full border border-stone-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-amber-400 outline-none bg-stone-50 cursor-pointer">
+                        <option value="">Seleccionar...</option>
+                    </select>
+                </div>
+
+                <!-- Input Manual (fallback) -->
+                <div id="manual-variant-container" class="mb-4">
+                    <label for="qv-variant" class="block text-xs font-bold text-stone-500 uppercase mb-1">Preferencia (Opcional)</label>
+                    <input type="text" id="qv-variant" class="w-full border border-stone-200 rounded-lg p-2 text-sm focus:ring-2 focus:ring-amber-400 outline-none" placeholder="Ej: Aroma, Color...">
+                </div>
+
                 <button id="qv-add-btn" class="w-full bg-stone-900 text-white font-bold py-3.5 rounded-xl shadow-lg hover:bg-stone-800 active:scale-95 transition flex items-center justify-center gap-2 text-lg">
                     <span>Agregar al Carrito</span>
                 </button>
 
-                <!-- Productos Relacionados -->
+                <!-- Relacionados -->
                 <div class="mt-6 pt-4 border-t border-stone-100">
                     <p class="text-xs font-bold text-stone-400 uppercase mb-3">También te puede interesar</p>
                     <div id="qv-related" class="grid grid-cols-2 gap-2"></div>
@@ -238,7 +263,7 @@
         </div>
     </div>
 
-    <!-- OTROS MODALES (Carrito, Checkout) - Se mantienen igual pero integrados -->
+    <!-- MODAL CARRITO -->
     <div id="cart-modal" class="fixed inset-0 z-50 hidden items-end sm:items-center justify-center p-0 sm:p-4 bg-stone-900/60 backdrop-blur-sm">
         <div class="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl shadow-2xl h-[85vh] sm:h-auto flex flex-col animate-[slideUp_0.3s_ease-out]">
             <div class="p-5 border-b flex justify-between items-center bg-stone-50 sm:rounded-t-2xl"><h3 class="font-bold text-stone-800">Tu Pedido</h3><button onclick="closeModal('cart-modal')" class="text-stone-400"><i class="fa-solid fa-xmark text-xl"></i></button></div>
@@ -262,7 +287,7 @@
         import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
         const CONFIG = {
-            whatsappNumber: "5492302486856", // ⚠️ TU NÚMERO AQUÍ
+            whatsappNumber: "5493415550000", // ⚠️ TU NÚMERO AQUÍ
             firebase: {
                 apiKey: "",
                 authDomain: "blanco-y-madera-17214.firebaseapp.com",
@@ -280,6 +305,7 @@
         let cart = JSON.parse(localStorage.getItem('bm_client_cart')) || {};
         let favorites = JSON.parse(localStorage.getItem('bm_client_favs')) || [];
         let categories = new Set();
+        let currentSelectedVariant = null; 
 
         // --- NAVEGACIÓN ---
         window.navigate = (viewId) => {
@@ -287,7 +313,6 @@
             document.getElementById(`view-${viewId}`).classList.add('active');
             document.getElementById('main-scroll').scrollTop = 0;
 
-            // Update Nav State
             const updateNav = (selector, activeClass, inactiveClass) => {
                 document.querySelectorAll(selector).forEach(btn => {
                     const isActive = btn.dataset.target === viewId;
@@ -296,8 +321,8 @@
                 });
             };
             
-            updateNav('.sidebar .nav-item', 'text-amber-600', 'text-stone-600'); // Desktop
-            updateNav('nav.md\\:hidden .nav-icon', 'text-amber-600', 'text-stone-400'); // Mobile
+            updateNav('.sidebar .nav-item', 'text-amber-600', 'text-stone-600'); 
+            updateNav('nav.md\\:hidden .nav-icon', 'text-amber-600', 'text-stone-400');
 
             if(viewId === 'favorites') renderFavorites();
         };
@@ -308,25 +333,39 @@
             categories = new Set();
             snapshot.forEach(doc => {
                 const d = doc.data();
+                
+                // LOGICA MULTIPLE IMAGEN
+                let imagesList = [];
+                if(d.images && Array.isArray(d.images)) imagesList = d.images;
+                else if (d.imageUrl) imagesList = [d.imageUrl];
+                else if (d.ImageUrl) imagesList = [d.ImageUrl];
+                
+                // LOGICA VARIANTES
+                let variantsList = [];
+                if (d.variants && Array.isArray(d.variants)) variantsList = d.variants;
+                else if (d.opciones && Array.isArray(d.opciones)) variantsList = d.opciones;
+
                 allProducts.push({
                     id: doc.id,
                     nombre: d.nombre || "Producto",
                     categoria: d.categoria || "Varios",
                     precio: Number(d.precio) || 0,
                     stock: Number(d.stock) || 0,
-                    imageUrl: d.imageUrl || d.ImageUrl || null
+                    images: imagesList, 
+                    imageUrl: imagesList[0] || null,
+                    variants: variantsList
                 });
                 if(d.categoria) categories.add(d.categoria);
             });
 
             initFilters();
-            renderCategoryCards(); // Home Cards
-            renderFeatured();      // Home Featured
-            renderProductsGrid();  // Catalog Grid
+            renderCategoryCards(); 
+            renderFeatured();      
+            renderProductsGrid();  
             updateCartUI();
             
             document.getElementById('loading-catalog').classList.add('hidden');
-            document.getElementById('loading-state').style.display = 'none'; // Home loader
+            if(document.getElementById('loading-state')) document.getElementById('loading-state').style.display = 'none'; 
         }, (err) => console.error(err));
 
         // --- HOME: CATEGORÍAS VISUALES ---
@@ -334,7 +373,6 @@
             const grid = document.getElementById('categories-grid');
             grid.innerHTML = '';
             Array.from(categories).sort().forEach(cat => {
-                // Buscar 1ra imagen de esta categoría
                 const p = allProducts.find(x => x.categoria === cat && x.imageUrl);
                 const img = p ? p.imageUrl : 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZTZlNmU2IiBzdHJva2Utd2lkdGg9IjEiPjxyZWN0IHg9IjMiIHk9IjMiIHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCIgcng9IjIiIHJ5PSIyIi8+PC9zdmc+';
                 
@@ -389,22 +427,22 @@
             const img = p.imageUrl || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZTZlNmU2IiBzdHJva2Utd2lkdGg9IjEiPjxyZWN0IHg9IjMiIHk9IjMiIHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCIgcng9IjIiIHJ5PSIyIi8+PC9zdmc+';
             const stock = p.stock > 0;
 
-            // Ajuste clave: aspect-square para forzar 1:1 en el contenedor de la imagen
             div.className = 'bg-white rounded-xl border border-stone-100 shadow-sm product-card overflow-hidden relative group h-full flex flex-col';
             div.innerHTML = `
                 <button class="fav-btn absolute top-2 right-2 z-10 w-8 h-8 bg-white/90 rounded-full shadow flex items-center justify-center text-stone-300 hover:text-red-500 transition ${isFav?'active':''}" onclick="event.stopPropagation(); toggleFav('${p.id}', this)">
                     <i class="fa-solid fa-heart"></i>
                 </button>
                 <div class="aspect-square w-full p-3 flex items-center justify-center relative bg-white">
-                    <img src="${img}" class="max-h-full max-w-full object-contain transition duration-500 group-hover:scale-105">
+                    <img src="${img}" class="max-w-full max-h-full object-contain transition duration-500 group-hover:scale-105">
                     ${!stock ? '<span class="absolute bottom-2 left-2 bg-stone-100 text-stone-400 text-[10px] font-bold px-2 rounded">AGOTADO</span>' : ''}
+                    ${p.images.length > 1 ? '<span class="absolute bottom-2 right-2 bg-black/50 text-white text-[10px] px-1.5 rounded"><i class="fa-regular fa-images"></i></span>' : ''}
                 </div>
                 <div class="p-3 border-t border-stone-50 flex flex-col flex-grow">
                     <p class="text-[10px] text-amber-600 font-bold uppercase mb-1 truncate">${p.categoria}</p>
                     <h3 class="font-bold text-stone-800 text-sm leading-tight mb-auto line-clamp-2">${p.nombre}</h3>
                     <div class="flex justify-between items-end mt-2">
                         <span class="font-extrabold text-stone-900">$${p.precio.toLocaleString('es-AR')}</span>
-                        <button class="w-8 h-8 rounded-full ${stock ? 'bg-amber-50 text-amber-700 hover:bg-amber-500 hover:text-white' : 'bg-stone-100 text-stone-300'} flex items-center justify-center transition shadow-sm text-xs" onclick="event.stopPropagation(); ${stock ? `addToCart('${p.id}')` : ''}">
+                        <button class="w-8 h-8 rounded-full ${stock ? 'bg-amber-50 text-amber-700 hover:bg-amber-500 hover:text-white' : 'bg-stone-100 text-stone-300'} flex items-center justify-center transition shadow-sm text-xs" onclick="event.stopPropagation(); ${stock ? `openQuickViewById('${p.id}')` : ''}">
                             <i class="fa-solid fa-plus"></i>
                         </button>
                     </div>
@@ -414,7 +452,11 @@
             return div;
         }
 
-        // --- LOGICA FAVORITOS ---
+        window.openQuickViewById = (id) => {
+             const p = allProducts.find(x => x.id === id);
+             if(p) openQuickView(p);
+        }
+
         window.toggleFav = (id, btn) => {
             if(favorites.includes(id)) {
                 favorites = favorites.filter(fid => fid !== id);
@@ -458,17 +500,84 @@
             renderGrid(res, 'products-container');
         }
 
-        // --- MODAL DETALLE ---
+        // --- MODAL DETALLE (GALERIA Y DESPLEGABLE DE VARIANTES) ---
         window.openQuickView = (p) => {
             const m = document.getElementById('quickview-modal');
             const btn = document.getElementById('qv-add-btn');
-            const rel = document.getElementById('qv-related');
+            const mainImg = document.getElementById('qv-image');
+            const thumbs = document.getElementById('qv-thumbnails');
+            const variantsContainer = document.getElementById('variants-container');
+            const variantSelect = document.getElementById('variant-select');
+            const manualInput = document.getElementById('manual-variant-container');
             
-            document.getElementById('qv-image').src = p.imageUrl || 'data:image/svg+xml;base64,PHN2Zy...';
+            // Reset state
+            currentSelectedVariant = null;
+            document.getElementById('qv-variant').value = '';
+            variantSelect.innerHTML = '<option value="">Seleccionar...</option>';
+
+            // Info base
             document.getElementById('qv-category').textContent = p.categoria;
             document.getElementById('qv-name').textContent = p.nombre;
             document.getElementById('qv-price').textContent = `$${p.precio.toLocaleString('es-AR')}`;
             
+            // Galería
+            mainImg.src = p.imageUrl || 'data:image/svg+xml;base64,PHN2Zy...';
+            thumbs.innerHTML = '';
+            
+            if(p.images && p.images.length > 1) {
+                p.images.forEach((img, idx) => {
+                    const t = document.createElement('img');
+                    t.src = img;
+                    t.className = 'w-12 h-12 object-contain border border-stone-200 rounded cursor-pointer hover:border-amber-500 thumbnail';
+                    t.onclick = () => {
+                        mainImg.src = img;
+                        document.querySelectorAll('.thumbnail').forEach(el => el.classList.remove('active'));
+                        t.classList.add('active');
+                        
+                        // Al hacer clic en miniatura, intentar seleccionar variante si hay coincidencia por índice
+                        if (p.variants && p.variants[idx]) {
+                             variantSelect.selectedIndex = idx + 1; // +1 porque el 0 es "Seleccionar..."
+                             currentSelectedVariant = p.variants[idx];
+                        }
+                    };
+                    thumbs.appendChild(t);
+                });
+                thumbs.firstChild.classList.add('active');
+            }
+
+            // Variantes (Dropdown SELECT)
+            if (p.variants && p.variants.length > 0) {
+                variantsContainer.classList.remove('hidden');
+                manualInput.classList.add('hidden'); // Ocultar input manual
+                
+                p.variants.forEach((v, idx) => {
+                    const opt = document.createElement('option');
+                    opt.value = v;
+                    opt.textContent = v;
+                    variantSelect.appendChild(opt);
+                });
+
+                // Evento de cambio en el select
+                variantSelect.onchange = (e) => {
+                    const selectedVal = e.target.value;
+                    const idx = p.variants.indexOf(selectedVal);
+                    
+                    currentSelectedVariant = selectedVal;
+
+                    // Cambiar foto si hay coincidencia
+                    if (idx >= 0 && p.images && p.images[idx]) {
+                         mainImg.src = p.images[idx];
+                         document.querySelectorAll('.thumbnail').forEach(el => el.classList.remove('active'));
+                         if(thumbs.children[idx]) thumbs.children[idx].classList.add('active');
+                    }
+                };
+
+            } else {
+                variantsContainer.classList.add('hidden');
+                manualInput.classList.remove('hidden');
+            }
+
+            // Stock
             const stock = document.getElementById('qv-stock-status');
             if(p.stock <= 0) {
                 stock.innerHTML = '<span class="text-red-500 font-medium text-sm">Sin Stock</span>';
@@ -476,10 +585,11 @@
             } else {
                 stock.innerHTML = '<span class="text-green-600 font-medium text-sm">Disponible</span>';
                 btn.disabled = false; btn.classList.remove('opacity-50');
-                btn.onclick = () => { addToCart(p.id); closeModal('quickview-modal'); };
+                btn.onclick = () => { addToCart(p.id); };
             }
 
-            // Relacionados (Misma categoría, excluyendo actual, max 2)
+            // Relacionados
+            const rel = document.getElementById('qv-related');
             rel.innerHTML = '';
             const related = allProducts.filter(x => x.categoria === p.categoria && x.id !== p.id).slice(0, 2);
             if(related.length > 0) {
@@ -501,18 +611,62 @@
             m.classList.remove('hidden'); m.classList.add('flex');
         };
 
+
         // --- CARRITO ---
         function addToCart(id) {
             const p = allProducts.find(x => x.id === id);
-            if(cart[id]) cart[id].qty++; else cart[id] = { ...p, qty: 1 };
-            saveCart(); updateCartUI(); showToast(`Agregado: ${p.nombre}`);
+            if(!p) return;
+            
+            let variant = "";
+            const hasVariantsConfigured = p.variants && p.variants.length > 0;
+
+            // Validación: Si hay variantes (select), ES OBLIGATORIO elegir una
+            if (hasVariantsConfigured) {
+                if (!currentSelectedVariant && !document.getElementById('quickview-modal').classList.contains('hidden')) {
+                    showToast("⚠️ Por favor, elige una opción");
+                    // Resaltar el select
+                    const sel = document.getElementById('variant-select');
+                    sel.classList.add('ring-2', 'ring-red-500');
+                    setTimeout(() => sel.classList.remove('ring-2', 'ring-red-500'), 1000);
+                    return;
+                }
+                if (currentSelectedVariant) variant = ` (${currentSelectedVariant})`;
+            } else {
+                // Fallback a input manual si está abierto el modal
+                const variantInput = document.getElementById('qv-variant');
+                const modalOpen = !document.getElementById('quickview-modal').classList.contains('hidden');
+                if(modalOpen && variantInput && variantInput.value.trim() !== "") {
+                    variant = ` (${variantInput.value.trim()})`;
+                }
+            }
+
+            const cartKey = id + (variant ? `_${variant.replace(/\s/g,'')}` : '');
+            
+            if(cart[cartKey]) {
+                cart[cartKey].qty++;
+            } else {
+                cart[cartKey] = {
+                    id: p.id,
+                    nombre: p.nombre + variant,
+                    precio: p.precio,
+                    imageUrl: p.imageUrl,
+                    qty: 1
+                };
+            }
+            
+            saveCart(); updateCartUI(); showToast(`Agregado al carrito`);
+            if (!document.getElementById('quickview-modal').classList.contains('hidden')) {
+                 closeModal('quickview-modal');
+            }
         }
-        window.changeQty = (id, d) => {
-            if(!cart[id]) return;
-            const n = cart[id].qty + d;
-            if(n <= 0) delete cart[id]; else cart[id].qty = n;
+
+        window.changeQty = (key, d) => {
+            if(!cart[key]) return;
+            const n = cart[key].qty + d;
+            if(n <= 0) delete cart[key]; else cart[key].qty = n;
             saveCart(); renderCartItems(); updateCartUI();
         };
+
         function updateCartUI() {
             const count = Object.values(cart).reduce((a,b) => a+b.qty, 0);
             const els = ['sidebar-cart-count', 'mobile-cart-badge', 'floating-cart-btn'];
@@ -524,33 +678,32 @@
                 }
             });
         }
+
         function renderCartItems() {
             const c = document.getElementById('cart-items-container');
             c.innerHTML = '';
             let tot = 0;
-            const items = Object.values(cart);
-            if(items.length===0) {
-                c.innerHTML = '<p class="text-center text-stone-400 py-10">Carrito vacío</p>';
-                document.getElementById('btn-checkout').disabled = true;
-                document.getElementById('btn-checkout').classList.add('opacity-50');
-                document.getElementById('cart-total-price').textContent = '$0';
-                return;
-            }
-            document.getElementById('btn-checkout').disabled = false;
-            document.getElementById('btn-checkout').classList.remove('opacity-50');
-
-            items.forEach(i => {
+            Object.keys(cart).forEach(key => {
+                const i = cart[key];
                 tot += i.precio * i.qty;
                 c.innerHTML += `
                 <div class="flex justify-between items-center bg-stone-50 p-3 rounded-lg mb-2">
                     <div class="flex gap-3 items-center overflow-hidden">
-                         <div class="w-10 h-10 bg-white rounded border flex-shrink-0 flex items-center justify-center"><img src="${i.imageUrl||''}" class="max-w-full max-h-full"></div>
-                         <div class="truncate"><div class="font-bold text-xs truncate">${i.nombre}</div><div class="text-xs text-stone-500">$${i.precio}</div></div>
+                         <div class="w-10 h-10 bg-white rounded border flex-shrink-0 flex items-center justify-center"><img src="${i.imageUrl||''}" class="max-w-full max-h-full object-contain"></div>
+                         <div class="truncate"><div class="font-bold text-xs truncate" title="${i.nombre}">${i.nombre}</div><div class="text-xs text-stone-500">$${i.precio}</div></div>
                     </div>
-                    <div class="flex items-center bg-white rounded border h-7"><button onclick="changeQty('${i.id}', -1)" class="px-2 text-stone-400 hover:text-red-500">-</button><span class="text-xs font-bold px-1">${i.qty}</span><button onclick="changeQty('${i.id}', 1)" class="px-2 text-stone-400 hover:text-green-500">+</button></div>
+                    <div class="flex items-center bg-white rounded border h-7"><button onclick="changeQty('${key}', -1)" class="px-2 text-stone-400 hover:text-red-500">-</button><span class="text-xs font-bold px-1">${i.qty}</span><button onclick="changeQty('${key}', 1)" class="px-2 text-stone-400 hover:text-green-500">+</button></div>
                 </div>`;
             });
             document.getElementById('cart-total-price').textContent = `$${tot.toLocaleString('es-AR')}`;
+            
+            const btn = document.getElementById('btn-checkout');
+            if(tot===0) { 
+                c.innerHTML = '<p class="text-center text-stone-400 py-10">Carrito vacío</p>';
+                btn.disabled = true; btn.classList.add('opacity-50');
+            } else { 
+                btn.disabled = false; btn.classList.remove('opacity-50'); 
+            }
         }
         
         window.openCartModal = () => { renderCartItems(); document.getElementById('cart-modal').classList.remove('hidden'); document.getElementById('cart-modal').classList.add('flex'); };
