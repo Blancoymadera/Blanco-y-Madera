@@ -63,6 +63,8 @@
             main {
                 padding-bottom: 5rem; 
             }
+            /* Esconder los filtros en móvil cuando se está viendo el carrito */
+            .mobile-filters-hidden { display: none !important; }
         }
         .mobile-nav {
             position: fixed;
@@ -208,26 +210,6 @@
             <div id="connection-status" class="text-xs text-stone-400 mt-1">Conectando a la nube...</div>
         </div>
         
-        <div class="bg-white p-6 rounded-xl shadow-lg mb-8 no-print" id="filters-container">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                    <label for="category-filter" class="block text-sm font-semibold text-stone-700 mb-1">Filtrar por Categoría</label>
-                    <select id="category-filter" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
-                        <option value="all">Todas las Categorías</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="search-box" class="block text-sm font-semibold text-stone-700 mb-1">Buscar por Nombre</label>
-                    <input type="text" id="search-box" placeholder="Escribe el nombre del producto..." class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
-                </div>
-                <div class="md:self-end">
-                    <button id="reset-button" class="w-full md:w-auto bg-stone-500 text-white font-bold py-2.5 px-6 rounded-lg shadow-xl hover:bg-stone-600 transition duration-300 focus:outline-none focus:ring-4 focus:ring-stone-400 focus:ring-offset-2">
-                        Mostrar Todos
-                    </button>
-                </div>
-            </div>
-        </div>
-
         <div id="print-view" class="hidden print-header"></div>
         
         <div id="toast-container"></div>
@@ -239,6 +221,25 @@
                 <div id="catalog-panel" class="bg-white p-6 rounded-xl shadow-lg relative min-h-[400px]" data-view="catalog">
                     <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">Catálogo de Productos Disponibles</h2>
                     
+                    <div class="bg-white rounded-xl mb-4 no-print border-b pb-4 border-stone-100" id="filters-container-content">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div>
+                                <label for="category-filter" class="block text-sm font-semibold text-stone-700 mb-1">Filtrar por Categoría</label>
+                                <select id="category-filter" class="w-full rounded-lg border-stone-300 shadow-sm focus:border-amber-600 focus:ring-amber-600 p-2">
+                                    <option value="all">Todas las Categorías</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="search-box" class="block text-sm font-semibold text-stone-700 mb-1">Buscar por Nombre</label>
+                                <input type="text" id="search-box" placeholder="Escribe el nombre del producto..." class="w-full rounded-lg border-stone-300 shadow-sm focus:border-amber-600 focus:ring-amber-600 p-2">
+                            </div>
+                            <div class="md:self-end">
+                                <button id="reset-button" class="w-full md:w-auto bg-stone-500 text-white font-bold py-2.5 px-6 rounded-lg shadow-xl hover:bg-stone-600 transition duration-300 focus:outline-none focus:ring-4 focus:ring-stone-400 focus:ring-offset-2 mt-4 md:mt-0">
+                                    Mostrar Todos
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                     <div id="catalog-loading" class="loading-overlay">
                         <div class="text-amber-600 font-bold animate-pulse">Cargando productos de la nube...</div>
                     </div>
@@ -295,6 +296,7 @@
                         <option value="Otro">Otro/No especificado</option>
                     </select>
                 </div>
+
                 <div id="cart-list" class="overflow-y-auto flex-grow pr-4 space-y-2">
                     <p id="empty-cart-message" class="text-stone-500 text-center mt-8">El carrito está vacío. Agrega productos del catálogo.</p>
                 </div>
@@ -767,8 +769,154 @@
                 document.getElementById('catalog-loading').innerHTML = `<div class="text-red-600 font-bold">¡ERROR! Revisa tu clave de Firebase.</div>`;
             });
         }
+        
+        // --- LÓGICA DE PEDIDOS PENDIENTES (Funcional) ---
 
-        // --- LÓGICA DEL MODAL DE VENTA MANUAL (Nueva) ---
+        // Función para guardar el carrito actual como un pedido pendiente
+        async function savePendingOrder() {
+            if (Object.keys(cart).length === 0) {
+                showToast("El carrito está vacío. No se puede guardar un pedido vacío.");
+                return;
+            }
+
+            const clientName = document.getElementById('client-name').value.trim() || "Cliente sin nombre";
+            const whatsappNumber = document.getElementById('whatsapp-number').value.trim().replace(/\D/g, '') || "N/A";
+            const discountRate = parseFloat(document.getElementById('discount-select').value); 
+            const total = calculateSubtotalWithoutDiscount() * (1 - discountRate);
+            
+            // Convertir Timestamps a formato legible para Firebase (aunque Firebase lo maneja, es más seguro)
+            const serializableCart = {};
+            for (const id in cart) {
+                serializableCart[id] = { ...cart[id] };
+            }
+
+            try {
+                await addDoc(collection(db, "pending_orders"), {
+                    timestamp: new Date(),
+                    cliente_nombre: clientName,
+                    cliente_whatsapp: whatsappNumber,
+                    total_estimado: total,
+                    descuento_aplicado: discountRate,
+                    cart: serializableCart // Guardar el objeto cart
+                });
+                showToast(`💾 Pedido de ${clientName} guardado en pendientes.`);
+                
+                // Limpiar el carrito y los campos de UI después de guardar
+                cart = {};
+                document.getElementById('client-name').value = '';
+                document.getElementById('whatsapp-number').value = '';
+                document.getElementById('discount-select').value = '0';
+                saveCart();
+                updateDashboard();
+            } catch (e) {
+                console.error("Error al guardar pedido pendiente:", e);
+                showToast("⚠️ Error al guardar el pedido pendiente.");
+            }
+        }
+        
+        // Función para cargar un pedido pendiente en el carrito actual
+        window.loadPendingOrder = function(orderId) {
+            const order = pendingOrders.find(o => o.id === orderId);
+
+            if (!order) {
+                showToast("🚫 Pedido no encontrado.");
+                return;
+            }
+
+            if (!window.confirm(`⚠️ Cargar Pedido: ¿Deseas reemplazar la cotización actual con el pedido de ${order.cliente_nombre}?`)) {
+                return;
+            }
+
+            // Cargar datos en el carrito y campos de UI
+            cart = order.cart;
+            document.getElementById('client-name').value = order.cliente_nombre;
+            document.getElementById('whatsapp-number').value = order.cliente_whatsapp !== "N/A" ? order.cliente_whatsapp : '';
+            document.getElementById('discount-select').value = order.descuento_aplicado.toString();
+            
+            saveCart();
+            updateDashboard();
+            showToast(`✅ Pedido de ${order.cliente_nombre} cargado.`);
+        }
+
+        // Función para eliminar un pedido pendiente
+        window.deletePendingOrder = async function(orderId) {
+            if (!window.confirm("⚠️ ¿Estás seguro de que deseas eliminar este pedido pendiente?")) {
+                return;
+            }
+            try {
+                await deleteDoc(doc(db, "pending_orders", orderId));
+                showToast("🗑️ Pedido eliminado.");
+                // El listener onSnapshot se encargará de re-renderizar
+            } catch (e) {
+                console.error("Error al eliminar pedido:", e);
+                showToast("⚠️ Error al eliminar el pedido pendiente.");
+            }
+        }
+        
+        // Función para suscribirse a pedidos pendientes en tiempo real
+        function subscribeToPendingOrders() {
+            const q = collection(db, "pending_orders");
+            const loadingElement = document.getElementById('pending-loading');
+            
+            if (loadingElement) {
+                loadingElement.textContent = "Sincronizando pedidos pendientes... 🔄";
+            }
+
+            onSnapshot(q, (querySnapshot) => {
+                pendingOrders = [];
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    pendingOrders.push({ id: doc.id, ...data });
+                });
+
+                renderPendingOrders();
+            }, (error) => {
+                console.error("Error al suscribirse a pedidos pendientes:", error);
+                if (loadingElement) {
+                    loadingElement.textContent = "Error al cargar pedidos pendientes 🔴";
+                }
+            });
+        }
+        
+        // Función para renderizar la lista de pedidos pendientes
+        function renderPendingOrders() {
+            const list = document.getElementById('pending-list');
+            list.innerHTML = ''; 
+
+            if (pendingOrders.length === 0) {
+                list.innerHTML = '<p id="pending-loading" class="text-stone-500 text-center py-4">No hay pedidos pendientes guardados.</p>';
+                return;
+            }
+            
+            // Ordenar por el más nuevo primero
+            pendingOrders.sort((a, b) => b.timestamp.toDate() - a.timestamp.toDate()); 
+
+            pendingOrders.forEach(order => {
+                const orderDate = order.timestamp ? new Date(order.timestamp.toDate()).toLocaleDateString('es-ES') : 'Fecha N/A';
+                const item = document.createElement('div');
+                item.className = "bg-stone-50 p-3 rounded-lg border border-stone-200 flex justify-between items-center text-sm hover:bg-stone-100 transition";
+                item.innerHTML = `
+                    <div>
+                        <p class="font-bold text-stone-700">${order.cliente_nombre}</p>
+                        <p class="text-xs text-stone-500">Total: ${formatCurrency(order.total_estimado)} (${orderDate})</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="loadPendingOrder('${order.id}')" class="bg-amber-500 text-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-amber-600 transition">
+                            Cargar
+                        </button>
+                        <button onclick="deletePendingOrder('${order.id}')" class="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold hover:bg-red-600 transition">
+                            🗑️
+                        </button>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+        
+        // --- FIN LÓGICA DE PEDIDOS PENDIENTES ---
+
+
+        // --- LÓGICA DEL MODAL DE VENTA MANUAL ---
         function openManualSaleModal() {
             // Limpiar campos y predeterminar
             document.getElementById('manual-sale-product-name').value = '';
@@ -853,7 +1001,6 @@
                 }
                 
                 // 2. Registrar la venta
-                // El total es igual al subtotal en una venta manual, no hay descuento.
                 await recordSale(clientName, "No especificado", subtotal, 0, paymentMethod, itemsToRecord);
                 
                 const stockMsg = deductStock ? "y stock actualizado" : "sin modificar stock";
@@ -875,7 +1022,7 @@
                     fecha_venta: formattedDate,
                     cliente_nombre: clientName || 'No especificado',
                     cliente_whatsapp: whatsappNumber || 'No especificado',
-                    metodo_pago: paymentMethod, // NUEVO CAMPO
+                    metodo_pago: paymentMethod, 
                     total_final: total,
                     descuento_aplicado: discountRate,
                     items: items.map(item => ({
@@ -907,7 +1054,7 @@
 
             const clientName = document.getElementById('client-name').value.trim();
             const whatsappNumber = document.getElementById('whatsapp-number').value.trim().replace(/\D/g, ''); 
-            const paymentMethod = document.getElementById('payment-method').value; // Leer el método de pago
+            const paymentMethod = document.getElementById('payment-method').value; 
             
             const discountRate = parseFloat(document.getElementById('discount-select').value); 
 
@@ -950,7 +1097,7 @@
                     
                     // 3. Limpiar y notificar
                     cart = {};
-                    saveCart(); // Limpiar localstorage
+                    saveCart(); 
                     
                     // Limpiar también los campos de la cotización
                     document.getElementById('client-name').value = '';
@@ -1256,13 +1403,13 @@
 
             const catalogPanel = document.getElementById('catalog-panel');
             const cartPanel = document.getElementById('cart-panel');
-            const filtersContainer = document.getElementById('filters-container');
+            const filtersContent = document.getElementById('filters-container-content');
             const tabCatalog = document.getElementById('tab-catalog');
             const tabCart = document.getElementById('tab-cart');
             
             if (viewName === 'catalog') {
                 catalogPanel.style.display = 'block';
-                filtersContainer.style.display = 'block';
+                filtersContent.classList.remove('mobile-filters-hidden');
                 cartPanel.style.display = 'none';
                 tabCatalog.classList.add('text-amber-800');
                 tabCart.classList.remove('text-amber-800');
@@ -1270,7 +1417,7 @@
                 tabCatalog.classList.remove('text-stone-500');
             } else {
                 catalogPanel.style.display = 'none';
-                filtersContainer.style.display = 'none';
+                filtersContent.classList.add('mobile-filters-hidden');
                 cartPanel.style.display = 'flex';
                 tabCart.classList.add('text-amber-800');
                 tabCatalog.classList.remove('text-amber-800');
@@ -1323,7 +1470,7 @@
             summaryLines.push(`TOTAL FINAL: ${formatCurrency(totalWithDiscount)}`); 
             summaryLines.push('--------------------------'); // Separador para el pago
             
-            // ACTUALIZADO: Información de Transferencia sin (CBU/CVU)
+            // Información de Transferencia (sin CBU/CVU)
             summaryLines.push('📦 Para abonar con Transferencia, usa el siguiente alias:');
             summaryLines.push('*sofiricca*');
             summaryLines.push('--------------------------');
@@ -1464,7 +1611,8 @@
             ctx.textAlign = 'center';
             ctx.fillStyle = '#0b0b0b';
             ctx.font = '18px "Inter", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif';
-            ctx.fillText('Muchas gracias por confiar en Blanco & Madera! 🫶🏼', canvasWidth / 2, cursorY + 30);
+            ctx.fillText('Para Transferencia, alias: sofiricca', canvasWidth / 2, cursorY + 30); // Info de Alias en la imagen
+            ctx.fillText('Muchas gracias por confiar en Blanco & Madera! 🫶🏼', canvasWidth / 2, cursorY + 60);
             // [FIN LÓGICA DEL CANVAS]
 
             // --- LÓGICA DE COMPARTIR NATIVA (COMPORTAMIENTO DESEADO) ---
@@ -1641,7 +1789,7 @@
                 // 2. Conectarse a la sincronización en tiempo real (Stock y Ventas)
                 subscribeToProducts(); 
                 // 3. Conectarse a pedidos pendientes
-                // subscribeToPendingOrders(); // Pendiente de implementación
+                subscribeToPendingOrders();
             } catch (e) {
                 console.error("Error al conectar Firebase:", e);
                 document.getElementById('connection-status').textContent = "ERROR: Conexión a Firebase fallida 🔴";
@@ -1675,7 +1823,7 @@
             
             // Re-renderizar carrito al cambiar el descuento manual 
             document.getElementById('discount-select').addEventListener('change', renderCart); 
-            document.getElementById('payment-method').addEventListener('change', renderCart); // NUEVO LISTENER
+            document.getElementById('payment-method').addEventListener('change', renderCart); 
             
             document.getElementById('client-name').addEventListener('input', renderCart); 
             document.getElementById('whatsapp-number').addEventListener('input', renderCart); 
@@ -1686,15 +1834,13 @@
             document.getElementById('share-image-button').addEventListener('click', shareQuoteAsImage);
             
             document.getElementById('print-button').addEventListener('click', printQuote);
-            document.getElementById('download-sales-report-button').addEventListener('click', downloadSalesReport); // Botón de Reporte
-
-            // EVENTO DE VENTA MANUAL (Ahora abre el modal)
+            document.getElementById('download-sales-report-button').addEventListener('click', downloadSalesReport); 
+            
+            // BOTONES IMPLEMENTADOS
             document.getElementById('add-manual-sale-button').addEventListener('click', () => {
                 openManualSaleModal();
             });
-            // ----------------------------------------------------
-
-            // document.getElementById('save-pending-button').addEventListener('click', savePendingOrder); // Pendiente de implementación
+            document.getElementById('save-pending-button').addEventListener('click', savePendingOrder); 
             
             const isMobile = window.innerWidth < 768;
             if (isMobile) {
@@ -1702,7 +1848,6 @@
             } else {
                 document.getElementById('catalog-panel').style.display = 'block';
                 document.getElementById('cart-panel').style.display = 'flex';
-                document.getElementById('filters-container').style.display = 'grid';
             }
 
             updateDashboard();
