@@ -7,50 +7,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-
-        :root {
-            --color-bg: #fefce8;
-            --color-surface: #ffffff;
-            --color-surface-muted: #f8fafc;
-            --color-primary: #d4a753;
-            --color-primary-strong: #b18b45;
-            --color-accent: #1d4ed8;
-            --color-text: #1c1917;
-            --color-muted: #78716c;
-            --focus-ring: 3px solid var(--color-accent);
-        }
-
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--color-bg);
-            color: var(--color-text);
-        }
-
-        a.skip-link {
-            position: absolute;
-            left: -999px;
-            top: auto;
-            width: 1px;
-            height: 1px;
-            overflow: hidden;
-            z-index: -999;
-        }
-
-        a.skip-link:focus-visible {
-            position: static;
-            width: auto;
-            height: auto;
-            padding: 0.75rem 1rem;
-            margin: 0.5rem;
-            background: var(--color-primary);
-            color: #0f172a;
-            border-radius: 0.75rem;
-            z-index: 9999;
-        }
-
-        :focus-visible {
-            outline: var(--focus-ring);
-            outline-offset: 3px;
+            background-color: #fefce8; /* Fondo suave (Amber 50) */
         }
         .item-card {
             transition: transform 0.1s ease-out;
@@ -59,7 +18,7 @@
             background-color: #fffaf0; /* Hover más claro */
         }
         .amber-gradient {
-            background-image: linear-gradient(to right, var(--color-primary), var(--color-primary-strong));
+            background-image: linear-gradient(to right, #d4a753, #b18b45);
         }
         .logo-text {
             font-family: serif;
@@ -179,32 +138,10 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #b18b45;
         }
-        /* Barra de filtros y acciones */
-        .catalog-toolbar {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 0.75rem 1rem;
-            align-items: end;
-        }
-        @media (min-width: 768px) {
-            .catalog-toolbar {
-                grid-template-columns: 1fr 1.2fr auto;
-                align-items: center;
-            }
-        }
-        .toolbar-actions {
-            display: flex;
-            gap: 0.75rem;
-            width: 100%;
-            justify-content: flex-start;
-        }
-        @media (min-width: 768px) {
-            .toolbar-actions { width: auto; justify-content: flex-end; }
-        }
         @media print {
             .no-print { display: none !important; }
             .print-header {
-                display: block !important;
+                display: block !important; 
                 text-align: center;
                 padding-bottom: 20px;
                 margin-bottom: 20px;
@@ -252,8 +189,6 @@
 </head>
 <body class="text-stone-800">
 
-    <a class="skip-link" href="#main-content">Saltar al contenido principal</a>
-
     <!-- HEADER FIJO (SOLO LOGO) -->
     <header class="bg-white shadow-lg sticky top-0 z-10 no-print">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-2 header-content">
@@ -268,20 +203,40 @@
         </div>
     </header>
 
-    <main id="main-content" class="container mx-auto p-4 sm:p-6 lg:p-8 pt-0" tabindex="-1">
+    <main class="container mx-auto p-4 sm:p-6 lg:p-8 pt-0"> 
         <!-- CONTENIDO QUE SE DESPLAZA -->
         
         <!-- BLOQUE DE TÍTULO Y ESTADO (Desplazable) -->
         <div class="header-title-block bg-white pb-2 text-center">
             <h1 class="main-title text-4xl font-extrabold text-amber-800 tracking-wide">CATÁLOGO</h1>
             <p class="text-stone-600 mt-1">Selecciona productos para generar la cotización del cliente.</p>
-            <div id="connection-status" class="text-xs text-stone-400 mt-1" role="status" aria-live="polite">Conectando a la nube...</div>
+            <div id="connection-status" class="text-xs text-stone-400 mt-1">Conectando a la nube...</div>
         </div>
         
+        <div class="bg-white p-6 rounded-xl shadow-lg mb-8 no-print" id="filters-container">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label for="category-filter" class="block text-sm font-semibold text-stone-700 mb-1">Filtrar por Categoría</label>
+                    <select id="category-filter" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
+                        <option value="all">Todas las Categorías</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="search-box" class="block text-sm font-semibold text-stone-700 mb-1">Buscar por Nombre</label>
+                    <input type="text" id="search-box" placeholder="Escribe el nombre del producto..." class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
+                </div>
+                <div class="md:self-end">
+                    <button id="reset-button" class="w-full md:w-auto bg-stone-500 text-white font-bold py-2.5 px-6 rounded-lg shadow-xl hover:bg-stone-600 transition duration-300 focus:outline-none focus:ring-4 focus:ring-stone-400 focus:ring-offset-2">
+                        Mostrar Todos
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <div id="print-view" class="hidden print-header"></div>
         
         <!-- Contenedor de Notificaciones -->
-        <div id="toast-container" role="status" aria-live="polite"></div>
+        <div id="toast-container"></div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             
@@ -291,36 +246,13 @@
                 <!-- CATÁLOGO -->
                 <div id="catalog-panel" class="bg-white p-6 rounded-xl shadow-lg relative min-h-[400px]" data-view="catalog">
                     <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">Catálogo de Productos Disponibles</h2>
-
-                    <div class="mb-4 bg-stone-50 border border-stone-200 rounded-xl p-4 no-print">
-                        <div class="catalog-toolbar">
-                            <div>
-                                <label for="category-filter" class="block text-sm font-semibold text-stone-700 mb-1">Filtrar por Categoría</label>
-                                <select id="category-filter" class="w-full rounded-xl border-stone-200 shadow-md focus:border-amber-600 focus:ring-amber-600 p-3">
-                                    <option value="all">Todas las Categorías</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label for="search-box" class="block text-sm font-semibold text-stone-700 mb-1">Buscar por Nombre</label>
-                                <input type="text" id="search-box" placeholder="Escribe el nombre del producto..." class="w-full rounded-xl border-stone-200 shadow-md focus:border-amber-600 focus:ring-amber-600 p-3" aria-label="Buscar productos por nombre">
-                            </div>
-                            <div class="toolbar-actions">
-                                <button id="reset-button" class="flex-1 md:flex-none bg-stone-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-stone-700 transition duration-300 focus:outline-none focus:ring-4 focus:ring-stone-400 focus:ring-offset-2">
-                                    Mostrar Todos
-                                </button>
-                                <button onclick="showView('cart')" class="hidden md:inline-flex items-center gap-2 bg-amber-500 text-white font-semibold py-3 px-4 rounded-xl shadow-lg hover:bg-amber-600 transition">
-                                    🛒 Ver Cotización
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
+                    
                     <!-- Overlay de Carga -->
                     <div id="catalog-loading" class="loading-overlay">
                         <div class="text-amber-600 font-bold animate-pulse">Cargando productos de la nube...</div>
                     </div>
                     
-                    <div id="product-list" class="overflow-y-auto h-[60vh] md:h-[70vh] pr-1 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                    <div id="product-list" class="overflow-y-auto h-[60vh] md:h-[70vh] pr-4 space-y-2">
                         <p class="text-stone-500">Conectando...</p>
                     </div>
                 </div>
@@ -359,14 +291,12 @@
                 
                 <div class="mb-4 no-print">
                     <label for="client-name" class="block text-sm font-semibold text-stone-700 mb-1">Nombre y Apellido (para agendar):</label>
-                    <input type="text" id="client-name" placeholder="Ej: Pepito Gomez" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2" aria-required="true">
-                    <p id="client-name-error" class="text-sm text-red-600 mt-1 hidden" role="status" aria-live="polite"></p>
+                    <input type="text" id="client-name" placeholder="Ej: Pepito Gomez" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
                 </div>
-
+                
                 <div class="mb-4 no-print">
                     <label for="whatsapp-number" class="block text-sm font-semibold text-stone-700 mb-1">Número de WhatsApp del Cliente (Formato: 549...):</label>
-                    <input type="tel" id="whatsapp-number" placeholder="Ej: 5493415551234" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2" aria-required="true" inputmode="tel">
-                    <p id="whatsapp-number-error" class="text-sm text-red-600 mt-1 hidden" role="status" aria-live="polite"></p>
+                    <input type="tel" id="whatsapp-number" placeholder="Ej: 5493415551234" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
                 </div>
                 
                 <!-- NUEVO: MÉTODO DE PAGO -->
@@ -472,7 +402,7 @@
     <script type="module">
         // --- CONFIGURACIÓN DE FIREBASE ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc, onSnapshot, setDoc, addDoc, writeBatch, deleteDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, onSnapshot, setDoc, addDoc, writeBatch, deleteDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
         // 🔥🔥🔥 CONFIGURACIÓN COPIADA DE TU CONSOLA DE FIREBASE 🔥🔥🔥
         const firebaseConfig = {
@@ -496,9 +426,7 @@
         const STORAGE_KEY_CART = 'bm_cart';
         
         // Almacena pedidos pendientes para su visualización
-        let pendingOrders = [];
-
-        const PENDING_COLLECTION = 'pendingOrders';
+        let pendingOrders = []; 
 
         // DATOS MAESTROS (Se usan SOLAMENTE para la subida inicial a Firebase)
         // **IMPORTANTE**: Este listado solo se usa si la base de datos está VACÍA al iniciar (función initDatabaseIfNeeded).
@@ -913,11 +841,8 @@
             }
 
 
-            const validation = validateClientInputs({ requirePhone: true });
-            if (!validation.valid) return;
-
-            const clientName = validation.clientName;
-            const whatsappNumber = validation.phoneDigits;
+            const clientName = document.getElementById('client-name').value.trim();
+            const whatsappNumber = document.getElementById('whatsapp-number').value.trim().replace(/\D/g, ''); 
             const paymentMethod = document.getElementById('payment-method').value; // Leer el método de pago
             
             const discountRate = parseFloat(document.getElementById('discount-select').value); 
@@ -1103,217 +1028,6 @@
             }).format(value);
         }
 
-        function formatShortDate(date) {
-            const parsed = date && typeof date.toDate === 'function' ? date.toDate() : new Date(date);
-            return new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).format(parsed);
-        }
-
-        function sanitizePhoneNumber(rawValue = '') {
-            return rawValue.trim().replace(/\D/g, '');
-        }
-
-        function toggleFieldError(elementId, message = '') {
-            const errorElement = document.getElementById(elementId);
-            if (!errorElement) return;
-
-            if (message) {
-                errorElement.textContent = message;
-                errorElement.classList.remove('hidden');
-            } else {
-                errorElement.textContent = '';
-                errorElement.classList.add('hidden');
-            }
-        }
-
-        function validateClientInputs({ requirePhone = false, showToastMessage = true } = {}) {
-            const clientNameInput = document.getElementById('client-name');
-            const whatsappInput = document.getElementById('whatsapp-number');
-
-            const clientName = clientNameInput?.value.trim() || '';
-            const phoneDigits = sanitizePhoneNumber(whatsappInput?.value || '');
-
-            let isValid = true;
-
-            toggleFieldError('client-name-error');
-            toggleFieldError('whatsapp-number-error');
-
-            if (!clientName) {
-                isValid = false;
-                toggleFieldError('client-name-error', 'Ingresa el nombre y apellido del cliente.');
-            }
-
-            const hasPhoneValue = Boolean(whatsappInput?.value.trim());
-            if ((requirePhone || hasPhoneValue) && (phoneDigits.length < 10 || phoneDigits.length > 15)) {
-                isValid = false;
-                toggleFieldError('whatsapp-number-error', 'Ingresa un WhatsApp válido con prefijo (ej: 549...).');
-            }
-
-            if (!isValid && showToastMessage) {
-                showToast('Revisa los datos del cliente antes de continuar.');
-            }
-
-            return { valid: isValid, clientName, phoneDigits };
-        }
-
-        function renderPendingOrders() {
-            const container = document.getElementById('pending-list');
-            const loading = document.getElementById('pending-loading');
-
-            if (!container) return;
-
-            container.innerHTML = '';
-
-            if (!pendingOrders.length) {
-                container.innerHTML = '<p class="text-stone-500 text-sm">No hay pedidos pendientes guardados.</p>';
-                return;
-            }
-
-            pendingOrders.forEach((order) => {
-                const card = document.createElement('div');
-                card.className = 'border border-amber-100 bg-amber-50/50 p-3 rounded-lg shadow-sm';
-
-                const header = document.createElement('div');
-                header.className = 'flex justify-between items-center';
-
-                const title = document.createElement('div');
-                title.innerHTML = `<p class="font-semibold text-stone-800">${order.clientName || 'Cliente sin nombre'}</p><p class="text-xs text-stone-500">${formatShortDate(order.createdAt || order.created_at || Date.now())}</p>`;
-
-                const amount = document.createElement('span');
-                amount.className = 'text-sm font-bold text-amber-700';
-                amount.textContent = formatCurrency(order.total || 0);
-
-                header.appendChild(title);
-                header.appendChild(amount);
-
-                const items = document.createElement('p');
-                items.className = 'text-xs text-stone-600 mt-2';
-                items.textContent = `${order.items?.length || 0} productos • ${order.paymentMethod || 'Pago no definido'}`;
-
-                const actions = document.createElement('div');
-                actions.className = 'flex gap-2 mt-3';
-
-                const resumeBtn = document.createElement('button');
-                resumeBtn.className = 'flex-1 bg-green-600 text-white text-xs font-semibold py-2 rounded-lg shadow hover:bg-green-700 transition';
-                resumeBtn.textContent = 'Reanudar';
-                resumeBtn.onclick = () => loadPendingOrder(order);
-
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'flex-1 bg-stone-200 text-stone-700 text-xs font-semibold py-2 rounded-lg hover:bg-stone-300 transition';
-                deleteBtn.textContent = 'Descartar';
-                deleteBtn.onclick = () => deletePendingOrder(order.id);
-
-                actions.appendChild(resumeBtn);
-                actions.appendChild(deleteBtn);
-
-                card.appendChild(header);
-                card.appendChild(items);
-                card.appendChild(actions);
-
-                container.appendChild(card);
-            });
-
-            if (loading) loading.remove();
-        }
-
-        async function savePendingOrder() {
-            if (Object.keys(cart).length === 0) {
-                showToast('El carrito está vacío. Agrega productos antes de guardar.');
-                return;
-            }
-
-            const validation = validateClientInputs({ requirePhone: true });
-            if (!validation.valid) return;
-
-            const clientName = validation.clientName || 'Cliente sin nombre';
-            const whatsappNumber = validation.phoneDigits;
-            const paymentMethod = document.getElementById('payment-method').value;
-            const discountRate = getApplicableDiscountRate();
-
-            const items = Object.keys(cart).map((id) => {
-                const item = cart[id];
-                return {
-                    id,
-                    nombre: item.nombre,
-                    cantidad: item.cantidad,
-                    precio: item.precio,
-                    subtotal: item.precio * item.cantidad
-                };
-            });
-
-            const subtotal = items.reduce((acc, item) => acc + item.subtotal, 0);
-            const total = subtotal * (1 - discountRate);
-
-            try {
-                await addDoc(collection(db, PENDING_COLLECTION), {
-                    clientName,
-                    whatsappNumber,
-                    paymentMethod,
-                    discountRate,
-                    total,
-                    items,
-                    createdAt: serverTimestamp(),
-                    status: 'pendiente'
-                });
-
-                showToast('Pedido pendiente guardado en la nube ✅');
-            } catch (e) {
-                console.error('Error guardando pedido pendiente', e);
-                showToast('No se pudo guardar el pedido pendiente.');
-            }
-        }
-
-        async function deletePendingOrder(id) {
-            if (!id) return;
-            if (!window.confirm('¿Seguro deseas eliminar este pedido pendiente?')) return;
-
-            try {
-                await deleteDoc(doc(db, PENDING_COLLECTION, id));
-                showToast('Pedido pendiente eliminado');
-            } catch (e) {
-                console.error('Error eliminando pendiente', e);
-                showToast('No se pudo eliminar el pedido.');
-            }
-        }
-
-        function loadPendingOrder(order) {
-            if (!order || !order.items) return;
-
-            cart = {};
-            order.items.forEach((item) => {
-                cart[item.id] = {
-                    nombre: item.nombre,
-                    precio: item.precio,
-                    cantidad: item.cantidad
-                };
-            });
-
-            document.getElementById('client-name').value = order.clientName || '';
-            document.getElementById('whatsapp-number').value = order.whatsappNumber || '';
-            document.getElementById('payment-method').value = order.paymentMethod || 'Otro';
-            document.getElementById('discount-select').value = order.discountRate?.toString() || '0';
-
-            saveCart();
-            updateDashboard();
-            showToast('Pedido cargado en el carrito.');
-        }
-
-        function subscribeToPendingOrders() {
-            const pendingRef = query(collection(db, PENDING_COLLECTION), orderBy('createdAt', 'desc'));
-            const loading = document.getElementById('pending-loading');
-
-            onSnapshot(pendingRef, (snapshot) => {
-                pendingOrders = [];
-                snapshot.forEach((docSnapshot) => {
-                    pendingOrders.push({ id: docSnapshot.id, ...docSnapshot.data() });
-                });
-                renderPendingOrders();
-                if (loading) loading.textContent = '';
-            }, (error) => {
-                console.error('Error al escuchar pendientes', error);
-                if (loading) loading.textContent = 'No se pudieron cargar los pedidos.';
-            });
-        }
-
         function saveCart() {
             localStorage.setItem(STORAGE_KEY_CART, JSON.stringify(cart));
         }
@@ -1404,43 +1118,6 @@
             }
             
             renderPrintView(subtotalWithoutDiscount, totalWithDiscount, finalDiscountRate);
-
-            // Validación en vivo de datos de contacto
-            validateContactFields();
-        }
-
-        function updateFieldError(inputEl, errorId, message) {
-            const errorEl = document.getElementById(errorId);
-            if (!inputEl || !errorEl) return;
-
-            if (message) {
-                errorEl.textContent = message;
-                errorEl.classList.remove('hidden');
-                inputEl.setAttribute('aria-invalid', 'true');
-                inputEl.setAttribute('aria-describedby', errorId);
-            } else {
-                errorEl.textContent = '';
-                errorEl.classList.add('hidden');
-                inputEl.removeAttribute('aria-invalid');
-                inputEl.removeAttribute('aria-describedby');
-            }
-        }
-
-        function validateContactFields() {
-            const nameInput = document.getElementById('client-name');
-            const whatsappInput = document.getElementById('whatsapp-number');
-
-            const nameValue = nameInput ? nameInput.value.trim() : '';
-            const whatsappValue = whatsappInput ? whatsappInput.value.trim() : '';
-
-            const isNameValid = nameValue.length >= 3;
-            const whatsappPattern = /^\d{11,15}$/;
-            const isWhatsappValid = whatsappPattern.test(whatsappValue);
-
-            updateFieldError(nameInput, 'client-name-error', isNameValid ? '' : 'Ingresa al menos 3 caracteres.');
-            updateFieldError(whatsappInput, 'whatsapp-number-error', isWhatsappValid ? '' : 'Solo números en formato 549XXXXXXXXX.');
-
-            return isNameValid && isWhatsappValid;
         }
 
         window.changeQuantity = function(id, delta) {
@@ -1515,11 +1192,13 @@
 
             const catalogPanel = document.getElementById('catalog-panel');
             const cartPanel = document.getElementById('cart-panel');
+            const filtersContainer = document.getElementById('filters-container');
             const tabCatalog = document.getElementById('tab-catalog');
             const tabCart = document.getElementById('tab-cart');
-
+            
             if (viewName === 'catalog') {
                 catalogPanel.style.display = 'block';
+                filtersContainer.style.display = 'block';
                 cartPanel.style.display = 'none';
                 tabCatalog.classList.add('text-amber-800');
                 tabCart.classList.remove('text-amber-800');
@@ -1527,6 +1206,7 @@
                 tabCatalog.classList.remove('text-stone-500');
             } else {
                 catalogPanel.style.display = 'none';
+                filtersContainer.style.display = 'none';
                 cartPanel.style.display = 'flex';
                 tabCart.classList.add('text-amber-800');
                 tabCatalog.classList.remove('text-amber-800');
@@ -1605,11 +1285,9 @@
         }
 
         async function shareQuoteAsImage() {
-            const validation = validateClientInputs({ requirePhone: false });
-            if (!validation.valid) return;
-
-            const clientName = validation.clientName;
-
+            const clientName = document.getElementById('client-name').value.trim();
+            const whatsappNumber = document.getElementById('whatsapp-number').value.trim().replace(/\D/g, ''); 
+            
             if (Object.keys(cart).length === 0) {
                 showToast("El carrito está vacío.");
                 return;
@@ -1803,8 +1481,7 @@
 
         function renderProductList(data) {
             const productList = document.getElementById('product-list');
-            productList.className = 'overflow-y-auto h-[60vh] md:h-[70vh] pr-1 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3';
-            productList.innerHTML = '';
+            productList.innerHTML = ''; 
 
             if (data.length === 0) {
                 productList.innerHTML = '<p class="text-stone-500">No se encontraron productos que coincidan con su búsqueda.</p>';
@@ -1838,22 +1515,22 @@
                 // ----------------------------------------
 
 
-                item.className = `bg-white p-4 rounded-xl border border-stone-100 flex flex-col gap-3 md:flex-row md:items-center md:justify-between item-card ${opacityClass} shadow-sm`;
+                item.className = `bg-white p-4 rounded-xl border border-stone-100 flex justify-between items-center item-card ${opacityClass}`;
                 item.innerHTML = `
-                    <div class="space-y-1">
-                        <p class="font-semibold text-lg text-stone-800 leading-tight">${product.nombre}</p>
-                        <div class="flex gap-2 items-center flex-wrap text-xs">
-                            <span class="px-2 py-0.5 rounded-full font-medium bg-stone-100 text-stone-600">${product.categoria}</span>
-                            <span class="px-2 py-0.5 rounded-full font-medium ${stockBadgeClass}">
+                    <div>
+                        <p class="font-semibold text-lg text-stone-800">${product.nombre}</p>
+                        <div class="flex gap-2 items-center">
+                            <p class="text-xs text-stone-500">${product.categoria}</p>
+                            <span class="text-xs px-2 py-0.5 rounded-full font-medium ${stockBadgeClass}">
                                 📦 ${stockMessage}
                             </span>
                         </div>
                     </div>
-                    <div class="flex items-center justify-between gap-3 w-full md:w-auto">
+                    <div class="flex items-center space-x-3">
                         <span class="text-xl font-extrabold text-amber-800">${formatCurrency(product.precio)}</span>
-                        <button onclick="addToCart('${product.id}')" class="p-2 w-full md:w-auto ${isOutOfStock ? 'bg-stone-300 cursor-not-allowed' : 'amber-gradient hover:opacity-90'} text-white rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
+                        <button onclick="addToCart('${product.id}')" class="p-2 ${isOutOfStock ? 'bg-stone-300 cursor-not-allowed' : 'amber-gradient hover:opacity-90'} text-white rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
                             ${isOutOfStock ? 'disabled' : ''}>
-                            <span class="text-lg md:text-xl">🛒 Agregar</span>
+                            <span class="text-xl">🛒</span>
                         </button>
                     </div>
                 `;
@@ -1902,8 +1579,6 @@
                 document.getElementById('search-box').value = '';
                 document.getElementById('client-name').value = '';
                 document.getElementById('whatsapp-number').value = '';
-                toggleFieldError('client-name-error');
-                toggleFieldError('whatsapp-number-error');
                 updateDashboard();
             });
             
@@ -1923,16 +1598,11 @@
             // ----------------------------------------------------
             
             // Re-renderizar carrito al cambiar el descuento manual 
-            document.getElementById('discount-select').addEventListener('change', renderCart);
+            document.getElementById('discount-select').addEventListener('change', renderCart); 
             document.getElementById('payment-method').addEventListener('change', renderCart); // NUEVO LISTENER
-
-            const handleClientFields = () => {
-                validateClientInputs({ showToastMessage: false });
-                renderCart();
-            };
-
-            document.getElementById('client-name').addEventListener('input', handleClientFields);
-            document.getElementById('whatsapp-number').addEventListener('input', handleClientFields);
+            
+            document.getElementById('client-name').addEventListener('input', renderCart); 
+            document.getElementById('whatsapp-number').addEventListener('input', renderCart); 
             
             // EVENTOS BOTONES PRINCIPALES
             document.getElementById('confirm-sale-button').addEventListener('click', confirmSaleAndDeductStock);
@@ -1964,6 +1634,7 @@
             } else {
                 document.getElementById('catalog-panel').style.display = 'block';
                 document.getElementById('cart-panel').style.display = 'flex';
+                document.getElementById('filters-container').style.display = 'grid';
             }
 
             updateDashboard();
