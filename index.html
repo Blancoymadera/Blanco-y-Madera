@@ -7,9 +7,50 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+        :root {
+            --color-bg: #fefce8;
+            --color-surface: #ffffff;
+            --color-surface-muted: #f8fafc;
+            --color-primary: #d4a753;
+            --color-primary-strong: #b18b45;
+            --color-accent: #1d4ed8;
+            --color-text: #1c1917;
+            --color-muted: #78716c;
+            --focus-ring: 3px solid var(--color-accent);
+        }
+
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #fefce8; /* Fondo suave (Amber 50) */
+            background-color: var(--color-bg);
+            color: var(--color-text);
+        }
+
+        a.skip-link {
+            position: absolute;
+            left: -999px;
+            top: auto;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            z-index: -999;
+        }
+
+        a.skip-link:focus-visible {
+            position: static;
+            width: auto;
+            height: auto;
+            padding: 0.75rem 1rem;
+            margin: 0.5rem;
+            background: var(--color-primary);
+            color: #0f172a;
+            border-radius: 0.75rem;
+            z-index: 9999;
+        }
+
+        :focus-visible {
+            outline: var(--focus-ring);
+            outline-offset: 3px;
         }
         .item-card {
             transition: transform 0.1s ease-out;
@@ -18,7 +59,7 @@
             background-color: #fffaf0; /* Hover más claro */
         }
         .amber-gradient {
-            background-image: linear-gradient(to right, #d4a753, #b18b45);
+            background-image: linear-gradient(to right, var(--color-primary), var(--color-primary-strong));
         }
         .logo-text {
             font-family: serif;
@@ -189,6 +230,8 @@
 </head>
 <body class="text-stone-800">
 
+    <a class="skip-link" href="#main-content">Saltar al contenido principal</a>
+
     <!-- HEADER FIJO (SOLO LOGO) -->
     <header class="bg-white shadow-lg sticky top-0 z-10 no-print">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-2 header-content">
@@ -203,14 +246,14 @@
         </div>
     </header>
 
-    <main class="container mx-auto p-4 sm:p-6 lg:p-8 pt-0"> 
+    <main id="main-content" class="container mx-auto p-4 sm:p-6 lg:p-8 pt-0" tabindex="-1">
         <!-- CONTENIDO QUE SE DESPLAZA -->
         
         <!-- BLOQUE DE TÍTULO Y ESTADO (Desplazable) -->
         <div class="header-title-block bg-white pb-2 text-center">
             <h1 class="main-title text-4xl font-extrabold text-amber-800 tracking-wide">CATÁLOGO</h1>
             <p class="text-stone-600 mt-1">Selecciona productos para generar la cotización del cliente.</p>
-            <div id="connection-status" class="text-xs text-stone-400 mt-1">Conectando a la nube...</div>
+            <div id="connection-status" class="text-xs text-stone-400 mt-1" role="status" aria-live="polite">Conectando a la nube...</div>
         </div>
         
         <div id="print-view" class="hidden print-header"></div>
@@ -294,12 +337,14 @@
                 
                 <div class="mb-4 no-print">
                     <label for="client-name" class="block text-sm font-semibold text-stone-700 mb-1">Nombre y Apellido (para agendar):</label>
-                    <input type="text" id="client-name" placeholder="Ej: Pepito Gomez" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
+                    <input type="text" id="client-name" placeholder="Ej: Pepito Gomez" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2" aria-required="true">
+                    <p id="client-name-error" class="text-sm text-red-600 mt-1 hidden" role="status" aria-live="polite"></p>
                 </div>
-                
+
                 <div class="mb-4 no-print">
                     <label for="whatsapp-number" class="block text-sm font-semibold text-stone-700 mb-1">Número de WhatsApp del Cliente (Formato: 549...):</label>
-                    <input type="tel" id="whatsapp-number" placeholder="Ej: 5493415551234" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
+                    <input type="tel" id="whatsapp-number" placeholder="Ej: 5493415551234" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2" aria-required="true" inputmode="tel">
+                    <p id="whatsapp-number-error" class="text-sm text-red-600 mt-1 hidden" role="status" aria-live="polite"></p>
                 </div>
                 
                 <!-- NUEVO: MÉTODO DE PAGO -->
@@ -1284,6 +1329,43 @@
             }
             
             renderPrintView(subtotalWithoutDiscount, totalWithDiscount, finalDiscountRate);
+
+            // Validación en vivo de datos de contacto
+            validateContactFields();
+        }
+
+        function updateFieldError(inputEl, errorId, message) {
+            const errorEl = document.getElementById(errorId);
+            if (!inputEl || !errorEl) return;
+
+            if (message) {
+                errorEl.textContent = message;
+                errorEl.classList.remove('hidden');
+                inputEl.setAttribute('aria-invalid', 'true');
+                inputEl.setAttribute('aria-describedby', errorId);
+            } else {
+                errorEl.textContent = '';
+                errorEl.classList.add('hidden');
+                inputEl.removeAttribute('aria-invalid');
+                inputEl.removeAttribute('aria-describedby');
+            }
+        }
+
+        function validateContactFields() {
+            const nameInput = document.getElementById('client-name');
+            const whatsappInput = document.getElementById('whatsapp-number');
+
+            const nameValue = nameInput ? nameInput.value.trim() : '';
+            const whatsappValue = whatsappInput ? whatsappInput.value.trim() : '';
+
+            const isNameValid = nameValue.length >= 3;
+            const whatsappPattern = /^\d{11,15}$/;
+            const isWhatsappValid = whatsappPattern.test(whatsappValue);
+
+            updateFieldError(nameInput, 'client-name-error', isNameValid ? '' : 'Ingresa al menos 3 caracteres.');
+            updateFieldError(whatsappInput, 'whatsapp-number-error', isWhatsappValid ? '' : 'Solo números en formato 549XXXXXXXXX.');
+
+            return isNameValid && isWhatsappValid;
         }
 
         window.changeQuantity = function(id, delta) {
