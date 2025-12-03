@@ -189,7 +189,6 @@
 </head>
 <body class="text-stone-800">
 
-    <!-- HEADER FIJO (SOLO LOGO) -->
     <header class="bg-white shadow-lg sticky top-0 z-10 no-print">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-2 header-content">
             <div class="logo-container">
@@ -199,14 +198,10 @@
                     <span class="deco-home">DECO HOME</span>
                 </div>
             </div>
-            <!-- NOTA: El título y la conexión a la nube están ahora DENTRO de MAIN (se desplazan) -->
-        </div>
+            </div>
     </header>
 
     <main class="container mx-auto p-4 sm:p-6 lg:p-8 pt-0"> 
-        <!-- CONTENIDO QUE SE DESPLAZA -->
-        
-        <!-- BLOQUE DE TÍTULO Y ESTADO (Desplazable) -->
         <div class="header-title-block bg-white pb-2 text-center">
             <h1 class="main-title text-4xl font-extrabold text-amber-800 tracking-wide">CATÁLOGO</h1>
             <p class="text-stone-600 mt-1">Selecciona productos para generar la cotización del cliente.</p>
@@ -235,19 +230,15 @@
 
         <div id="print-view" class="hidden print-header"></div>
         
-        <!-- Contenedor de Notificaciones -->
         <div id="toast-container"></div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             
-            <!-- PANEL IZQUIERDO: CATÁLOGO, PENDIENTES Y REPORTES -->
             <div class="space-y-6">
                 
-                <!-- CATÁLOGO -->
                 <div id="catalog-panel" class="bg-white p-6 rounded-xl shadow-lg relative min-h-[400px]" data-view="catalog">
                     <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">Catálogo de Productos Disponibles</h2>
                     
-                    <!-- Overlay de Carga -->
                     <div id="catalog-loading" class="loading-overlay">
                         <div class="text-amber-600 font-bold animate-pulse">Cargando productos de la nube...</div>
                     </div>
@@ -257,7 +248,6 @@
                     </div>
                 </div>
 
-                <!-- PEDIDOS PENDIENTES (NUEVO) -->
                 <div class="bg-white p-6 rounded-xl shadow-lg no-print">
                     <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">⏳ Pedidos Pendientes</h2>
                     <div id="pending-list" class="space-y-2 max-h-60 overflow-y-auto">
@@ -265,7 +255,6 @@
                     </div>
                 </div>
                 
-                <!-- PANEL DE REPORTES -->
                 <div class="bg-white p-6 rounded-xl shadow-lg no-print">
                     <h2 class="text-xl font-semibold mb-4 text-stone-700 border-b pb-2 border-stone-200">📊 Reportes y Gestión</h2>
                     <div class="flex flex-col space-y-3">
@@ -273,19 +262,17 @@
                             ⬇️ Descargar Historial de Ventas (CSV)
                         </button>
                         
-                        <!-- NUEVO BOTÓN PARA REGISTRAR VENTA MANUAL -->
                         <button id="add-manual-sale-button" class="w-full bg-red-500 text-white font-bold py-3 rounded-lg shadow-md hover:bg-red-600 transition duration-300 focus:outline-none focus:ring-4 focus:ring-red-400 focus:ring-offset-2">
-                             ➕ Registrar Venta Manual (SIN Descontar Stock)
+                             ➕ Registrar Venta Manual (Modal)
                         </button>
                         <p class="text-xs text-red-500 text-center mt-1">
-                            * Presiona el botón de arriba para registrar una venta manual SIN DESCONTAR STOCK
+                            * Presiona el botón de arriba para registrar una venta manual.
                         </p>
                         
                     </div>
                 </div>
             </div>
             
-            <!-- PANEL DERECHO: COTIZACIÓN (CARRITO) -->
             <div id="cart-panel" class="hidden md:flex flex-col bg-white p-6 rounded-xl shadow-lg" data-view="cart">
                 <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">Cotización Actual</h2>
                 
@@ -299,7 +286,6 @@
                     <input type="tel" id="whatsapp-number" placeholder="Ej: 5493415551234" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
                 </div>
                 
-                <!-- NUEVO: MÉTODO DE PAGO -->
                 <div class="mb-4 no-print">
                     <label for="payment-method" class="block text-sm font-semibold text-stone-700 mb-1">Método de Pago:</label>
                     <select id="payment-method" class="w-full rounded-lg border-stone-300 shadow-md focus:border-amber-600 focus:ring-amber-600 p-2">
@@ -309,17 +295,13 @@
                         <option value="Otro">Otro/No especificado</option>
                     </select>
                 </div>
-                <!------------------------->
-
                 <div id="cart-list" class="overflow-y-auto flex-grow pr-4 space-y-2">
                     <p id="empty-cart-message" class="text-stone-500 text-center mt-8">El carrito está vacío. Agrega productos del catálogo.</p>
                 </div>
 
                 <div class="mt-4 pt-4 border-t-2 border-amber-500/50">
-                    <!-- Mensaje de Descuento Automático -->
                     <div id="discount-message-area" class="mb-3 text-center text-sm font-semibold text-red-600">
-                        <!-- Esta área ya no se usa, pero se mantiene para evitar errores de HTML -->
-                    </div>
+                        </div>
                     
                     <div class="mb-4 no-print">
                         <label for="discount-select" class="block text-sm font-semibold text-stone-700 mb-1">Descuento Manual:</label>
@@ -337,15 +319,12 @@
                         <span id="cart-total" class="text-4xl font-extrabold text-amber-800 cart-total-print">$0</span>
                     </div>
 
-                    <!-- BOTONES DE ACCIÓN MEJORADOS -->
                     <div class="space-y-3 no-print">
                         
-                        <!-- Botón: GUARDAR PEDIDO PENDIENTE -->
                         <button id="save-pending-button" class="w-full bg-stone-700 text-white font-bold py-3 rounded-lg shadow-xl hover:bg-stone-800 transition duration-300 focus:outline-none focus:ring-4 focus:ring-stone-600 focus:ring-offset-2 flex justify-center items-center gap-2 mb-2">
                             💾 Guardar Pedido Pendiente
                         </button>
                         
-                        <!-- Botón: GESTIÓN INTERNA (Descuenta Stock y Registra Venta) -->
                         <button id="confirm-sale-button" class="w-full bg-red-700 text-white font-bold py-3 rounded-lg shadow-xl hover:bg-red-800 transition duration-300 focus:outline-none focus:ring-4 focus:ring-red-600 focus:ring-offset-2 flex justify-center items-center gap-2 mb-2">
                             ❌ Registrar Venta y Descontar Stock
                         </button>
@@ -354,11 +333,9 @@
                         </p>
 
                         <div class="grid grid-cols-2 gap-3 mt-4">
-                            <!-- Botón que abre WhatsApp directo (solo texto) -->
                             <button id="send-whatsapp-text-button" class="bg-green-600 text-white font-bold py-2 rounded-lg shadow-md hover:bg-green-700 transition duration-300 focus:outline-none flex justify-center items-center gap-1 text-sm">
                                 💬 Enviar Cotización (Texto)
                             </button>
-                            <!-- Botón que Comparte la imagen de forma nativa -->
                             <button id="share-image-button" class="bg-amber-500 text-white font-bold py-2 rounded-lg shadow-md hover:bg-amber-600 transition duration-300 focus:outline-none flex justify-center items-center gap-1 text-sm">
                                 🖼️ Compartir (Imagen)
                             </button>
@@ -377,11 +354,62 @@
             </div>
         </div>
         
-        <!-- Botón discreto para restaurar stock (SOLO se usa para debug/carga inicial) -->
         <div class="text-center mt-12 mb-4 no-print opacity-50 hover:opacity-100 transition-opacity">
             <button onclick="resetLocalData()" class="text-xs text-stone-400 underline">Restaurar Datos Iniciales (Local & Nube)</button>
         </div>
     </main>
+    
+    <div id="manual-sale-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 items-center justify-center">
+        <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-md mx-4">
+            <h3 class="text-xl font-bold mb-4 text-red-700 border-b pb-2">➕ Registrar Venta Manual</h3>
+            <p class="mb-4 text-sm text-stone-600">Para registrar ventas que no pasan por el carrito (ej. ventas por mayor o fuera de sistema).</p>
+
+            <div class="mb-4">
+                <label for="manual-sale-product-name" class="block text-sm font-semibold text-stone-700 mb-1">Nombre del Producto:</label>
+                <input type="text" id="manual-sale-product-name" placeholder="Ej: Camino De Arpillera" class="w-full rounded-lg border-stone-300 p-2 focus:border-amber-600 focus:ring-amber-600">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="mb-4">
+                    <label for="manual-sale-quantity" class="block text-sm font-semibold text-stone-700 mb-1">Cantidad:</label>
+                    <input type="number" id="manual-sale-quantity" value="1" min="1" class="w-full rounded-lg border-stone-300 p-2 focus:border-amber-600 focus:ring-amber-600">
+                </div>
+                <div class="mb-4">
+                    <label for="manual-sale-price" class="block text-sm font-semibold text-stone-700 mb-1">Precio de Venta ($):</label>
+                    <input type="number" id="manual-sale-price" placeholder="Ej: 11600" min="1" class="w-full rounded-lg border-stone-300 p-2 focus:border-amber-600 focus:ring-amber-600">
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <label for="manual-sale-client-name" class="block text-sm font-semibold text-stone-700 mb-1">Nombre del Cliente (O "Venta Externa"):</label>
+                <input type="text" id="manual-sale-client-name" value="Venta Externa" class="w-full rounded-lg border-stone-300 p-2 focus:border-amber-600 focus:ring-amber-600">
+            </div>
+
+            <div class="mb-6">
+                <label for="manual-sale-payment" class="block text-sm font-semibold text-stone-700 mb-1">Método de Pago:</label>
+                <select id="manual-sale-payment" class="w-full rounded-lg border-stone-300 p-2 focus:border-amber-600 focus:ring-amber-600">
+                    <option value="Efectivo">Efectivo</option>
+                    <option value="Transferencia">Transferencia</option>
+                    <option value="Tarjeta">Tarjeta</option>
+                    <option value="Otro">Otro/No especificado</option>
+                </select>
+            </div>
+            
+            <div class="flex items-center mb-6">
+                <input id="manual-sale-deduct-stock" type="checkbox" checked class="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                <label for="manual-sale-deduct-stock" class="ml-2 block text-sm text-stone-900 font-semibold">
+                    Descontar Stock del inventario ⚠️
+                </label>
+            </div>
+
+            <div class="flex justify-between space-x-3">
+                <button onclick="closeManualSaleModal()" class="w-1/2 bg-stone-300 text-stone-800 font-bold py-2 rounded-lg hover:bg-stone-400 transition">Cancelar</button>
+                <button onclick="handleManualSale()" class="w-1/2 bg-red-700 text-white font-bold py-2 rounded-lg shadow-xl hover:bg-red-800 transition">
+                    Registrar Venta
+                </button>
+            </div>
+        </div>
+    </div>
 
     <div class="mobile-nav bg-white shadow-2xl p-3 border-t border-stone-200">
         <div class="flex justify-around">
@@ -740,30 +768,65 @@
             });
         }
 
-        // --- FUNCIÓN PARA REGISTRAR VENTA MANUAL (SIN USAR EL CARRITO) ---
-        async function addManualSale(productName, quantity, salePrice, clientName, paymentMethod, deductStock = true) {
-            
-            const product = productData.find(p => p.nombre === productName);
+        // --- LÓGICA DEL MODAL DE VENTA MANUAL (Nueva) ---
+        function openManualSaleModal() {
+            // Limpiar campos y predeterminar
+            document.getElementById('manual-sale-product-name').value = '';
+            document.getElementById('manual-sale-quantity').value = 1;
+            document.getElementById('manual-sale-price').value = '';
+            document.getElementById('manual-sale-client-name').value = 'Venta Externa';
+            document.getElementById('manual-sale-payment').value = 'Otro';
+            document.getElementById('manual-sale-deduct-stock').checked = true;
 
-            if (!product) {
-                showToast(`🚫 Producto no encontrado en el stock: ${productName}`);
+            document.getElementById('manual-sale-modal').style.display = 'flex';
+        }
+
+        window.closeManualSaleModal = function() {
+            document.getElementById('manual-sale-modal').style.display = 'none';
+        }
+
+        window.handleManualSale = function() {
+            const productName = document.getElementById('manual-sale-product-name').value.trim();
+            const quantity = parseInt(document.getElementById('manual-sale-quantity').value);
+            const salePrice = parseInt(document.getElementById('manual-sale-price').value);
+            const clientName = document.getElementById('manual-sale-client-name').value.trim();
+            const paymentMethod = document.getElementById('manual-sale-payment').value;
+            const deductStock = document.getElementById('manual-sale-deduct-stock').checked;
+
+            // Validación básica
+            if (!productName || quantity <= 0 || salePrice <= 0 || !clientName) {
+                showToast("🚫 Error: Completa todos los campos (Producto, Cantidad, Precio y Cliente).");
                 return;
             }
 
-            const quantityToDeduct = parseInt(quantity);
-            const currentStock = product.stock;
+            // Llamar a la función de registro de venta
+            addManualSale(productName, quantity, salePrice, clientName, paymentMethod, deductStock);
             
-            if (deductStock && currentStock < quantityToDeduct) {
-                showToast(`🚫 No hay suficiente stock de ${productName}. Quedan ${currentStock}.`);
-                return;
-            }
+            closeManualSaleModal();
+        }
+        // ----------------------------------------
+        
+        // --- FUNCIÓN PARA REGISTRAR VENTA MANUAL (Ahora llamada por el modal) ---
+        async function addManualSale(productName, quantityToDeduct, salePrice, clientName, paymentMethod, deductStock) {
             
+            // Usamos .toLowerCase() para una búsqueda más flexible
+            const product = productData.find(p => p.nombre.toLowerCase() === productName.toLowerCase());
+
             let confirmationMessage = `⚠️ REGISTRAR VENTA MANUAL: ${productName} (x${quantityToDeduct}) a ${clientName} por ${formatCurrency(salePrice)}.`;
             
             if (deductStock) {
-                confirmationMessage += ` ¿Deseas descontar stock?`;
+                if (!product) {
+                     // Si el producto no está en la DB, no podemos descontar stock.
+                     confirmationMessage += ` PRODUCTO NO ENCONTRADO para DESCONTAR STOCK. Se registrará la venta sin modificar stock. ¿Confirmar?`;
+                     deductStock = false; 
+                } else if (product.stock < quantityToDeduct) {
+                    confirmationMessage += ` No hay suficiente stock de ${product.nombre} (Quedan ${product.stock}). Se registrará la venta sin modificar stock. ¿Confirmar?`;
+                    deductStock = false;
+                } else {
+                     confirmationMessage += ` Stock SÍ será descontado. ¿Confirmar la transacción?`;
+                }
             } else {
-                confirmationMessage += ` El stock NO será descontado. ¿Confirmar solo el registro de venta?`;
+                 confirmationMessage += ` El stock NO será descontado. ¿Confirmar solo el registro de venta?`;
             }
 
             if (!window.confirm(confirmationMessage)) {
@@ -781,15 +844,16 @@
             try {
                 const batch = writeBatch(db);
 
-                // 1. Descontar Stock (SOLO si deductStock es TRUE)
-                if (deductStock) {
-                    const newStock = currentStock - quantityToDeduct;
+                // 1. Descontar Stock (SOLO si deductStock es TRUE y encontramos el producto)
+                if (deductStock && product) {
+                    const newStock = product.stock - quantityToDeduct;
                     const docRef = doc(db, "products", product.id);
                     batch.update(docRef, { stock: newStock });
                     await batch.commit();
                 }
                 
                 // 2. Registrar la venta
+                // El total es igual al subtotal en una venta manual, no hay descuento.
                 await recordSale(clientName, "No especificado", subtotal, 0, paymentMethod, itemsToRecord);
                 
                 const stockMsg = deductStock ? "y stock actualizado" : "sin modificar stock";
@@ -1257,6 +1321,13 @@
             }
 
             summaryLines.push(`TOTAL FINAL: ${formatCurrency(totalWithDiscount)}`); 
+            summaryLines.push('--------------------------'); // Separador para el pago
+            
+            // ACTUALIZADO: Información de Transferencia sin (CBU/CVU)
+            summaryLines.push('📦 Para abonar con Transferencia, usa el siguiente alias:');
+            summaryLines.push('*sofiricca*');
+            summaryLines.push('--------------------------');
+            
             summaryLines.push('');
             summaryLines.push('¡Muchas gracias por confiar en Blanco & Madera!'); 
 
@@ -1410,7 +1481,8 @@
                         await navigator.share({
                             files: [file],
                             title: 'Cotización Blanco & Madera',
-                            text: `Hola ${clientName}! Te envío el detalle de tu compra en Blanco & Madera el día ${formattedDate}`
+                            // TEXTO DE COMPARTIR CON ALIAS DE TRANSFERENCIA
+                            text: `Hola ${clientName}! Te envío el detalle de tu compra en Blanco & Madera el día ${formattedDate}.\n\nPara abonar con Transferencia, nuestro alias es: sofiricca`
                         });
                     } catch (err) {
                         console.error('Error al compartir:', err);
@@ -1474,6 +1546,10 @@
                     <span style="font-weight: 700; color: #333;">TOTAL FINAL:</span>
                     <span style="font-weight: 800; color: #d4a753;">${formatCurrency(totalWithDiscount)}</span>
                 </div>
+                
+                <p style="font-size: 10pt; text-align: center; margin-top: 20px; border-top: 1px solid #ddd; padding-top: 10px;">
+                    * Para Transferencia, alias: sofiricca
+                </p>
             `;
             
             printView.innerHTML = printContent;
@@ -1565,7 +1641,7 @@
                 // 2. Conectarse a la sincronización en tiempo real (Stock y Ventas)
                 subscribeToProducts(); 
                 // 3. Conectarse a pedidos pendientes
-                subscribeToPendingOrders();
+                // subscribeToPendingOrders(); // Pendiente de implementación
             } catch (e) {
                 console.error("Error al conectar Firebase:", e);
                 document.getElementById('connection-status').textContent = "ERROR: Conexión a Firebase fallida 🔴";
@@ -1612,21 +1688,13 @@
             document.getElementById('print-button').addEventListener('click', printQuote);
             document.getElementById('download-sales-report-button').addEventListener('click', downloadSalesReport); // Botón de Reporte
 
-            // EVENTO DE VENTA MANUAL (¡SOLUCIÓN PARA NO USAR LA CONSOLA!)
+            // EVENTO DE VENTA MANUAL (Ahora abre el modal)
             document.getElementById('add-manual-sale-button').addEventListener('click', () => {
-                // Parámetros: productName, quantity, salePrice, clientName, paymentMethod, deductStock (FALSE)
-                addManualSale(
-                    "Calendario de adviento", 
-                    1, 
-                    20000, 
-                    "Nati Giordana (Venta Externa)", 
-                    "Otro", // Método de Pago
-                    false // <--- ¡AQUÍ DECIMOS NO DESCONTAR STOCK!
-                );
+                openManualSaleModal();
             });
             // ----------------------------------------------------
 
-            document.getElementById('save-pending-button').addEventListener('click', savePendingOrder); // Botón Guardar Pendiente
+            // document.getElementById('save-pending-button').addEventListener('click', savePendingOrder); // Pendiente de implementación
             
             const isMobile = window.innerWidth < 768;
             if (isMobile) {
