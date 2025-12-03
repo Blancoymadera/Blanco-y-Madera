@@ -259,7 +259,7 @@
         <div id="print-view" class="hidden print-header"></div>
         
         <!-- Contenedor de Notificaciones -->
-        <div id="toast-container"></div>
+        <div id="toast-container" role="status" aria-live="polite"></div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             
@@ -891,8 +891,11 @@
             }
 
 
-            const clientName = document.getElementById('client-name').value.trim();
-            const whatsappNumber = document.getElementById('whatsapp-number').value.trim().replace(/\D/g, ''); 
+            const validation = validateClientInputs({ requirePhone: true });
+            if (!validation.valid) return;
+
+            const clientName = validation.clientName;
+            const whatsappNumber = validation.phoneDigits;
             const paymentMethod = document.getElementById('payment-method').value; // Leer el método de pago
             
             const discountRate = parseFloat(document.getElementById('discount-select').value); 
@@ -1083,6 +1086,53 @@
             return new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).format(parsed);
         }
 
+        function sanitizePhoneNumber(rawValue = '') {
+            return rawValue.trim().replace(/\D/g, '');
+        }
+
+        function toggleFieldError(elementId, message = '') {
+            const errorElement = document.getElementById(elementId);
+            if (!errorElement) return;
+
+            if (message) {
+                errorElement.textContent = message;
+                errorElement.classList.remove('hidden');
+            } else {
+                errorElement.textContent = '';
+                errorElement.classList.add('hidden');
+            }
+        }
+
+        function validateClientInputs({ requirePhone = false, showToastMessage = true } = {}) {
+            const clientNameInput = document.getElementById('client-name');
+            const whatsappInput = document.getElementById('whatsapp-number');
+
+            const clientName = clientNameInput?.value.trim() || '';
+            const phoneDigits = sanitizePhoneNumber(whatsappInput?.value || '');
+
+            let isValid = true;
+
+            toggleFieldError('client-name-error');
+            toggleFieldError('whatsapp-number-error');
+
+            if (!clientName) {
+                isValid = false;
+                toggleFieldError('client-name-error', 'Ingresa el nombre y apellido del cliente.');
+            }
+
+            const hasPhoneValue = Boolean(whatsappInput?.value.trim());
+            if ((requirePhone || hasPhoneValue) && (phoneDigits.length < 10 || phoneDigits.length > 15)) {
+                isValid = false;
+                toggleFieldError('whatsapp-number-error', 'Ingresa un WhatsApp válido con prefijo (ej: 549...).');
+            }
+
+            if (!isValid && showToastMessage) {
+                showToast('Revisa los datos del cliente antes de continuar.');
+            }
+
+            return { valid: isValid, clientName, phoneDigits };
+        }
+
         function renderPendingOrders() {
             const container = document.getElementById('pending-list');
             const loading = document.getElementById('pending-loading');
@@ -1149,8 +1199,11 @@
                 return;
             }
 
-            const clientName = document.getElementById('client-name').value.trim() || 'Cliente sin nombre';
-            const whatsappNumber = document.getElementById('whatsapp-number').value.trim().replace(/\D/g, '');
+            const validation = validateClientInputs({ requirePhone: true });
+            if (!validation.valid) return;
+
+            const clientName = validation.clientName || 'Cliente sin nombre';
+            const whatsappNumber = validation.phoneDigits;
             const paymentMethod = document.getElementById('payment-method').value;
             const discountRate = getApplicableDiscountRate();
 
@@ -1530,9 +1583,11 @@
         }
 
         async function shareQuoteAsImage() {
-            const clientName = document.getElementById('client-name').value.trim();
-            const whatsappNumber = document.getElementById('whatsapp-number').value.trim().replace(/\D/g, ''); 
-            
+            const validation = validateClientInputs({ requirePhone: false });
+            if (!validation.valid) return;
+
+            const clientName = validation.clientName;
+
             if (Object.keys(cart).length === 0) {
                 showToast("El carrito está vacío.");
                 return;
@@ -1825,6 +1880,8 @@
                 document.getElementById('search-box').value = '';
                 document.getElementById('client-name').value = '';
                 document.getElementById('whatsapp-number').value = '';
+                toggleFieldError('client-name-error');
+                toggleFieldError('whatsapp-number-error');
                 updateDashboard();
             });
             
@@ -1844,11 +1901,16 @@
             // ----------------------------------------------------
             
             // Re-renderizar carrito al cambiar el descuento manual 
-            document.getElementById('discount-select').addEventListener('change', renderCart); 
+            document.getElementById('discount-select').addEventListener('change', renderCart);
             document.getElementById('payment-method').addEventListener('change', renderCart); // NUEVO LISTENER
-            
-            document.getElementById('client-name').addEventListener('input', renderCart); 
-            document.getElementById('whatsapp-number').addEventListener('input', renderCart); 
+
+            const handleClientFields = () => {
+                validateClientInputs({ showToastMessage: false });
+                renderCart();
+            };
+
+            document.getElementById('client-name').addEventListener('input', handleClientFields);
+            document.getElementById('whatsapp-number').addEventListener('input', handleClientFields);
             
             // EVENTOS BOTONES PRINCIPALES
             document.getElementById('confirm-sale-button').addEventListener('click', confirmSaleAndDeductStock);
