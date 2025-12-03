@@ -1247,6 +1247,354 @@
             return parseFloat(discountSelect.value);
         }
 
+        // --- LÓGICA DEL MODAL DE VISTA RÁPIDA ---
+
+        window.closeProductModal = function() {
+            document.getElementById('product-quickview-modal').style.display = 'none';
+        }
+
+        window.showProductModal = function(id) {
+            const product = productData.find(p => p.id === id);
+            if (!product) return;
+
+            const modal = document.getElementById('product-quickview-modal');
+            
+            // PROGRAMACIÓN DEFENSIVA: Evitamos que falle si el campo no está en minúsculas (ej: ImageUrl)
+            const imageUrl = product.imageUrl || product.ImageUrl || ''; 
+
+            const imageEl = document.getElementById('modal-product-image');
+            const stockEl = document.getElementById('modal-product-stock');
+            const addButton = document.getElementById('modal-add-to-cart-button');
+
+            // 1. Cargar Datos
+            document.getElementById('modal-product-name').textContent = product.nombre;
+            document.getElementById('modal-product-category').textContent = product.categoria;
+            document.getElementById('modal-product-price').textContent = formatCurrency(product.precio);
+            
+            // 2. Cargar Imagen
+            imageEl.src = imageUrl || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'; // Default transparente
+            imageEl.alt = product.nombre;
+            
+            // 3. Cargar Stock
+            if (product.stock <= 0) {
+                stockEl.textContent = '❌ SIN STOCK';
+                stockEl.classList.add('text-red-600');
+                addButton.setAttribute('disabled', 'true');
+                addButton.classList.replace('amber-gradient', 'bg-stone-300');
+                addButton.classList.remove('hover:opacity-90');
+            } else {
+                stockEl.textContent = `✅ ${product.stock} unidades disponibles`;
+                stockEl.classList.remove('text-red-600');
+                addButton.removeAttribute('disabled');
+                addButton.classList.replace('bg-stone-300', 'amber-gradient');
+                addButton.classList.add('hover:opacity-90');
+            }
+            
+            // 4. Asignar acción al botón "Agregar" dentro del modal
+            addButton.onclick = () => {
+                addToCart(id); 
+                closeProductModal();
+            };
+
+            // 5. Mostrar Modal
+            modal.style.display = 'flex';
+        }
+        // --- FIN LÓGICA DEL MODAL DE VISTA RÁPIDA ---
+
+
+        // --- LÓGICA DEL MODAL DE VENTA MANUAL ---
+        function openManualSaleModal() {
+            // Limpiar campos y predeterminar
+            document.getElementById('manual-sale-product-name').value = '';
+            document.getElementById('manual-sale-quantity').value = 1;
+            document.getElementById('manual-sale-price').value = '';
+            document.getElementById('manual-sale-client-name').value = 'Venta Externa';
+            document.getElementById('manual-sale-payment').value = 'Otro';
+            document.getElementById('manual-sale-deduct-stock').checked = true;
+
+            document.getElementById('manual-sale-modal').style.display = 'flex';
+        }
+
+        window.closeManualSaleModal = function() {
+            document.getElementById('manual-sale-modal').style.display = 'none';
+        }
+
+        window.handleManualSale = function() {
+            const productName = document.getElementById('manual-sale-product-name').value.trim();
+            const quantity = parseInt(document.getElementById('manual-sale-quantity').value);
+            const salePrice = parseInt(document.getElementById('manual-sale-price').value);
+            const clientName = document.getElementById('manual-sale-client-name').value.trim();
+            const paymentMethod = document.getElementById('manual-sale-payment').value;
+            const deductStock = document.getElementById('manual-sale-deduct-stock').checked;
+
+            // Validación básica
+            if (!productName || quantity <= 0 || salePrice <= 0 || !clientName) {
+                showToast("🚫 Error: Completa todos los campos (Producto, Cantidad, Precio y Cliente).");
+                return;
+            }
+
+            // Llamar a la función de registro de venta
+            addManualSale(productName, quantity, salePrice, clientName, paymentMethod, deductStock);
+            
+            closeManualSaleModal();
+        }
+        // ----------------------------------------
+        
+        // --- FUNCIÓN PARA REGISTRAR VENTA MANUAL (Ahora llamada por el modal) ---
+        async function addManualSale(productName, quantityToDeduct, salePrice, clientName, paymentMethod, deductStock) {
+            
+            // Usamos .toLowerCase() para una búsqueda más flexible
+            const product = productData.find(p => p.nombre.toLowerCase() === productName.toLowerCase());
+
+            let confirmationMessage = `⚠️ REGISTRAR VENTA MANUAL: ${productName} (x${quantityToDeduct}) a ${clientName} por ${formatCurrency(salePrice)}.`;
+            
+            if (deductStock) {
+                if (!product) {
+                     // Si el producto no está en la DB, no podemos descontar stock.
+                     confirmationMessage += ` PRODUCTO NO ENCONTRADO para DESCONTAR STOCK. Se registrará la venta sin modificar stock. ¿Confirmar?`;
+                     deductStock = false; 
+                } else if (product.stock < quantityToDeduct) {
+                    confirmationMessage += ` No hay suficiente stock de ${product.nombre} (Quedan ${product.stock}). Se registrará la venta sin modificar stock. ¿Confirmar?`;
+                    deductStock = false;
+                } else {
+                     confirmationMessage += ` Stock SÍ será descontado. ¿Confirmar la transacción?`;
+                }
+            } else {
+                 confirmationMessage += ` El stock NO será descontado. ¿Confirmar solo el registro de venta?`;
+            }
+
+            if (!window.confirm(confirmationMessage)) {
+                 return;
+            }
+
+            const subtotal = salePrice * quantityToDeduct; 
+            const itemsToRecord = [{
+                nombre: productName,
+                cantidad: quantityToDeduct,
+                precio: salePrice, // El precio al que se vendió
+                subtotal: subtotal
+            }];
+
+            try {
+                const batch = writeBatch(db);
+
+                // 1. Descontar Stock (SOLO si deductStock es TRUE y encontramos el producto)
+                if (deductStock && product) {
+                    const newStock = product.stock - quantityToDeduct;
+                    const docRef = doc(db, "products", product.id);
+                    batch.update(docRef, { stock: newStock });
+                    await batch.commit();
+                }
+                
+                // 2. Registrar la venta
+                await recordSale(clientName, "No especificado", subtotal, 0, paymentMethod, itemsToRecord);
+                
+                const stockMsg = deductStock ? "y stock actualizado" : "sin modificar stock";
+                showToast(`✅ Venta manual registrada ${stockMsg} para ${productName}.`);
+
+            } catch (e) {
+                console.error("Error al completar la transacción de venta manual:", e);
+                showToast("Hubo un error al registrar la venta manual.");
+            }
+        }
+        
+        // --- FUNCIÓN DE REGISTRO DE VENTA (EXISTENTE) ---
+        async function recordSale(clientName, whatsappNumber, total, discountRate, paymentMethod, items) {
+            const formattedDate = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+            
+            try {
+                await addDoc(collection(db, "ventas"), {
+                    timestamp: new Date(),
+                    fecha_venta: formattedDate,
+                    cliente_nombre: clientName || 'No especificado',
+                    cliente_whatsapp: whatsappNumber || 'No especificado',
+                    metodo_pago: paymentMethod, 
+                    total_final: total,
+                    descuento_aplicado: discountRate,
+                    items: items.map(item => ({
+                        nombre: item.nombre,
+                        cantidad: item.cantidad,
+                        precio_unitario: item.precio,
+                        subtotal: item.subtotal
+                    }))
+                });
+                console.log("Venta registrada en la colección 'ventas'.");
+            } catch (e) {
+                console.error("Error registrando la venta en Firestore:", e);
+                showToast("⚠️ Error al guardar el registro de venta.");
+            }
+        }
+
+
+        // 3. Confirmar Venta en la Nube (Desde el Carrito)
+        async function confirmSaleAndDeductStock() {
+            if (Object.keys(cart).length === 0) {
+                showToast("El carrito está vacío. Debes agregar productos antes de registrar una venta.");
+                return;
+            }
+
+            if (!window.confirm("⚠️ CONFIRMAR BAJA DE STOCK: ¿Estás seguro de que la venta ha sido cobrada y deseas descontar el stock de estos productos?")) {
+                 return;
+            }
+
+
+            const clientName = document.getElementById('client-name').value.trim();
+            const whatsappNumber = document.getElementById('whatsapp-number').value.trim().replace(/\D/g, ''); 
+            const paymentMethod = document.getElementById('payment-method').value; 
+            
+            const discountRate = parseFloat(document.getElementById('discount-select').value); 
+
+            let subtotal = 0;
+            const itemsToRecord = [];
+            
+            const batch = writeBatch(db);
+            let error = false;
+
+            for (const id in cart) {
+                const item = cart[id];
+                const itemSubtotal = item.precio * item.cantidad;
+                subtotal += itemSubtotal;
+                
+                const productInDb = productData.find(p => p.id === id);
+                
+                if (productInDb) {
+                    const newStock = productInDb.stock - item.cantidad;
+                    if (newStock < 0) {
+                        showToast(`Error: No hay suficiente stock de ${productInDb.nombre}. Quedan ${productInDb.stock}.`);
+                        error = true;
+                        break;
+                    }
+                    const docRef = doc(db, "products", id);
+                    batch.update(docRef, { stock: newStock });
+
+                    itemsToRecord.push({ ...item, subtotal: itemSubtotal });
+                }
+            }
+
+            const totalWithDiscount = subtotal * (1 - discountRate);
+
+            if (!error) {
+                try {
+                    // 1. Ejecutar el descuento de stock
+                    await batch.commit();
+                    
+                    // 2. Registrar la venta
+                    await recordSale(clientName, whatsappNumber, totalWithDiscount, discountRate, paymentMethod, itemsToRecord);
+                    
+                    // 3. Limpiar y notificar
+                    cart = {};
+                    saveCart(); 
+                    
+                    // Limpiar también los campos de la cotización
+                    document.getElementById('client-name').value = '';
+                    document.getElementById('whatsapp-number').value = '';
+                    document.getElementById('discount-select').value = '0';
+                    document.getElementById('payment-method').value = 'Otro';
+                    
+                    updateDashboard(); 
+                    showToast("✅ Venta registrada y stock descontado.");
+                } catch (e) {
+                    console.error("Error al completar la transacción:", e);
+                    showToast("Hubo un error al actualizar el stock/registrar la venta. Revisa tu conexión y permisos.");
+                }
+            }
+        }
+        
+        // 4. Función de reinicio de emergencia (Borra todo el stock en la nube y local)
+        window.resetLocalData = async function() {
+            if (!window.confirm("⚠️ ADVERTENCIA: Esta acción BORRARÁ TODOS los productos de la base de datos de Firebase y subirá los productos del código actual. ¿Estás absolutamente seguro?")) {
+                 return;
+            }
+
+            // 1. Borrar datos locales (carrito)
+            localStorage.removeItem(STORAGE_KEY_CART);
+            
+            // 2. Borrar todos los documentos de la colección 'products' en Firebase
+            try {
+                const statusElement = document.getElementById('connection-status');
+                statusElement.textContent = "Borrando datos antiguos en la nube... 🗑️";
+                
+                const querySnapshot = await getDocs(collection(db, "products"));
+                const batch = writeBatch(db);
+                querySnapshot.docs.forEach((doc) => {
+                    batch.delete(doc.ref);
+                });
+                await batch.commit();
+                
+                showToast("Base de datos de Firebase borrada. Recargando para inicializar...");
+                // Forzar la recarga para que initDatabaseIfNeeded suba los datos nuevos
+                window.location.reload(true);
+            } catch(e) {
+                console.error("Error al borrar datos de Firebase:", e);
+                showToast("Hubo un error al borrar los datos de Firebase. Revisa tus permisos o conexión.");
+            }
+        }
+        
+        // --- FUNCIÓN DE DESCARGA DE REPORTE (CSV) ---
+        async function downloadSalesReport() {
+            showToast("Preparando descarga del historial...");
+            try {
+                // Lee de la colección de ventas
+                const salesSnapshot = await getDocs(collection(db, "ventas"));
+                let csvContent = "data:text/csv;charset=utf-8,";
+                
+                // Ajuste del orden de la cabecera
+                const header = ["ID Venta", "Fecha Venta", "Nombre Cliente", "WhatsApp", "Método Pago", "Total Final", "Descuento", "Detalle Productos"];
+                csvContent += header.join(";") + "\n";
+                
+                salesSnapshot.forEach((doc) => {
+                    const sale = doc.data();
+                    let itemsDetail = sale.items.map(i => 
+                        `${i.nombre} (x${i.cantidad}, $${i.precio_unitario})`
+                    ).join(" | ");
+
+                    const row = [
+                        doc.id,
+                        sale.fecha_venta,
+                        `"${sale.cliente_nombre}"`, 
+                        sale.cliente_whatsapp,
+                        // Insertamos el método de pago aquí
+                        sale.metodo_pago || 'N/A', 
+                        sale.total_final,
+                        (sale.descuento_aplicado * 100) + '%',
+                        `"${itemsDetail}"`
+                    ];
+                    csvContent += row.join(";") + "\n";
+                });
+
+                // Crear un enlace temporal para la descarga
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", `Reporte_Ventas_BlancoMadera_${new Date().toLocaleDateString('es-AR')}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showToast("Descarga completada.");
+                
+            } catch (e) {
+                console.error("Error generando CSV:", e);
+                showToast("⚠️ Falló la descarga. Asegúrate de que las reglas de Firebase permitan la lectura.");
+            }
+        }
+        
+        // --- LÓGICA DE DESCUENTO ---
+        
+        function calculateSubtotalWithoutDiscount() {
+            let subtotal = 0;
+            for (const id in cart) {
+                const item = cart[id];
+                subtotal += Number(item.precio) * item.cantidad;
+            }
+            return subtotal;
+        }
+
+        function getApplicableDiscountRate() {
+            // AHORA ESTA FUNCIÓN SOLO DEVUELVE EL VALOR DEL DESCUENTO MANUAL SELECCIONADO.
+            const discountSelect = document.getElementById('discount-select');
+            return parseFloat(discountSelect.value);
+        }
+
         // --- FUNCIONES UTILITARIAS ---
 
         function populateCategoryFilter() {
@@ -1775,7 +2123,8 @@
                 }
                 
                 // --- NUEVA LÓGICA DE IMAGEN ---
-                const imageUrl = product.imageUrl || '';
+                // Se verifica si el usuario usó 'imageUrl' o 'ImageUrl'
+                const imageUrl = product.imageUrl || product.ImageUrl || '';
                 const imageHtml = imageUrl 
                     ? `<img src="${imageUrl}" alt="${product.nombre}" class="w-12 h-12 object-cover rounded-lg mr-3 shadow-md">` 
                     : `<div class="w-12 h-12 bg-stone-100 rounded-lg flex items-center justify-center text-stone-400 mr-3">🖼️</div>`;
