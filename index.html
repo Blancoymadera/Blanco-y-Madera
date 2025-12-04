@@ -571,10 +571,21 @@
         document.getElementById('print-button').onclick = () => window.print();
         document.getElementById('download-sales-report-button').onclick = window.downloadSalesReport;
         
+        // CORRECCIÓN: Función de WhatsApp para asegurar que se abre la ventana
         document.getElementById('send-whatsapp-text-button').onclick = () => {
-            const clientName = document.getElementById('client-name').value || 'Cliente';
-            const whatsappNumber = document.getElementById('whatsapp-number').value.replace(/\D/g,''); 
+            if (Object.keys(cart).length === 0) {
+                 showToast("⚠️ El carrito está vacío.");
+                 return;
+            }
 
+            const clientName = document.getElementById('client-name').value || 'Cliente';
+            const whatsappNumber = document.getElementById('whatsapp-number').value.replace(/\D/g,''); // Obtener el número
+            
+            if (!whatsappNumber) {
+                 window.alert("Por favor, introduce un número de WhatsApp (549...)");
+                 return;
+            }
+            
             let subtotal = 0;
             const items = [];
             for(let id in cart) { 
@@ -586,7 +597,7 @@
             const totalWithDiscount = subtotal * (1 - disc);
             const formattedDate = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
 
-            // INICIO DEL MENSAJE REQUERIDO
+            // INICIO DEL MENSAJE 
             const summaryLines = [
                 `Hola, ${clientName}!`,
                 '',
@@ -610,13 +621,15 @@
             summaryLines.push('--------------------------');
 
             summaryLines.push('');
-            out("¡Muchas gracias por confiar en Blanco & Madera!"); 
-            // FIN DEL MENSAJE REQUERIDO
+            summaryLines.push("¡Muchas gracias por confiar en Blanco & Madera!");
+            // FIN DEL MENSAJE 
 
             const whatsappText = encodeURIComponent(summaryLines.join('\n'));
-            const num = document.getElementById('whatsapp-number').value.replace(/\D/g,'');
-            window.open(`https://wa.me/${num}?text=${whatsappText}`, '_blank');
+            
+            // CORRECCIÓN CLAVE: Abrir la ventana con el número y el texto
+            window.open(`https://wa.me/${whatsappNumber}?text=${whatsappText}`, '_blank');
         };
+        // FIN CORRECCIÓN
 
         window.handleManualSale = async () => {
             const name = document.getElementById('manual-sale-product-name').value;
