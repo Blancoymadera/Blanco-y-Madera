@@ -253,7 +253,11 @@
             document.getElementById('modal-product-name').textContent = product.nombre;
             document.getElementById('modal-product-category').textContent = product.categoria;
             document.getElementById('modal-product-price').textContent = formatCurrency(product.precio);
-            document.getElementById('modal-product-image').src = product.imageUrl || product.ImageUrl || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ccc' stroke-width='1'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' ry='2'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3Cpolyline points='21 15 16 10 5 21'/%3E%3C/svg%3E";
+            
+            // Lógica para obtener la imagen principal del array 'images'
+            let modalImgUrl = product.imageUrl || product.ImageUrl || (product.images && product.images.length > 0 ? product.images[0] : null);
+
+            document.getElementById('modal-product-image').src = modalImgUrl || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ccc' stroke-width='1'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' ry='2'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3Cpolyline points='21 15 16 10 5 21'/%3E%3C/svg%3E";
             
             const stockEl = document.getElementById('modal-product-stock');
             const addBtn = document.getElementById('modal-add-to-cart-button');
@@ -296,7 +300,7 @@
             let addsCount = 0;
 
             for (let i = 0; i < lines.length; i++) {
-                // Nombre,Categoría,Precio,Stock,URL_Imagen
+                // Nombre,Categoría,Precio,Stock,URL_Imagen (Aquí se asume una sola imagen o la principal)
                 const parts = lines[i].split(',').map(p => p.trim());
                 
                 if (parts.length < 4 || isNaN(parseFloat(parts[2])) || isNaN(parseInt(parts[3]))) {
@@ -312,6 +316,7 @@
 
                 const existingProduct = productData.find(p => (p.nombre || '').toLowerCase() === nombre.toLowerCase());
 
+                // NOTA: Para bulk upload, asumimos que imageUrl es la primera y única imagen por simplicidad
                 const newProductData = {
                     nombre: nombre,
                     categoria: categoria,
@@ -320,7 +325,8 @@
                 };
                 
                 if (imageUrl && imageUrl.startsWith('http')) {
-                    newProductData.imageUrl = imageUrl;
+                    // Si se proporciona una imagen en la carga masiva, la guarda en el array 'images'
+                    newProductData.images = [imageUrl]; 
                 }
 
                 if (existingProduct) {
@@ -374,10 +380,18 @@
                 const item = document.createElement('div');
                 const isNoStock = p.stock <= 0;
                 const opacity = isNoStock ? 'opacity-60' : '';
-                const imgUrl = p.imageUrl || p.ImageUrl;
                 
-                // Ajuste: Imagen a w-10 h-10
+                // === AJUSTE PRINCIPAL: Obtener la imagen del array 'images' ===
+                let imgUrl = p.imageUrl || p.ImageUrl || (p.images && p.images.length > 0 ? p.images[0] : null);
+                
+                // Si existe una URL, le añadimos un parámetro de versión para evitar la caché del navegador
+                if (imgUrl && imgUrl.startsWith('http')) {
+                    // Usamos el ID del producto como un "cache-buster" simple
+                    imgUrl = `${imgUrl.split('?')[0]}?v=${p.id}`; 
+                }
                 const imgHtml = imgUrl ? `<img src="${imgUrl}" class="w-10 h-10 rounded object-cover bg-stone-200">` : `<div class="w-10 h-10 rounded bg-stone-200 flex items-center justify-center text-lg">🖼️</div>`;
+                // === FIN AJUSTE PRINCIPAL ===
+
                 
                 // Determina las clases para el badge de stock
                 const stockBadge = p.stock > 3 ? 'bg-green-600' : (p.stock > 0 ? 'bg-amber-500' : 'bg-red-600');
@@ -594,7 +608,7 @@
             summaryLines.push('--------------------------');
 
             summaryLines.push('');
-            summaryLines.push('¡Muchas gracias por confiar en Blanco & Madera!'); 
+            out("¡Muchas gracias por confiar en Blanco & Madera!"); 
             // FIN DEL MENSAJE REQUERIDO
 
             const whatsappText = encodeURIComponent(summaryLines.join('\n'));
