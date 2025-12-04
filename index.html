@@ -360,7 +360,12 @@
                 const stockBadge = p.stock > 3 ? 'bg-green-100 text-green-800' : (p.stock > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-400 text-white');
 
                 item.className = `bg-white p-3 rounded-xl border border-stone-100 flex justify-between items-center item-card ${opacity}`;
-                item.onclick = (e) => { if(!e.target.closest('button')) openQuickView(p.id); };
+                item.onclick = (e) => { 
+                    // Si el clic es en un botón de acción, no abrir modal
+                    if(e.target.closest('button')) return;
+                    openQuickView(p.id); 
+                };
+
                 item.innerHTML = `
                     <div class="flex items-center gap-3 flex-grow">
                         ${imgHtml}
@@ -403,8 +408,7 @@
         }
 
         function renderCart() {
-            const list = document.getElementById('cart-list');
-            list.innerHTML = ''; 
+            const list = document.getElementById('cart-list'); list.innerHTML = ''; 
             let subtotal = 0, count = 0;
             for(const id in cart) {
                 const item = cart[id];
