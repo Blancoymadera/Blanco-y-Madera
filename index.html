@@ -569,8 +569,70 @@
         document.getElementById('discount-select').onchange = renderCart;
         document.getElementById('clear-cart-button').onclick = () => { cart={}; saveCart(); renderCart(); };
         document.getElementById('print-button').onclick = () => window.print();
-        document.getElementById('download-sales-report-button').onclick = window.downloadSalesReport;
         
+        // Función agregada para la descarga de ventas
+        window.downloadSalesReport = async () => {
+            showToast("Cargando reporte de ventas...");
+            
+            try {
+                const salesSnapshot = await getDocs(collection(db, "ventas"));
+                let csvContent = "Fecha,Cliente,WhatsApp,Método Pago,Descuento (%),Total Final,Producto,Cantidad,Precio Unitario\n";
+
+                salesSnapshot.forEach((doc) => {
+                    const sale = doc.data();
+                    
+                    // Manejo seguro de campos que podrían ser opcionales o faltar
+                    const date = sale.fecha_venta || '';
+                    const client = sale.cliente_nombre || '';
+                    const whatsapp = sale.cliente_whatsapp || '';
+                    const method = sale.metodo_pago || '';
+                    const discount = (sale.descuento_aplicado * 100).toFixed(0) + '%' || '0%';
+                    const total = sale.total_final || 0;
+                    
+                    // Si no hay items, creamos una línea base (esto es raro, pero es un resguardo)
+                    if (!sale.items || sale.items.length === 0) {
+                        const row = [date, client, whatsapp, method, discount, total, '', '', ''].map(item => `"${String(item).replace(/"/g, '""')}"`).join(',');
+                        csvContent += row + '\n';
+                        return;
+                    }
+
+                    // Iteramos sobre los items para tener una fila por producto vendido
+                    sale.items.forEach(item => {
+                        const product = item.nombre || '';
+                        const qty = item.cantidad || 0;
+                        const price = item.precio_unitario || 0;
+                        
+                        // Creación de la fila CSV
+                        const rowData = [date, client, whatsapp, method, discount, total, product, qty, price];
+                        
+                        // Envolver cada item en comillas y escapar comillas internas para CSV seguro
+                        const row = rowData.map(item => `"${String(item).replace(/"/g, '""')}"`).join(',');
+                        csvContent += row + '\n';
+                    });
+                });
+
+                // Crear el Blob y el enlace de descarga
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.setAttribute('href', url);
+                const timestamp = new Date().toISOString().slice(0, 10);
+                link.setAttribute('download', `reporte_ventas_${timestamp}.csv`);
+                
+                // Simular el clic en el enlace y removerlo
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showToast("✅ Reporte descargado.");
+
+            } catch (error) {
+                console.error("Error al descargar el reporte:", error);
+                showToast("❌ Error al obtener datos de ventas.");
+            }
+        };
+
+
         // CORRECCIÓN: Función de WhatsApp para asegurar que se abre la ventana
         document.getElementById('send-whatsapp-text-button').onclick = () => {
             if (Object.keys(cart).length === 0) {
