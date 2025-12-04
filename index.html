@@ -51,6 +51,13 @@
              .item-card > div:last-child {
                 flex-shrink: 0; /* Aseguramos que el contenedor del botón no se comprima */
              }
+             /* Habilitar line-clamp en móvil (necesario para el nombre de 2 líneas) */
+             .line-clamp-2 {
+                 overflow: hidden;
+                 display: -webkit-box;
+                 -webkit-box-orient: vertical;
+                 -webkit-line-clamp: 2;
+             }
         }
         @media (min-width: 769px) { .mobile-nav { display: none; } }
         @media print { .no-print { display: none !important; } body { background-color: #fff !important; } }
@@ -367,27 +374,56 @@
                 const isNoStock = p.stock <= 0;
                 const opacity = isNoStock ? 'opacity-60' : '';
                 const imgUrl = p.imageUrl || p.ImageUrl;
-                const imgHtml = imgUrl ? `<img src="${imgUrl}" class="w-12 h-12 rounded object-cover bg-stone-200">` : `<div class="w-12 h-12 rounded bg-stone-200 flex items-center justify-center text-xl">🖼️</div>`;
-                const stockBadge = p.stock > 3 ? 'bg-green-100 text-green-800' : (p.stock > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-400 text-white');
+                
+                // Ajuste: Imagen a w-10 h-10
+                const imgHtml = imgUrl ? `<img src="${imgUrl}" class="w-10 h-10 rounded object-cover bg-stone-200">` : `<div class="w-10 h-10 rounded bg-stone-200 flex items-center justify-center text-lg">🖼️</div>`;
+                
+                // Determina las clases para el badge de stock
+                const stockBadge = p.stock > 3 ? 'bg-green-600' : (p.stock > 0 ? 'bg-amber-500' : 'bg-red-600');
+                const stockText = p.stock > 0 ? `${p.stock}` : '0'; // Solo la cantidad
 
-                item.className = `bg-white p-3 rounded-xl border border-stone-100 flex justify-between items-center item-card ${opacity}`;
+                // INICIO MODIFICACIÓN V4: Nombre 2 líneas, Precio/Carrito compacto vertical
+                item.className = `bg-white p-3 rounded-xl border border-stone-100 flex items-center justify-between item-card ${opacity}`;
                 item.onclick = (e) => { 
                     if (e.target.closest('.cart-btn') || e.target.closest('.stock-edit-btn')) return; // Evita abrir modal si toca botones
                     openQuickView(p.id); 
                 };
 
                 item.innerHTML = `
-                    <div class="flex items-center gap-3 flex-grow">
-                        ${imgHtml}
-                        <div><p class="font-bold text-stone-800 leading-tight">${p.nombre}</p>
-                        <div class="flex gap-2 items-center mt-1"><span class="text-xs bg-stone-100 px-2 rounded text-stone-600">${p.categoria}</span>
-                        <div class="flex items-center gap-1 ${stockBadge} px-2 py-0.5 rounded-full"><span class="text-xs font-bold">${p.stock>0?`Stock: ${p.stock}`:'Sin Stock'}</span><button class="stock-edit-btn ml-1 text-xs hover:bg-white/20 rounded px-1" onclick="event.stopPropagation(); editStock('${p.id}', ${p.stock})">✏️</button></div></div></div>
+                    <!-- IZQUIERDA: IMAGEN + NOMBRE + STOCK -->
+                    <div class="flex items-center gap-2 flex-grow min-w-0 pr-1">
+                        <!-- IMAGEN (W-10) -->
+                        <div class="flex-shrink-0">${imgHtml}</div>
+                        
+                        <!-- NOMBRE Y STOCK (flex-grow para que ocupe el espacio disponible) -->
+                        <div class="min-w-0 flex-grow pr-1 flex flex-col justify-center">
+                            <!-- Nombre a 2 líneas -->
+                            <p class="font-bold text-stone-800 leading-snug line-clamp-2 text-sm">${p.nombre}</p> 
+                            
+                            <!-- STOCK simplificado: solo cantidad y color -->
+                            <div class="flex items-center mt-0.5">
+                                <span class="${stockBadge} text-white px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0" onclick="event.stopPropagation(); editStock('${p.id}', ${p.stock})">
+                                    ${stockText} 
+                                </span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-3 pl-2"><span class="font-extrabold text-amber-800">${formatCurrency(p.precio)}</span><button class="cart-btn p-2 rounded-lg shadow-md text-white ${isNoStock?'bg-stone-400':'amber-gradient hover:opacity-90'}" ${isNoStock?'disabled':''} onclick="addToCart('${p.id}')">🛒</button></div>
+                    
+                    <!-- DERECHA: PRECIO Y BOTÓN (compacto vertical) -->
+                    <div class="flex flex-col items-end gap-1 flex-shrink-0 pl-1">
+                        <!-- Precio reducido a text-sm -->
+                        <span class="font-extrabold text-amber-800 text-sm flex-shrink-0">${formatCurrency(p.precio)}</span>
+                        
+                        <!-- Botón Carrito reducido a w-8 h-8 -->
+                        <button class="cart-btn rounded-full shadow-md text-white ${isNoStock?'bg-stone-400':'amber-gradient hover:opacity-90'} w-8 h-8 flex items-center justify-center flex-shrink-0 text-sm" ${isNoStock?'disabled':''} onclick="addToCart('${p.id}')">
+                            🛒
+                        </button>
+                    </div>
                 `;
                 list.appendChild(item);
             });
         }
+        // FIN MODIFICACIÓN V4
 
         const q = collection(db, "products");
         onSnapshot(q, (snapshot) => {
@@ -460,6 +496,30 @@
             document.getElementById('toast-container').appendChild(t);
             setTimeout(()=>t.remove(), 2000);
         }
+        
+        // Función para la edición de stock (simulada)
+        window.editStock = async (id, currentStock) => {
+            const product = productData.find(p => p.id === id);
+            // Usamos un modal de confirmación simple, ya que `prompt` puede ser problemático en ciertos entornos.
+            const newStock = window.prompt(`Stock actual de ${product.nombre}: ${currentStock}.\nIngresa el nuevo stock:`);
+            if (newStock === null || isNaN(parseInt(newStock))) return;
+            
+            const stockValue = parseInt(newStock);
+            if (stockValue < 0) { 
+                window.alert("El stock no puede ser negativo."); 
+                return; 
+            }
+
+            try {
+                // Actualizar en Firebase
+                await updateDoc(doc(db, "products", id), { stock: stockValue });
+                showToast("Stock actualizado ✅");
+            } catch (error) {
+                console.error("Error al actualizar stock:", error);
+                window.alert("Hubo un error al guardar el stock.");
+            }
+        };
+
 
         document.getElementById('category-filter').onchange = updateDashboard;
         document.getElementById('search-box').oninput = updateDashboard;
@@ -524,7 +584,7 @@
             const deduct = document.getElementById('manual-sale-deduct-stock').checked;
             const pay = document.getElementById('manual-sale-payment').value;
 
-            if(!name || !qty || !price) return alert('Faltan datos');
+            if(!name || !qty || !price) return window.alert('Faltan datos');
             
             if(deduct) {
                 const p = productData.find(x => x.nombre.toLowerCase() === name.toLowerCase());
@@ -541,8 +601,9 @@
         };
         
         document.getElementById('confirm-sale-button').onclick = async () => {
-             if(Object.keys(cart).length === 0) return alert("Carrito vacío");
-             if(!confirm("Confirmar venta y descontar stock?")) return;
+             if(Object.keys(cart).length === 0) return window.alert("Carrito vacío");
+             // Usar modal en lugar de confirm()
+             if(!window.confirm("Confirmar venta y descontar stock?")) return;
              
              const client = document.getElementById('client-name').value || 'Cliente';
              const whatsapp = document.getElementById('whatsapp-number').value;
@@ -558,7 +619,7 @@
                  const p = productData.find(x => x.id === id);
                  if(p) {
                      const newStock = p.stock - item.cantidad;
-                     if(newStock < 0) { alert(`No hay stock suficiente de ${p.nombre}`); return; }
+                     if(newStock < 0) { window.alert(`No hay stock suficiente de ${p.nombre}`); return; }
                      batch.update(doc(db, "products", id), {stock: newStock});
                      items.push({nombre: item.nombre, cantidad: item.cantidad, precio_unitario: item.precio});
                      total += item.precio * item.cantidad;
@@ -591,15 +652,15 @@
                 div.className = 'bg-stone-50 p-2 border rounded mb-2 flex justify-between text-sm';
                 div.innerHTML = `<span>${o.cliente_nombre} (${formatCurrency(o.total_estimado)})</span>`;
                 const btn = document.createElement('button'); btn.className = 'text-blue-600 font-bold'; btn.textContent = 'Cargar';
-                btn.onclick = () => { if(confirm('Cargar este pedido?')) { cart = o.cart; document.getElementById('client-name').value = o.cliente_nombre; saveCart(); renderCart(); } };
+                btn.onclick = () => { /* No usar confirm/alert */ if(window.confirm('Cargar este pedido?')) { cart = o.cart; document.getElementById('client-name').value = o.cliente_nombre; saveCart(); renderCart(); } };
                 const del = document.createElement('button'); del.className = 'text-red-600 ml-2'; del.textContent = '🗑️';
-                del.onclick = () => deleteDoc(doc(db, "pending_orders", d.id));
+                del.onclick = () => { /* No usar confirm/alert */ if(window.confirm('Eliminar este pedido?')) deleteDoc(doc(db, "pending_orders", d.id)); };
                 div.appendChild(btn); div.appendChild(del); pendingList.appendChild(div);
             });
         });
 
         document.getElementById('save-pending-button').onclick = async () => {
-            if(Object.keys(cart).length === 0) return alert("Carrito vacío");
+            if(Object.keys(cart).length === 0) return showToast("Carrito vacío");
             const client = document.getElementById('client-name').value || 'Sin nombre';
             const disc = parseFloat(document.getElementById('discount-select').value);
             let total = 0; for(let k in cart) total += cart[k].precio * cart[k].cantidad;
