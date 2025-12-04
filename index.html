@@ -89,12 +89,13 @@
                     
                     <!-- FILTROS -->
                     <div class="bg-white rounded-xl mb-4 no-print border-b pb-4 border-stone-100">
+                        <!-- MODIFICACIÓN: Se elimina el filtro de orden. -->
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                             <div>
                                 <label class="block text-sm font-semibold text-stone-700 mb-1">Categoría</label>
                                 <select id="category-filter" class="w-full rounded-lg border-stone-300 shadow-sm p-2"><option value="all">Todas</option></select>
                             </div>
-                            <div>
+                            <div class="col-span-1 md:col-span-1">
                                 <label class="block text-sm font-semibold text-stone-700 mb-1">Buscar</label>
                                 <input type="text" id="search-box" placeholder="Nombre..." class="w-full rounded-lg border-stone-300 shadow-sm p-2">
                             </div>
@@ -428,6 +429,7 @@
         const q = collection(db, "products");
         onSnapshot(q, (snapshot) => {
             productData = []; categories = new Set();
+            // Mapeo inicial de productos y categorías
             snapshot.forEach(doc => {
                 const d = doc.data(); d.id = doc.id; productData.push(d);
                 if(d.categoria) categories.add(d.categoria);
@@ -435,22 +437,40 @@
             document.getElementById('catalog-loading').style.display = 'none';
             document.getElementById('connection-status').textContent = "🟢 Conectado";
             document.getElementById('connection-status').classList.add('text-green-600');
+            
+            // Llenar el filtro de categorías
             const catSelect = document.getElementById('category-filter');
-            const current = catSelect.value;
+            const currentCat = catSelect.value;
             catSelect.innerHTML = '<option value="all">Todas</option>';
             Array.from(categories).sort().forEach(c => catSelect.innerHTML += `<option value="${c}">${c}</option>`);
-            catSelect.value = current;
+            catSelect.value = currentCat;
+            
             updateDashboard();
         }, (err) => {
             console.error(err);
             document.getElementById('connection-status').textContent = "🔴 Error de conexión";
         });
 
+        // Modificación de updateDashboard para aplicar SIEMPRE orden alfabético por nombre
         function updateDashboard() {
             const cat = document.getElementById('category-filter').value;
             const search = document.getElementById('search-box').value.toLowerCase();
-            const filtered = productData.filter(p => (cat === 'all' || p.categoria === cat) && (p.nombre||'').toLowerCase().includes(search));
-            renderProductList(filtered); renderCart();
+            
+            // 1. Filtrado
+            let filtered = productData.filter(p => (cat === 'all' || p.categoria === cat) && (p.nombre||'').toLowerCase().includes(search));
+
+            // 2. Ordenamiento: SIEMPRE por Nombre (A-Z)
+            filtered.sort((a, b) => {
+                const nameA = (a.nombre || '').toLowerCase();
+                const nameB = (b.nombre || '').toLowerCase();
+                if (nameA < nameB) return -1;
+                if (nameA > nameB) return 1;
+                return 0;
+            });
+
+            // 3. Renderizado
+            renderProductList(filtered); 
+            renderCart();
         }
 
         function renderCart() {
@@ -523,7 +543,13 @@
 
         document.getElementById('category-filter').onchange = updateDashboard;
         document.getElementById('search-box').oninput = updateDashboard;
-        document.getElementById('reset-button').onclick = () => { document.getElementById('category-filter').value='all'; document.getElementById('search-box').value=''; updateDashboard(); };
+        // El filtro de orden ya no existe, por lo que quitamos el evento onchange: document.getElementById('sort-filter').onchange = updateDashboard;
+        document.getElementById('reset-button').onclick = () => { 
+            document.getElementById('category-filter').value='all'; 
+            document.getElementById('search-box').value=''; 
+            // document.getElementById('sort-filter').value='default'; // Se eliminó
+            updateDashboard(); 
+        };
         document.getElementById('discount-select').onchange = renderCart;
         document.getElementById('clear-cart-button').onclick = () => { cart={}; saveCart(); renderCart(); };
         document.getElementById('print-button').onclick = () => window.print();
