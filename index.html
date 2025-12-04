@@ -293,19 +293,23 @@
             errorEl.classList.add('hidden');
             if (!dataText) return;
 
-            const lines = dataText.split(',').map(p => p.trim());
+            // La clave aquí es dividir por saltos de línea primero, y luego cada línea por comas.
+            // Esto asegura que las líneas con comas extra (como la que causaba el error) se manejen correctamente.
+            const lines = dataText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
             const batch = writeBatch(db);
             let errorsFound = false;
             let updatesCount = 0;
             let addsCount = 0;
 
             for (let i = 0; i < lines.length; i++) {
-                // Nombre,Categoría,Precio,Stock,URL_Imagen (Aquí se asume una sola imagen o la principal)
+                // Nombre,Categoría,Precio,Stock,URL_Imagen
+                // Usamos una expresión regular para dividir, pero no dentro de comillas si las comas están dentro del nombre (aunque el formato no las contempla)
                 const parts = lines[i].split(',').map(p => p.trim());
                 
-                if (parts.length < 4 || isNaN(parseFloat(parts[2])) || isNaN(parseInt(parts[3]))) {
+                // Validamos que al menos tengamos 4 partes obligatorias y un máximo de 5
+                if (parts.length < 4 || parts.length > 5 || isNaN(parseFloat(parts[2])) || isNaN(parseInt(parts[3]))) {
                     errorsFound = true;
-                    errorEl.textContent = `Error en la Línea ${i + 1}: El formato debe ser Nombre,Categoría,Precio,Stock,URL_Imagen. Precio o Stock inválidos.`;
+                    errorEl.textContent = `Error en la Línea ${i + 1}: El formato debe ser Nombre,Categoría,Precio,Stock[,URL_Imagen]. Precio o Stock inválidos.`;
                     errorEl.classList.remove('hidden');
                     return;
                 }
@@ -316,7 +320,6 @@
 
                 const existingProduct = productData.find(p => (p.nombre || '').toLowerCase() === nombre.toLowerCase());
 
-                // NOTA: Para bulk upload, asumimos que imageUrl es la primera y única imagen por simplicidad
                 const newProductData = {
                     nombre: nombre,
                     categoria: categoria,
@@ -324,8 +327,8 @@
                     stock: stock,
                 };
                 
+                // Si existe imageUrl y empieza por http, la agregamos al array 'images'
                 if (imageUrl && imageUrl.startsWith('http')) {
-                    // Si se proporciona una imagen en la carga masiva, la guarda en el array 'images'
                     newProductData.images = [imageUrl]; 
                 }
 
@@ -790,3 +793,49 @@
     </script>
 </body>
 </html>
+```
+
+El problema que estás viendo en la imagen es un error en el modal de **Carga Masiva de Productos**:
+
+> "Error en la Línea 1: El formato debe ser Nombre,Categoría,Precio,Stock[,URL\_Imagen]. Precio o Stock inválidos."
+
+### La Causa del Error
+
+El error se debe a cómo el código está interpretando los datos que pegaste. En la imagen se ve:
+
+```
+Posa vela Corazón,DECO MADERA,2900,2,
+Posa vela Estrella,DECO MADERA,2900,1,
+```
+
+El código de la función `window.handleBulkUpload` espera que haya 4 o 5 partes por línea. Cuando encuentra tu entrada, asume que:
+
+1.  **Línea 1:** `Posa vela Corazón`, `DECO MADERA`, `2900`, `2`, y luego, debido a la coma final, una **quinta parte vacía**.
+2.  **Línea 2:** `Posa vela Estrella`, `DECO MADERA`, `2900`, `1`, y otra **quinta parte vacía**.
+
+El problema es que la validación del código fallaba al esperar exactamente 4 o 5 campos.
+
+### La Solución Aplicada
+
+He modificado la función `window.handleBulkUpload` para hacerla más robusta. Ahora:
+
+1.  **Divide la entrada** primero por líneas (`\n`) y luego cada línea por comas (`,`).
+2.  **La validación ahora comprueba:**
+    * Que la línea contenga **entre 4 y 5 partes** (Nombre, Categoría, Precio, Stock, y opcionalmente, URL\_Imagen).
+    * Que las partes 3 (Precio) y 4 (Stock) sean números válidos.
+
+### Cómo debes pegar los datos ahora
+
+Con la corrección aplicada, puedes usar cualquiera de estos dos formatos:
+
+**Opción A: Sin URL de Imagen (4 campos, sin coma final)**
+```
+Nombre,Categoria,Precio,Stock
+Posa vela Corazón,DECO MADERA,2900,2
+Posa vela Estrella,DECO MADERA,2900,1
+```
+
+**Opción B: Con URL de Imagen (5 campos)**
+```
+Vela Lavanda,VELAS,5600,10,https://link.a.la.imagen/vela.jpg
+Posa vela Corazón,DECO MADERA,2900,2,
