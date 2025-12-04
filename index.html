@@ -3,7 +3,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catálogo Blanco & Madera</title>
+    <title>Catálogo Vendedor - Blanco & Madera</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
@@ -14,7 +14,6 @@
         .item-card {
             transition: transform 0.1s ease-out;
             cursor: pointer; 
-            /* Aseguramos que los eventos de puntero funcionen */
             pointer-events: auto; 
         }
         .item-card:hover {
@@ -53,29 +52,29 @@
 </head>
 <body class="text-stone-800">
 
-    <!-- HEADER -->
+    <!-- HEADER (VENDEDOR) -->
     <header class="bg-white shadow-lg sticky top-0 z-10 no-print">
         <div class="container mx-auto px-4 py-2 flex flex-col items-center">
             <span style="font-family: serif; font-size: 2.25rem; font-weight: 800; color: #1c1917; line-height: 1;">blanco&madera</span>
             <hr class="w-24 border-stone-400 my-0.5">
-            <span style="font-size: 0.75rem; letter-spacing: 0.3em; color: #78716c;">DECO HOME</span>
+            <span style="font-size: 0.75rem; letter-spacing: 0.3em; color: #78716c;">SISTEMA VENDEDOR</span>
         </div>
     </header>
 
     <main class="container mx-auto p-4 sm:p-6 lg:p-8 pt-0"> 
         <div class="py-4 text-center">
-            <h1 class="text-4xl font-extrabold text-amber-800">CATÁLOGO</h1>
-            <p class="text-stone-600 mt-1">Selecciona productos para cotizar.</p>
+            <h1 class="text-4xl font-extrabold text-amber-800">PANEL DE VENTAS</h1>
+            <p class="text-stone-600 mt-1">Gestión de stock, cotizaciones y pedidos.</p>
             <div id="connection-status" class="text-xs text-stone-400 mt-1">Conectando...</div>
         </div>
         
         <div id="toast-container"></div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- PANEL IZQUIERDO: LISTADO -->
+            <!-- PANEL IZQUIERDO: LISTADO DE PRODUCTOS -->
             <div class="space-y-6">
                 <div id="catalog-panel" class="bg-white p-6 rounded-xl shadow-lg relative min-h-[400px]">
-                    <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">Productos Disponibles</h2>
+                    <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">Stock Disponible</h2>
                     
                     <!-- FILTROS -->
                     <div class="bg-white rounded-xl mb-4 no-print border-b pb-4 border-stone-100">
@@ -101,22 +100,22 @@
                     <div id="product-list" class="overflow-y-auto h-[60vh] md:h-[70vh] pr-4 space-y-2"></div>
                 </div>
 
-                <!-- PANEL GESTION -->
+                <!-- PANEL GESTION (Exclusivo Vendedor) -->
                 <div class="bg-white p-6 rounded-xl shadow-lg no-print">
-                    <h2 class="text-xl font-semibold mb-4 text-stone-700 border-b pb-2">Gestión</h2>
+                    <h2 class="text-xl font-semibold mb-4 text-stone-700 border-b pb-2">Herramientas de Gestión</h2>
                     <div class="flex flex-col space-y-3">
-                        <button id="download-sales-report-button" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-blue-700">⬇️ Descargar Historial</button>
-                        <button onclick="openManualSaleModal()" class="w-full bg-red-500 text-white font-bold py-3 rounded-lg shadow-md hover:bg-red-600">➕ Venta Manual</button>
+                        <button id="download-sales-report-button" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-blue-700">⬇️ Descargar Reporte de Ventas</button>
+                        <button onclick="openManualSaleModal()" class="w-full bg-red-500 text-white font-bold py-3 rounded-lg shadow-md hover:bg-red-600">➕ Registrar Venta Manual (Sin Carrito)</button>
                     </div>
                 </div>
             </div>
             
-            <!-- PANEL DERECHO: CARRITO -->
+            <!-- PANEL DERECHO: CARRITO/COTIZACIÓN -->
             <div id="cart-panel" class="hidden md:flex flex-col bg-white p-6 rounded-xl shadow-lg">
-                <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">Cotización</h2>
+                <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">Cotización en Curso</h2>
                 
-                <div class="mb-4 no-print"><input type="text" id="client-name" placeholder="Nombre Cliente" class="w-full rounded-lg border-stone-300 p-2 shadow-sm"></div>
-                <div class="mb-4 no-print"><input type="tel" id="whatsapp-number" placeholder="WhatsApp (549...)" class="w-full rounded-lg border-stone-300 p-2 shadow-sm"></div>
+                <div class="mb-4 no-print"><input type="text" id="client-name" placeholder="Nombre del Cliente" class="w-full rounded-lg border-stone-300 p-2 shadow-sm"></div>
+                <div class="mb-4 no-print"><input type="tel" id="whatsapp-number" placeholder="WhatsApp Cliente (549...)" class="w-full rounded-lg border-stone-300 p-2 shadow-sm"></div>
                 <div class="mb-4 no-print">
                     <select id="payment-method" class="w-full rounded-lg border-stone-300 p-2 shadow-sm">
                         <option value="Efectivo">Efectivo</option><option value="Transferencia">Transferencia</option><option value="Tarjeta">Tarjeta</option><option value="Otro">Otro</option>
@@ -124,7 +123,7 @@
                 </div>
 
                 <div id="cart-list" class="overflow-y-auto flex-grow pr-4 space-y-2">
-                    <p id="empty-cart-message" class="text-stone-500 text-center mt-8">Carrito vacío.</p>
+                    <p id="empty-cart-message" class="text-stone-500 text-center mt-8">El carrito está vacío.</p>
                 </div>
 
                 <div class="mt-4 pt-4 border-t-2 border-amber-500/50">
@@ -136,18 +135,18 @@
                     </div>
                     <div class="flex justify-between items-center mb-4">
                         <span class="text-2xl font-bold">TOTAL:</span>
-                        <span id="cart-total" class="text-4xl font-extrabold text-amber-800">$0</span>
+                        <span id="cart-total" class="text-4xl font-extrabold text-amber-800 cart-total-print">$0</span>
                     </div>
                     <div class="space-y-3 no-print">
-                        <button id="save-pending-button" class="w-full bg-stone-700 text-white font-bold py-3 rounded-lg shadow-xl">💾 Guardar Pendiente</button>
-                        <button id="confirm-sale-button" class="w-full bg-red-700 text-white font-bold py-3 rounded-lg shadow-xl">❌ Registrar Venta</button>
+                        <button id="save-pending-button" class="w-full bg-stone-700 text-white font-bold py-3 rounded-lg shadow-xl hover:bg-stone-800">💾 Guardar como Pendiente</button>
+                        <button id="confirm-sale-button" class="w-full bg-red-700 text-white font-bold py-3 rounded-lg shadow-xl hover:bg-red-800">❌ Finalizar Venta (Descontar Stock)</button>
                         <div class="grid grid-cols-2 gap-3 mt-2">
-                            <button id="send-whatsapp-text-button" class="bg-green-600 text-white py-2 rounded-lg font-bold">💬 WhatsApp</button>
-                            <button id="share-image-button" class="bg-amber-500 text-white py-2 rounded-lg font-bold">🖼️ Imagen</button>
+                            <button id="send-whatsapp-text-button" class="bg-green-600 text-white font-bold py-2 rounded-lg shadow-md">💬 Enviar WPP</button>
+                            <button id="share-image-button" class="bg-amber-500 text-white font-bold py-2 rounded-lg shadow-md">🖼️ Crear Imagen</button>
                         </div>
                         <div class="grid grid-cols-2 gap-3 mt-2">
-                            <button id="print-button" class="bg-stone-500 text-white py-2 rounded-lg font-bold">🖨️ Imprimir</button>
-                            <button id="clear-cart-button" class="bg-red-500/50 text-white py-2 rounded-lg font-bold">🗑️ Vaciar</button>
+                            <button id="print-button" class="bg-stone-500 text-white font-bold py-2 rounded-lg shadow-md">🖨️ Imprimir</button>
+                            <button id="clear-cart-button" class="bg-red-500/50 text-white font-bold py-2 rounded-lg shadow-md">🗑️ Borrar Todo</button>
                         </div>
                     </div>
                 </div>
@@ -180,7 +179,7 @@
                     <p id="modal-product-stock" class="text-lg font-bold text-stone-700 mb-6"></p>
                     
                     <button id="modal-add-to-cart-button" class="w-full amber-gradient text-white font-bold py-3 rounded-lg shadow-lg hover:opacity-90">
-                        🛒 Agregar al Carrito
+                        🛒 Agregar a Cotización
                     </button>
                 </div>
             </div>
@@ -190,18 +189,18 @@
     <!-- MODAL VENTA MANUAL -->
     <div id="manual-sale-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 items-center justify-center">
         <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-md mx-4">
-            <h3 class="text-xl font-bold mb-4 text-red-700">➕ Venta Manual</h3>
+            <h3 class="text-xl font-bold mb-4 text-red-700 border-b pb-2">➕ Venta Manual</h3>
             <div class="space-y-4">
-                <input type="text" id="manual-sale-product-name" placeholder="Producto" class="w-full border p-2 rounded">
+                <input type="text" id="manual-sale-product-name" placeholder="Nombre del Producto" class="w-full border p-2 rounded">
                 <div class="grid grid-cols-2 gap-2">
-                    <input type="number" id="manual-sale-quantity" value="1" class="w-full border p-2 rounded">
-                    <input type="number" id="manual-sale-price" placeholder="Precio" class="w-full border p-2 rounded">
+                    <input type="number" id="manual-sale-quantity" value="1" class="w-full border p-2 rounded" placeholder="Cant">
+                    <input type="number" id="manual-sale-price" placeholder="Precio Total" class="w-full border p-2 rounded">
                 </div>
                 <input type="text" id="manual-sale-client-name" value="Venta Externa" class="w-full border p-2 rounded">
                 <select id="manual-sale-payment" class="w-full border p-2 rounded">
-                    <option value="Efectivo">Efectivo</option><option value="Transferencia">Transferencia</option><option value="Otro">Otro</option>
+                    <option value="Efectivo">Efectivo</option><option value="Transferencia">Transferencia</option><option value="Tarjeta">Tarjeta</option><option value="Otro">Otro</option>
                 </select>
-                <div class="flex items-center"><input type="checkbox" id="manual-sale-deduct-stock" checked class="mr-2"> <label>Descontar Stock</label></div>
+                <div class="flex items-center"><input type="checkbox" id="manual-sale-deduct-stock" checked class="mr-2"> <label>Descontar Stock de la base de datos</label></div>
                 <div class="flex gap-2">
                     <button onclick="closeManualSaleModal()" class="flex-1 bg-gray-300 py-2 rounded font-bold">Cancelar</button>
                     <button onclick="handleManualSale()" class="flex-1 bg-red-600 text-white py-2 rounded font-bold">Registrar</button>
@@ -210,7 +209,7 @@
         </div>
     </div>
 
-    <!-- NAV MÓVIL -->
+    <!-- NAV MÓVIL (Solo para Vendedor) -->
     <div class="mobile-nav bg-white shadow-2xl p-3 border-t border-stone-200 flex justify-around">
         <button onclick="showView('catalog')" class="flex flex-col items-center text-amber-800 font-bold"><span class="text-2xl">🛒</span><span class="text-xs">Catálogo</span></button>
         <button onclick="showView('cart')" class="flex flex-col items-center text-stone-500 font-bold"><span class="text-2xl">📝</span><span class="text-xs">Cotización</span></button>
@@ -221,7 +220,7 @@
         import { getFirestore, collection, getDocs, doc, updateDoc, onSnapshot, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
         const firebaseConfig = {
-            apiKey: "", // No needed for public/rules restricted
+            apiKey: "", 
             authDomain: "blanco-y-madera-17214.firebaseapp.com",
             projectId: "blanco-y-madera-17214",
             storageBucket: "blanco-y-madera-17214.appspot.com",
@@ -235,10 +234,29 @@
         let productData = [];
         let cart = {};
         let categories = new Set();
+        let pendingOrders = [];
         const STORAGE_KEY = 'bm_cart_v2';
 
-        // --- FUNCIONES GLOBALES PARA EL HTML (MODALES Y CLICS) ---
+        // --- FUNCIONES GLOBALES ---
         
+        // EDITAR STOCK (Exclusivo Vendedor)
+        window.editStock = async function(id, current) {
+            const newVal = prompt(`Editar Stock para este producto:\nActual: ${current}`, current);
+            if (newVal !== null && !isNaN(newVal)) {
+                const stockNum = parseInt(newVal);
+                if (stockNum >= 0) {
+                    try {
+                        await updateDoc(doc(db, "products", id), { stock: stockNum });
+                        showToast("Stock actualizado ✅");
+                    } catch (e) {
+                        alert("Error al actualizar stock: " + e.message);
+                    }
+                } else {
+                    alert("El stock no puede ser negativo.");
+                }
+            }
+        };
+
         window.openQuickView = function(id) {
             const product = productData.find(p => p.id === id);
             if (!product) return;
@@ -248,31 +266,27 @@
             const stockEl = document.getElementById('modal-product-stock');
             const addBtn = document.getElementById('modal-add-to-cart-button');
 
-            // Datos seguros
             const name = product.nombre || 'Producto';
             const cat = product.categoria || 'General';
             const price = formatCurrency(product.precio || 0);
-            const imgUrl = product.imageUrl || product.ImageUrl || ''; // Compatibilidad mayúscula/minúscula
+            const imgUrl = product.imageUrl || product.ImageUrl || '';
 
             document.getElementById('modal-product-name').textContent = name;
             document.getElementById('modal-product-category').textContent = cat;
             document.getElementById('modal-product-price').textContent = price;
             
-            // Imagen (SVG por defecto si no hay URL)
             imgEl.src = imgUrl || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ccc' stroke-width='2'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' ry='2'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3Cpolyline points='21 15 16 10 5 21'/%3E%3C/svg%3E";
 
-            // Stock
             if (product.stock <= 0) {
                 stockEl.innerHTML = '<span class="text-red-600">❌ Sin Stock</span>';
                 addBtn.disabled = true;
                 addBtn.classList.add('opacity-50', 'cursor-not-allowed');
             } else {
-                stockEl.innerHTML = `<span class="text-green-600">✅ ${product.stock} disponibles</span>`;
+                stockEl.innerHTML = `<span class="text-green-600">✅ ${product.stock} unidades</span>`;
                 addBtn.disabled = false;
                 addBtn.classList.remove('opacity-50', 'cursor-not-allowed');
             }
 
-            // Asignar evento al botón del modal (usando closure para evitar errores de string)
             addBtn.onclick = function() {
                 addToCart(id);
                 closeProductModal();
@@ -334,19 +348,19 @@
                 const item = document.createElement('div');
                 const isNoStock = p.stock <= 0;
                 const opacity = isNoStock ? 'opacity-60' : '';
+                let stockBadgeClass = (p.stock > 3) ? 'bg-green-100 text-green-800' : (p.stock > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-400 text-white');
+                let stockMessage = (p.stock > 0) ? `Stock: ${p.stock}` : 'Sin Stock';
+
                 const imgUrl = p.imageUrl || p.ImageUrl;
                 const imgHtml = imgUrl 
                     ? `<img src="${imgUrl}" class="w-12 h-12 rounded object-cover bg-stone-200">` 
                     : `<div class="w-12 h-12 rounded bg-stone-200 flex items-center justify-center text-xl">🖼️</div>`;
-                
-                const badgeColor = isNoStock ? 'bg-red-100 text-red-800' : (p.stock < 3 ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800');
 
                 item.className = `bg-white p-3 rounded-xl border border-stone-100 flex justify-between items-center item-card ${opacity}`;
                 
-                // EVENTO DE CLIC SEGURO (JS PURO)
+                // Evento CLICK para abrir modal (evita botones internos)
                 item.addEventListener('click', (e) => {
-                    // Si el clic fue en el botón de carrito, NO abrir modal
-                    if (e.target.closest('.cart-btn')) return;
+                    if (e.target.closest('.cart-btn') || e.target.closest('.stock-edit-btn')) return;
                     openQuickView(p.id);
                 });
 
@@ -355,9 +369,13 @@
                         ${imgHtml}
                         <div>
                             <p class="font-bold text-stone-800 leading-tight">${p.nombre}</p>
-                            <div class="flex gap-2 mt-1">
+                            <div class="flex gap-2 items-center mt-1">
                                 <span class="text-xs bg-stone-100 px-2 rounded text-stone-600">${p.categoria}</span>
-                                <span class="text-xs px-2 rounded font-bold ${badgeColor}">${isNoStock ? 'Sin Stock' : 'Stock: '+p.stock}</span>
+                                <div class="flex items-center gap-1 ${stockBadgeClass} px-2 py-0.5 rounded-full">
+                                    <span class="text-xs font-bold">${stockMessage}</span>
+                                    <!-- LÁPIZ EDITAR STOCK -->
+                                    <button class="stock-edit-btn ml-1 text-xs hover:bg-white/20 rounded px-1" onclick="event.stopPropagation(); editStock('${p.id}', ${p.stock})">✏️</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -391,7 +409,6 @@
             document.getElementById('connection-status').textContent = "🟢 Conectado";
             document.getElementById('connection-status').classList.add('text-green-600');
             
-            // Cargar filtros
             const catSelect = document.getElementById('category-filter');
             const current = catSelect.value;
             catSelect.innerHTML = '<option value="all">Todas</option>';
@@ -406,15 +423,13 @@
             document.getElementById('connection-status').textContent = "🔴 Error de conexión";
         });
 
-        // --- HELPERS Y OTROS ---
-
         function updateDashboard() {
             const cat = document.getElementById('category-filter').value;
             const search = document.getElementById('search-box').value.toLowerCase();
             
             const filtered = productData.filter(p => {
                 const mCat = cat === 'all' || p.categoria === cat;
-                const mSearch = p.nombre.toLowerCase().includes(search);
+                const mSearch = (p.nombre || '').toLowerCase().includes(search);
                 return mCat && mSearch;
             });
             renderProductList(filtered);
@@ -425,13 +440,16 @@
             const list = document.getElementById('cart-list');
             const totalEl = document.getElementById('cart-total');
             const emptyEl = document.getElementById('empty-cart-message');
-            list.innerHTML = '';
-            let total = 0, count = 0;
+            const discountSelect = document.getElementById('discount-select');
 
-            for(let id in cart) {
+            list.innerHTML = ''; 
+            let subtotal = 0;
+            let count = 0;
+            
+            for (const id in cart) {
                 const item = cart[id];
-                const sub = item.precio * item.cantidad;
-                total += sub;
+                const price = parseFloat(item.precio) || 0;
+                subtotal += price * item.cantidad;
                 count += item.cantidad;
 
                 list.innerHTML += `
@@ -442,14 +460,16 @@
                         </div>
                         <div class="flex items-center gap-2">
                             <span class="font-bold">$${sub}</span>
-                            <button onclick="changeQuantity('${id}', -1)" class="px-2 bg-stone-200 rounded">-</button>
-                            <button onclick="changeQuantity('${id}', 1)" class="px-2 bg-amber-200 rounded">+</button>
+                            <button onclick="changeQuantity('${id}', -1)" class="px-2 bg-stone-200 rounded text-stone-700">-</button>
+                            <button onclick="changeQuantity('${id}', 1)" class="px-2 bg-amber-500 text-white rounded">+</button>
                         </div>
                     </div>`;
             }
             
-            const disc = parseFloat(document.getElementById('discount-select').value);
-            totalEl.textContent = formatCurrency(total * (1 - disc));
+            const disc = parseFloat(discountSelect.value) || 0;
+            const total = subtotal * (1 - disc);
+
+            cartTotalEl.textContent = formatCurrency(total);
             emptyEl.style.display = count ? 'none' : 'block';
             
             const badge = document.getElementById('cart-item-count');
@@ -477,7 +497,6 @@
         document.getElementById('clear-cart-button').onclick = () => { cart={}; saveCart(); renderCart(); };
         document.getElementById('print-button').onclick = () => window.print();
         
-        // WhatsApp
         document.getElementById('send-whatsapp-text-button').onclick = () => {
             const name = document.getElementById('client-name').value || 'Cliente';
             let msg = `Hola ${name}, tu presupuesto:\n\n`;
@@ -500,11 +519,11 @@
             const qty = parseInt(document.getElementById('manual-sale-quantity').value);
             const price = parseFloat(document.getElementById('manual-sale-price').value);
             const client = document.getElementById('manual-sale-client-name').value;
+            const pay = document.getElementById('manual-sale-payment').value;
             const deduct = document.getElementById('manual-sale-deduct-stock').checked;
 
             if(!name || !qty || !price) { alert('Faltan datos'); return; }
             
-            // Buscar producto para descontar
             if(deduct) {
                 const p = productData.find(x => x.nombre.toLowerCase() === name.toLowerCase());
                 if(p) {
@@ -524,7 +543,7 @@
             closeManualSaleModal();
         };
         
-        // Pedidos Pendientes (Simplificado)
+        // Pedidos Pendientes
         const pendingList = document.getElementById('pending-list');
         onSnapshot(collection(db, "pending_orders"), (snap) => {
             pendingList.innerHTML = '';
@@ -544,15 +563,11 @@
                         saveCart(); renderCart();
                     }
                 };
-                // Borrar
                 const del = document.createElement('button');
                 del.className = 'text-red-600 ml-2';
                 del.textContent = '🗑️';
                 del.onclick = () => deleteDoc(doc(db, "pending_orders", d.id));
-                
-                div.appendChild(btn);
-                div.appendChild(del);
-                pendingList.appendChild(div);
+                div.appendChild(btn); div.appendChild(del); pendingList.appendChild(div);
             });
         });
 
@@ -580,7 +595,13 @@
             document.getElementById('cart-panel').style.display = isCat ? 'none' : 'flex';
         };
 
-        // Init
+        window.resetLocalData = () => {
+             if(confirm("Borrar cache local?")) {
+                 localStorage.removeItem(STORAGE_KEY);
+                 location.reload();
+             }
+        }
+
         loadCart();
     </script>
 </body>
