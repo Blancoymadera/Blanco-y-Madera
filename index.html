@@ -15,6 +15,8 @@
             transition: transform 0.1s ease-out;
             cursor: pointer; 
             pointer-events: auto; 
+            /* Para móvil: padding extra para que el contenido no pegue al borde */
+            padding-right: 1rem; 
         }
         .item-card:hover {
             background-color: #fffaf0;
@@ -42,6 +44,13 @@
              #toast-container { bottom: 80px; left: 50%; transform: translateX(-50%); right: auto; }
              .mobile-filters-hidden { display: none !important; }
              .mobile-nav { position: fixed; bottom: 0; left: 0; width: 100%; z-index: 50; }
+             /* Ajuste crítico para que el botón de carrito NO cause scroll horizontal */
+             .item-card {
+                padding-right: 0.5rem !important; /* Reducimos el padding derecho total */
+             }
+             .item-card > div:last-child {
+                flex-shrink: 0; /* Aseguramos que el contenedor del botón no se comprima */
+             }
         }
         @media (min-width: 769px) { .mobile-nav { display: none; } }
         @media print { .no-print { display: none !important; } body { background-color: #fff !important; } }
@@ -173,7 +182,9 @@
             <button onclick="closeProductModal()" class="absolute top-4 right-4 text-stone-500 hover:text-red-600 text-3xl">&times;</button>
             <h3 id="modal-product-name" class="text-2xl font-bold text-amber-800 pr-8 mb-4"></h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="bg-stone-100 rounded-lg flex items-center justify-center p-2 h-[300px]"><img id="modal-product-image" src="" class="max-h-full max-w-full object-contain shadow-sm"></div>
+                <div class="bg-stone-100 rounded-lg flex items-center justify-center p-2 h-[300px]">
+                    <img id="modal-product-image" src="" class="max-h-full max-w-full object-contain shadow-sm">
+                </div>
                 <div class="flex flex-col justify-center">
                     <p class="text-sm font-semibold text-stone-500">Categoría:</p><p id="modal-product-category" class="text-lg font-medium text-stone-800 mb-4"></p>
                     <p class="text-sm font-semibold text-stone-500">Precio:</p><p id="modal-product-price" class="text-3xl font-extrabold text-amber-800 mb-4"></p>
@@ -407,36 +418,37 @@
         }
 
         function renderCart() {
-            const list = document.getElementById('cart-list'); list.innerHTML = ''; 
+            const list = document.getElementById('cart-list'); 
+            const totalEl = document.getElementById('cart-total');
+            const emptyEl = document.getElementById('empty-cart-message');
+            const discountSelect = document.getElementById('discount-select');
+
+            list.innerHTML = ''; 
             let subtotal = 0, count = 0;
             for(const id in cart) {
                 const item = cart[id];
                 subtotal += item.precio * item.cantidad; count += item.cantidad;
                 list.innerHTML += `<div class="bg-white p-2 rounded border flex justify-between items-center mb-2"><div><div class="font-bold text-sm">${item.nombre}</div><div class="text-xs text-stone-500">$${item.precio} x ${item.cantidad}</div></div><div class="flex items-center gap-2"><span class="font-bold">$${item.precio*item.cantidad}</span><button onclick="changeQuantity('${id}', -1)" class="px-2 bg-stone-200 rounded text-stone-700">-</button><button onclick="changeQuantity('${id}', 1)" class="px-2 bg-amber-500 text-white rounded">+</button></div></div>`;
             }
-            const disc = parseFloat(document.getElementById('discount-select').value) || 0;
+            const disc = parseFloat(discountSelect.value) || 0;
             const discountAmount = subtotal * disc;
             const total = subtotal * (1 - disc);
 
             
             // Renderizar resumen del descuento
-            const summaryDiv = document.createElement('div');
-            summaryDiv.className = 'mt-3 pt-2 border-t border-stone-200';
-            
-            if (disc > 0) {
-                 summaryDiv.innerHTML += `<div class="flex justify-between text-sm text-stone-500"><span>Subtotal:</span><span>${formatCurrency(subtotal)}</span></div>`;
-                 summaryDiv.innerHTML += `<div class="flex justify-between font-bold text-red-600 mb-2"><span>Descuento (${(disc * 100).toFixed(0)}%):</span><span>-${formatCurrency(discountAmount)}</span></div>`;
-            }
-
-            // Insertar el resumen ANTES del total, pero después de los ítems
             if (count > 0) {
+                 const summaryDiv = document.createElement('div');
+                 summaryDiv.className = 'mt-3 pt-2 border-t border-stone-200';
+                 if (disc > 0) {
+                     summaryDiv.innerHTML += `<div class="flex justify-between text-sm text-stone-500"><span>Subtotal:</span><span>${formatCurrency(subtotal)}</span></div>`;
+                     summaryDiv.innerHTML += `<div class="flex justify-between font-bold text-red-600 mb-2"><span>Descuento (${(disc * 100).toFixed(0)}%):</span><span>-${formatCurrency(discountAmount)}</span></div>`;
+                 }
                  list.appendChild(summaryDiv);
             }
             
             document.getElementById('cart-total').textContent = formatCurrency(total);
             
             // Manejo de Carrito Vacío
-            const emptyEl = document.getElementById('empty-cart-message');
             if (emptyEl) emptyEl.style.display = count ? 'none' : 'block';
         }
 
