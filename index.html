@@ -254,7 +254,7 @@
             document.getElementById('modal-product-category').textContent = product.categoria;
             document.getElementById('modal-product-price').textContent = formatCurrency(product.precio);
             
-            // Lógica para obtener la imagen principal del array 'images'
+            // Lógica para obtener la imagen principal del array 'images' (SIN cache buster aquí para no romper el token de Firebase Storage)
             let modalImgUrl = product.imageUrl || product.ImageUrl || (product.images && product.images.length > 0 ? product.images[0] : null);
 
             document.getElementById('modal-product-image').src = modalImgUrl || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ccc' stroke-width='1'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' ry='2'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3Cpolyline points='21 15 16 10 5 21'/%3E%3C/svg%3E";
@@ -293,7 +293,7 @@
             errorEl.classList.add('hidden');
             if (!dataText) return;
 
-            const lines = dataText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+            const lines = dataText.split(',').map(p => p.trim());
             const batch = writeBatch(db);
             let errorsFound = false;
             let updatesCount = 0;
@@ -381,12 +381,13 @@
                 const isNoStock = p.stock <= 0;
                 const opacity = isNoStock ? 'opacity-60' : '';
                 
-                // === AJUSTE PRINCIPAL: Obtener la imagen del array 'images' ===
-                let imgUrl = p.imageUrl || p.ImageUrl || (p.images && p.images.length > 0 ? p.images[0] : null);
+                // === AJUSTE PRINCIPAL: Obtener la imagen del array 'images' y aplicar Cache Buster correctamente ===
+                let imgUrl = (p.images && p.images.length > 0 ? p.images[0] : p.imageUrl || p.ImageUrl);
                 
-                // Si existe una URL, le añadimos un parámetro de versión para evitar la caché del navegador
-                if (imgUrl && imgUrl.startsWith('http')) {
-                    // Usamos el ID del producto como un "cache-buster" simple
+                // Aplicar cache-buster SÓLO si la URL no contiene el token de Firebase Storage
+                if (imgUrl && imgUrl.startsWith('http') && !imgUrl.includes('token=')) {
+                    // Si no hay token, es probable que sea una URL de Google Storage simple, añadimos el cache-buster
+                    // Aseguramos que solo tengamos el URL base antes de añadir el parámetro
                     imgUrl = `${imgUrl.split('?')[0]}?v=${p.id}`; 
                 }
                 const imgHtml = imgUrl ? `<img src="${imgUrl}" class="w-10 h-10 rounded object-cover bg-stone-200">` : `<div class="w-10 h-10 rounded bg-stone-200 flex items-center justify-center text-lg">🖼️</div>`;
@@ -397,7 +398,7 @@
                 const stockBadge = p.stock > 3 ? 'bg-green-600' : (p.stock > 0 ? 'bg-amber-500' : 'bg-red-600');
                 const stockText = p.stock > 0 ? `${p.stock}` : '0'; // Solo la cantidad
 
-                // INICIO MODIFICACIÓN V4: Nombre 2 líneas, Precio/Carrito compacto vertical
+                // INICIO MODIFICACIÓN V5: Nombre y Stock en la misma línea
                 item.className = `bg-white p-3 rounded-xl border border-stone-100 flex items-center justify-between item-card ${opacity}`;
                 item.onclick = (e) => { 
                     if (e.target.closest('.cart-btn') || e.target.closest('.stock-edit-btn')) return; // Evita abrir modal si toca botones
@@ -405,19 +406,20 @@
                 };
 
                 item.innerHTML = `
-                    <!-- IZQUIERDA: IMAGEN + NOMBRE + STOCK -->
-                    <div class="flex items-center gap-2 flex-grow min-w-0 pr-1">
+                    <!-- IZQUIERDA: IMAGEN + NOMBRE + STOCK (Ahora en la misma línea) -->
+                    <div class="flex items-start gap-2 flex-grow min-w-0 pr-1">
                         <!-- IMAGEN (W-10) -->
                         <div class="flex-shrink-0">${imgHtml}</div>
                         
-                        <!-- NOMBRE Y STOCK (flex-grow para que ocupe el espacio disponible) -->
-                        <div class="min-w-0 flex-grow pr-1 flex flex-col justify-center">
-                            <!-- Nombre a 2 líneas -->
-                            <p class="font-bold text-stone-800 leading-snug line-clamp-2 text-sm">${p.nombre}</p> 
-                            
-                            <!-- STOCK simplificado: solo cantidad y color -->
-                            <div class="flex items-center mt-0.5">
-                                <span class="${stockBadge} text-white px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0" onclick="event.stopPropagation(); editStock('${p.id}', ${p.stock})">
+                        <!-- NOMBRE Y STOCK BADGE (flex-grow para que ocupe el espacio disponible) -->
+                        <div class="min-w-0 flex-grow pr-1 flex flex-col">
+                            <!-- Contenedor del nombre y stock para que estén alineados en la parte superior -->
+                            <div class="flex items-start gap-2 w-full">
+                                <!-- Nombre con truncate de 2 líneas -->
+                                <p class="font-bold text-stone-800 leading-snug line-clamp-2 text-sm flex-grow min-w-0">${p.nombre}</p> 
+                                
+                                <!-- STOCK Badge (alineado arriba, se vuelve clickeable para editar) -->
+                                <span class="${stockBadge} text-white px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0 mt-0.5 cursor-pointer" onclick="event.stopPropagation(); editStock('${p.id}', ${p.stock})">
                                     ${stockText} 
                                 </span>
                             </div>
@@ -438,7 +440,7 @@
                 list.appendChild(item);
             });
         }
-        // FIN MODIFICACIÓN V4
+        // FIN MODIFICACIÓN V5
 
         const q = collection(db, "products");
         onSnapshot(q, (snapshot) => {
