@@ -361,8 +361,7 @@
 
                 item.className = `bg-white p-3 rounded-xl border border-stone-100 flex justify-between items-center item-card ${opacity}`;
                 item.onclick = (e) => { 
-                    // Si el clic es en un botón de acción, no abrir modal
-                    if(e.target.closest('button')) return;
+                    if (e.target.closest('.cart-btn') || e.target.closest('.stock-edit-btn')) return; // Evita abrir modal si toca botones
                     openQuickView(p.id); 
                 };
 
@@ -459,15 +458,50 @@
         document.getElementById('download-sales-report-button').onclick = window.downloadSalesReport;
         
         document.getElementById('send-whatsapp-text-button').onclick = () => {
-            const name = document.getElementById('client-name').value || 'Cliente';
-            let msg = `Hola ${name}, tu presupuesto:\n\n`;
-            let tot = 0;
-            for(let id in cart) { let i = cart[id]; msg += `• ${i.nombre} x${i.cantidad}: $${i.precio*i.cantidad}\n`; tot += i.precio*i.cantidad; }
+            const clientName = document.getElementById('client-name').value || 'Cliente';
+            const whatsappNumber = document.getElementById('whatsapp-number').value.replace(/\D/g,''); 
+
+            let subtotal = 0;
+            const items = [];
+            for(let id in cart) { 
+                let i = cart[id]; 
+                subtotal += i.precio * i.cantidad;
+                items.push({ nombre: i.nombre, cantidad: i.cantidad, subtotal: i.precio * i.cantidad });
+            }
             const disc = parseFloat(document.getElementById('discount-select').value);
-            if (disc > 0) msg += `\nDescuento: ${disc*100}%`;
-            msg += `\n*TOTAL: ${formatCurrency(tot * (1-disc))}*\n\nTransferencias alias: *sofiricca*`;
+            const totalWithDiscount = subtotal * (1 - disc);
+            const formattedDate = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+
+            // INICIO DEL MENSAJE REQUERIDO
+            const summaryLines = [
+                `Hola, ${clientName}!`,
+                '',
+                `Te envío el detalle de tu compra en Blanco & Madera el ${formattedDate}`,
+                ''
+            ];
+
+            items.forEach((item) => {
+                // Formato: • Apagavela Filomena x 1: $ 2.900
+                summaryLines.push(` • ${item.nombre} x ${item.cantidad}: ${formatCurrency(item.subtotal)}`);
+            });
+
+            summaryLines.push('');
+            summaryLines.push('--------------------------');
+            summaryLines.push(`TOTAL FINAL: ${formatCurrency(totalWithDiscount)}`); 
+            summaryLines.push('--------------------------');
+            
+            // Alias
+            summaryLines.push(`Para abonar con Transferencia, usa el siguiente alias:`);
+            summaryLines.push(`*sofiricca*`);
+            summaryLines.push('--------------------------');
+
+            summaryLines.push('');
+            summaryLines.push('¡Muchas gracias por confiar en Blanco & Madera!'); 
+            // FIN DEL MENSAJE REQUERIDO
+
+            const whatsappText = encodeURIComponent(summaryLines.join('\n'));
             const num = document.getElementById('whatsapp-number').value.replace(/\D/g,'');
-            window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`);
+            window.open(`https://wa.me/${num}?text=${whatsappText}`, '_blank');
         };
 
         window.handleManualSale = async () => {
