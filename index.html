@@ -586,9 +586,14 @@
                     return;
                 }
 
-                let csvContent = "Fecha,Cliente,WhatsApp,Método Pago,Descuento (%),Total Final,Producto,Cantidad,Precio Unitario\n";
+                // FIX: Añadir BOM (\uFEFF) para forzar la codificación UTF-8 en Excel
+                let csvContent = '\uFEFF' + "Fecha,Cliente,WhatsApp,Método Pago,Descuento (%),Total Final,Producto,Cantidad,Precio Unitario\n";
+                
+                // Contar ventas para asegurar que se procesó algo
+                let salesCount = 0;
 
                 salesSnapshot.forEach((doc) => {
+                    salesCount++;
                     const sale = doc.data();
                     
                     // Manejo seguro de campos que podrían ser opcionales o faltar
@@ -614,6 +619,7 @@
                             const price = item.precio_unitario || 0;
                             
                             // Creación de la fila CSV
+                            // Nota: Solo el primer item de la venta necesita el total, los demás lo replican en esta estructura de reporte.
                             const rowData = [date, client, whatsapp, method, discount, total, product, qty, price];
                             
                             // Envolver cada item en comillas y escapar comillas internas para CSV seguro
@@ -622,8 +628,16 @@
                         });
                     }
                 });
+                
+                if (salesCount === 0) {
+                    showToast("⚠️ No se encontraron ventas para descargar.");
+                    return;
+                }
+                
+                // console.log("CSV Generado:\n", csvContent); // Para debug
 
                 // Crear el Blob y el enlace de descarga
+                // FIX: Usamos 'text/csv;charset=utf-8;' para la descarga
                 const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
@@ -640,7 +654,7 @@
 
             } catch (error) {
                 console.error("Error al descargar el reporte:", error);
-                showToast("❌ Error al obtener datos de ventas.");
+                showToast("❌ Error al obtener datos de ventas. Revisa la Consola.");
             }
         };
 
