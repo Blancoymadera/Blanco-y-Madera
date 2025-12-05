@@ -213,7 +213,7 @@
                 <input type="text" id="manual-sale-client-name" value="Venta Externa" class="w-full border p-2 rounded">
                 <select id="manual-sale-payment" class="w-full border p-2 rounded"><option value="Efectivo">Efectivo</option><option value="Transferencia">Transferencia</option><option value="Tarjeta">Tarjeta</option><option value="Otro">Otro</option></select>
                 <div class="flex items-center"><input type="checkbox" id="manual-sale-deduct-stock" checked class="mr-2"> <label>Descontar Stock</label></div>
-                <div class="flex gap-2"><button onclick="closeManualSaleModal()" class="flex-1 bg-gray-300 py-2 rounded font-bold">Cancelar</button><button onclick="handleManualSale()" class="flex-1 bg-red-600 text-white py-2 rounded font-bold">Registrar</button></div>
+                <div class="flex gap-2"><button onclick="closeManualSaleModal()" class="flex-1 bg-gray-300 py-2 rounded font-bold">Cancelar</button><button onclick="handleManualSale()" class="flex-1 bg-red-600 text-white font-bold py-2 rounded-lg">Registrar</button></div>
             </div>
         </div>
     </div>
@@ -466,7 +466,7 @@
             
             updateDashboard();
         }, (err) => {
-            console.error(err);
+            console.error("Error al obtener productos:", err);
             document.getElementById('connection-status').textContent = "🔴 Error de conexión";
         });
 
