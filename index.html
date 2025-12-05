@@ -573,12 +573,19 @@
         document.getElementById('clear-cart-button').onclick = () => { cart={}; saveCart(); renderCart(); };
         document.getElementById('print-button').onclick = () => window.print();
         
-        // Función agregada para la descarga de ventas
+        // Función agregada para la descarga de ventas (FIXED)
         window.downloadSalesReport = async () => {
             showToast("Cargando reporte de ventas...");
             
             try {
+                // Se utiliza getDocs de forma síncrona dentro del async para asegurar que se obtienen todos los datos
                 const salesSnapshot = await getDocs(collection(db, "ventas"));
+                
+                if (salesSnapshot.empty) {
+                    showToast("⚠️ No hay ventas registradas para descargar.");
+                    return;
+                }
+
                 let csvContent = "Fecha,Cliente,WhatsApp,Método Pago,Descuento (%),Total Final,Producto,Cantidad,Precio Unitario\n";
 
                 salesSnapshot.forEach((doc) => {
@@ -592,26 +599,28 @@
                     const discount = (sale.descuento_aplicado * 100).toFixed(0) + '%' || '0%';
                     const total = sale.total_final || 0;
                     
-                    // Si no hay items, creamos una línea base (esto es raro, pero es un resguardo)
-                    if (!sale.items || sale.items.length === 0) {
-                        const row = [date, client, whatsapp, method, discount, total, '', '', ''].map(item => `"${String(item).replace(/"/g, '""')}"`).join(',');
-                        csvContent += row + '\n';
-                        return;
-                    }
-
                     // Iteramos sobre los items para tener una fila por producto vendido
-                    sale.items.forEach(item => {
-                        const product = item.nombre || '';
-                        const qty = item.cantidad || 0;
-                        const price = item.precio_unitario || 0;
-                        
-                        // Creación de la fila CSV
-                        const rowData = [date, client, whatsapp, method, discount, total, product, qty, price];
-                        
-                        // Envolver cada item en comillas y escapar comillas internas para CSV seguro
-                        const row = rowData.map(item => `"${String(item).replace(/"/g, '""')}"`).join(',');
-                        csvContent += row + '\n';
-                    });
+                    const items = Array.isArray(sale.items) ? sale.items : [];
+
+                    if (items.length === 0) {
+                        // Fila para ventas sin items (debería ser raro, pero por seguridad)
+                         const rowData = [date, client, whatsapp, method, discount, total, 'N/A', 0, 0];
+                         const row = rowData.map(item => `"${String(item).replace(/"/g, '""')}"`).join(',');
+                         csvContent += row + '\n';
+                    } else {
+                        items.forEach(item => {
+                            const product = item.nombre || '';
+                            const qty = item.cantidad || 0;
+                            const price = item.precio_unitario || 0;
+                            
+                            // Creación de la fila CSV
+                            const rowData = [date, client, whatsapp, method, discount, total, product, qty, price];
+                            
+                            // Envolver cada item en comillas y escapar comillas internas para CSV seguro
+                            const row = rowData.map(item => `"${String(item).replace(/"/g, '""')}"`).join(',');
+                            csvContent += row + '\n';
+                        });
+                    }
                 });
 
                 // Crear el Blob y el enlace de descarga
@@ -793,49 +802,3 @@
     </script>
 </body>
 </html>
-```
-
-El problema que estás viendo en la imagen es un error en el modal de **Carga Masiva de Productos**:
-
-> "Error en la Línea 1: El formato debe ser Nombre,Categoría,Precio,Stock[,URL\_Imagen]. Precio o Stock inválidos."
-
-### La Causa del Error
-
-El error se debe a cómo el código está interpretando los datos que pegaste. En la imagen se ve:
-
-```
-Posa vela Corazón,DECO MADERA,2900,2,
-Posa vela Estrella,DECO MADERA,2900,1,
-```
-
-El código de la función `window.handleBulkUpload` espera que haya 4 o 5 partes por línea. Cuando encuentra tu entrada, asume que:
-
-1.  **Línea 1:** `Posa vela Corazón`, `DECO MADERA`, `2900`, `2`, y luego, debido a la coma final, una **quinta parte vacía**.
-2.  **Línea 2:** `Posa vela Estrella`, `DECO MADERA`, `2900`, `1`, y otra **quinta parte vacía**.
-
-El problema es que la validación del código fallaba al esperar exactamente 4 o 5 campos.
-
-### La Solución Aplicada
-
-He modificado la función `window.handleBulkUpload` para hacerla más robusta. Ahora:
-
-1.  **Divide la entrada** primero por líneas (`\n`) y luego cada línea por comas (`,`).
-2.  **La validación ahora comprueba:**
-    * Que la línea contenga **entre 4 y 5 partes** (Nombre, Categoría, Precio, Stock, y opcionalmente, URL\_Imagen).
-    * Que las partes 3 (Precio) y 4 (Stock) sean números válidos.
-
-### Cómo debes pegar los datos ahora
-
-Con la corrección aplicada, puedes usar cualquiera de estos dos formatos:
-
-**Opción A: Sin URL de Imagen (4 campos, sin coma final)**
-```
-Nombre,Categoria,Precio,Stock
-Posa vela Corazón,DECO MADERA,2900,2
-Posa vela Estrella,DECO MADERA,2900,1
-```
-
-**Opción B: Con URL de Imagen (5 campos)**
-```
-Vela Lavanda,VELAS,5600,10,https://link.a.la.imagen/vela.jpg
-Posa vela Corazón,DECO MADERA,2900,2,
