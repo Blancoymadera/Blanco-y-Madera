@@ -576,20 +576,23 @@
         // Función agregada para la descarga de ventas (FIXED)
         window.downloadSalesReport = async () => {
             showToast("Cargando reporte de ventas...");
+            console.log("--- INICIANDO DESCARGA DE REPORTE ---");
             
             try {
-                // Se utiliza getDocs de forma síncrona dentro del async para asegurar que se obtienen todos los datos
+                console.log("Intentando obtener datos de 'ventas'...");
                 const salesSnapshot = await getDocs(collection(db, "ventas"));
+                
+                console.log(`Datos obtenidos: ${salesSnapshot.docs.length} documentos.`);
                 
                 if (salesSnapshot.empty) {
                     showToast("⚠️ No hay ventas registradas para descargar.");
+                    console.log("Finalizado: Snapshot vacío.");
                     return;
                 }
 
                 // FIX: Añadir BOM (\uFEFF) para forzar la codificación UTF-8 en Excel
                 let csvContent = '\uFEFF' + "Fecha,Cliente,WhatsApp,Método Pago,Descuento (%),Total Final,Producto,Cantidad,Precio Unitario\n";
                 
-                // Contar ventas para asegurar que se procesó algo
                 let salesCount = 0;
 
                 salesSnapshot.forEach((doc) => {
@@ -619,7 +622,6 @@
                             const price = item.precio_unitario || 0;
                             
                             // Creación de la fila CSV
-                            // Nota: Solo el primer item de la venta necesita el total, los demás lo replican en esta estructura de reporte.
                             const rowData = [date, client, whatsapp, method, discount, total, product, qty, price];
                             
                             // Envolver cada item en comillas y escapar comillas internas para CSV seguro
@@ -631,13 +633,13 @@
                 
                 if (salesCount === 0) {
                     showToast("⚠️ No se encontraron ventas para descargar.");
+                    console.log("Finalizado: salesCount 0.");
                     return;
                 }
                 
-                // console.log("CSV Generado:\n", csvContent); // Para debug
+                console.log(`CSV generado con éxito, ${salesCount} ventas procesadas.`);
 
                 // Crear el Blob y el enlace de descarga
-                // FIX: Usamos 'text/csv;charset=utf-8;' para la descarga
                 const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
@@ -651,6 +653,7 @@
                 document.body.removeChild(link);
                 
                 showToast("✅ Reporte descargado.");
+                console.log("--- DESCARGA DE REPORTE FINALIZADA CON ÉXITO ---");
 
             } catch (error) {
                 console.error("Error al descargar el reporte:", error);
