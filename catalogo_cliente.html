@@ -162,7 +162,7 @@
                 </div>
 
                 <div class="container mx-auto px-4 py-6 max-w-6xl min-h-[60vh]">
-                    <div id="products-container" class="space-y-8"></div> <!-- Grid o mensaje -->
+                    <div id="products-container" class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 md:gap-6"></div> 
                     <div id="loading-catalog" class="flex flex-col items-center py-20">
                         <div class="loader-dots block relative w-20 h-5"><div class="bg-amber-500 absolute top-0 w-3 h-3 rounded-full"></div><div class="bg-amber-500 absolute top-0 w-3 h-3 rounded-full"></div><div class="bg-amber-500 absolute top-0 w-3 h-3 rounded-full"></div><div class="bg-amber-500 absolute top-0 w-3 h-3 rounded-full"></div></div>
                     </div>
@@ -213,14 +213,21 @@
         </nav>
     </div>
 
+    <!-- BOTÓN DE CARRITO FLOTANTE (RECOMENDACIÓN 1: Añadido para mejor UX móvil/escritorio) -->
+    <button id="floating-cart-btn" onclick="openCartModal()" class="fixed bottom-24 right-4 md:bottom-8 md:right-8 w-14 h-14 bg-stone-900 text-white rounded-full shadow-2xl z-40 transition-all duration-300 transform hover:scale-105 items-center justify-center hidden">
+        <i class="fa-solid fa-cart-shopping text-xl"></i>
+        <span id="floating-cart-count" class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">0</span>
+    </button>
+
+
     <!-- MODAL VISTA RÁPIDA (CON GALERÍA Y SELECCIÓN DE VARIANTE) -->
     <div id="quickview-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-stone-900/70 backdrop-blur-sm transition-opacity duration-300">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative animate-[scaleIn_0.3s_ease-out] flex flex-col max-h-[90vh]">
             <button onclick="closeModal('quickview-modal')" class="absolute top-3 right-3 z-10 bg-white/90 rounded-full p-2 text-stone-500 hover:text-stone-900 shadow-sm"><i class="fa-solid fa-xmark text-lg"></i></button>
             
-            <!-- Imagen Principal -->
-            <div class="h-64 bg-white flex items-center justify-center p-4 shrink-0">
-                <img id="qv-image" src="" class="max-w-full max-h-full object-contain" alt="Producto">
+            <!-- Imagen Principal: Se usa h-72 fijo para reservar el espacio vertical y evitar saltos de contenido -->
+            <div class="h-72 bg-white flex items-center justify-center p-4 shrink-0 border-b border-stone-100">
+                <img id="qv-image" src="" class="max-w-full max-h-full object-contain transition duration-300" alt="Producto">
             </div>
 
             <!-- Galería Miniaturas (se llena si hay fotos) -->
@@ -248,6 +255,11 @@
                 <div id="manual-variant-container" class="mb-4">
                     <label for="qv-variant" class="block text-xs font-bold text-stone-500 uppercase mb-1">Preferencia (Opcional)</label>
                     <input type="text" id="qv-variant" class="w-full border border-stone-200 rounded-lg p-2 text-sm focus:ring-2 focus:ring-amber-400 outline-none" placeholder="Ej: Aroma, Color...">
+                </div>
+                
+                <!-- RECOMENDACIÓN 2: Mensaje de error visible antes del botón -->
+                <div id="qv-error-message" class="text-red-600 text-sm font-semibold mb-3 hidden">
+                    ⚠️ Debes seleccionar una opción.
                 </div>
 
                 <button id="qv-add-btn" class="w-full bg-stone-900 text-white font-bold py-3.5 rounded-xl shadow-lg hover:bg-stone-800 active:scale-95 transition flex items-center justify-center gap-2 text-lg">
@@ -307,6 +319,21 @@
         let categories = new Set();
         let currentSelectedVariant = null; 
 
+        // --- FUNCIONES UTILITARIAS ---
+        // RECOMENDACIÓN 3: Función para formatear moneda de manera consistente
+        function formatCurrency(v) {
+            return new Intl.NumberFormat('es-AR', {
+                style: 'currency',
+                currency: 'ARS',
+                minimumFractionDigits: 0
+            }).format(v);
+        }
+
+        window.closeModal = (id) => { 
+            document.getElementById(id).classList.add('hidden'); 
+            document.getElementById(id).classList.remove('flex'); 
+        };
+        
         // --- NAVEGACIÓN ---
         window.navigate = (viewId) => {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
@@ -387,7 +414,8 @@
                     filterProducts();
                 };
                 btn.innerHTML = `
-                    <div class="h-24 rounded-xl overflow-hidden mb-2 border border-stone-100 relative">
+                    <!-- Aspect ratio 1:1 para consistencia en categorías -->
+                    <div class="aspect-square h-auto rounded-xl overflow-hidden mb-2 border border-stone-100 relative">
                         <img src="${img}" class="w-full h-full object-cover transition duration-500 group-hover:scale-110">
                         <div class="absolute inset-0 bg-black/10 group-hover:bg-transparent transition"></div>
                     </div>
@@ -401,6 +429,7 @@
         function renderGrid(products, containerId) {
             const grid = document.getElementById(containerId);
             grid.innerHTML = '';
+            // El layout de grid ahora está definido en el HTML para products-container
             if(products.length === 0 && containerId === 'products-container') {
                 grid.innerHTML = '<div class="col-span-full text-center py-10 text-stone-400">Sin resultados</div>'; return;
             }
@@ -445,7 +474,8 @@
                     <p class="text-[10px] text-amber-600 font-bold uppercase mb-1 truncate">${p.categoria}</p>
                     <h3 class="font-bold text-stone-800 text-sm leading-tight mb-auto line-clamp-2">${p.nombre}</h3>
                     <div class="flex justify-between items-end mt-2">
-                        <span class="font-extrabold text-stone-900">$${p.precio.toLocaleString('es-AR')}</span>
+                        <!-- Usando la función formatCurrency para consistencia -->
+                        <span class="font-extrabold text-stone-900">${formatCurrency(p.precio)}</span>
                         <button class="w-8 h-8 rounded-full ${stock ? 'bg-amber-50 text-amber-700 hover:bg-amber-500 hover:text-white' : 'bg-stone-100 text-stone-300'} flex items-center justify-center transition shadow-sm text-xs" onclick="event.stopPropagation(); ${stock ? `openQuickViewById('${p.id}')` : ''}">
                             <i class="fa-solid fa-plus"></i>
                         </button>
@@ -513,23 +543,24 @@
             const variantsContainer = document.getElementById('variants-container');
             const variantSelect = document.getElementById('variant-select');
             const manualInput = document.getElementById('manual-variant-container');
-            
+            const errorMsgEl = document.getElementById('qv-error-message'); // Nuevo elemento de error
+
             // Reset state
             currentSelectedVariant = null;
             document.getElementById('qv-variant').value = '';
             variantSelect.innerHTML = '<option value="">Seleccionar...</option>';
+            errorMsgEl.classList.add('hidden'); // Ocultar error al abrir
 
             // Info base
             document.getElementById('qv-category').textContent = p.categoria;
             document.getElementById('qv-name').textContent = p.nombre;
-            document.getElementById('qv-price').textContent = `$${p.precio.toLocaleString('es-AR')}`;
+            document.getElementById('qv-price').textContent = formatCurrency(p.precio); // Usando formatCurrency
             
             // Galería
             mainImg.src = p.imageUrl || 'data:image/svg+xml;base64,PHN2Zy...';
             thumbs.innerHTML = '';
             
             // Si hay una lista de imágenes (variantes), se usa para la galería.
-            // Si NO hay lista 'images' pero sí hay foto de portada, la usamos como única foto.
             let galleryImages = [];
             if (p.images && p.images.length > 0) {
                 galleryImages = p.images;
@@ -576,6 +607,7 @@
                     const idx = p.variants.indexOf(selectedVal);
                     
                     currentSelectedVariant = selectedVal;
+                    errorMsgEl.classList.add('hidden'); // Ocultar error al seleccionar
 
                     // Cambiar foto si hay coincidencia en el array de imágenes
                     if (idx >= 0 && p.images && p.images[idx]) {
@@ -598,7 +630,8 @@
             } else {
                 stock.innerHTML = '<span class="text-green-600 font-medium text-sm">Disponible</span>';
                 btn.disabled = false; btn.classList.remove('opacity-50');
-                btn.onclick = () => { addToCart(p.id); };
+                // Se actualiza el evento onclick para manejar la validación de la variante
+                btn.onclick = () => { handleAddToCartClick(p.id, p.variants.length > 0); };
             }
 
             // Relacionados
@@ -613,7 +646,7 @@
                     rDiv.innerHTML = `
                         <img src="${r.imageUrl || ''}" class="w-10 h-10 object-contain bg-white rounded border border-stone-100">
                         <div class="truncate text-xs font-bold text-stone-700 flex-1">${r.nombre}</div>
-                        <div class="text-xs font-bold text-amber-700">$${r.precio}</div>
+                        <div class="text-xs font-bold text-amber-700">${formatCurrency(r.precio)}</div>
                     `;
                     rel.appendChild(rDiv);
                 });
@@ -624,6 +657,23 @@
             m.classList.remove('hidden'); m.classList.add('flex');
         };
 
+        // --- NUEVA FUNCIÓN PARA MANEJAR EL CLIC DE AGREGAR AL CARRITO ---
+        window.handleAddToCartClick = (id, requiresVariant) => {
+            const errorMsgEl = document.getElementById('qv-error-message');
+            const variantSelect = document.getElementById('variant-select');
+
+            if (requiresVariant && !currentSelectedVariant) {
+                errorMsgEl.classList.remove('hidden');
+                // Resaltar el select (manteniendo la lógica de resaltado temporal)
+                variantSelect.classList.add('ring-2', 'ring-red-500');
+                setTimeout(() => variantSelect.classList.remove('ring-2', 'ring-red-500'), 1000);
+                return;
+            }
+
+            errorMsgEl.classList.add('hidden'); // Ocultar el error si pasa la validación
+            addToCart(id); 
+            closeModal('quickview-modal');
+        }
 
         // --- CARRITO ---
         function addToCart(id) {
@@ -633,19 +683,11 @@
             let variant = "";
             const hasVariantsConfigured = p.variants && p.variants.length > 0;
 
-            // Validación: Si hay variantes (select), ES OBLIGATORIO elegir una
-            if (hasVariantsConfigured) {
-                if (!currentSelectedVariant && !document.getElementById('quickview-modal').classList.contains('hidden')) {
-                    showToast("⚠️ Por favor, elige una opción");
-                    // Resaltar el select
-                    const sel = document.getElementById('variant-select');
-                    sel.classList.add('ring-2', 'ring-red-500');
-                    setTimeout(() => sel.classList.remove('ring-2', 'ring-red-500'), 1000);
-                    return;
-                }
-                if (currentSelectedVariant) variant = ` (${currentSelectedVariant})`;
-            } else {
-                // Fallback a input manual si está abierto el modal
+            // La validación estricta de variante ahora está en handleAddToCartClick
+            if (hasVariantsConfigured && currentSelectedVariant) {
+                variant = ` (${currentSelectedVariant})`;
+            } else if (!hasVariantsConfigured) {
+                // Fallback a input manual si el modal estaba abierto
                 const variantInput = document.getElementById('qv-variant');
                 const modalOpen = !document.getElementById('quickview-modal').classList.contains('hidden');
                 if(modalOpen && variantInput && variantInput.value.trim() !== "") {
@@ -677,9 +719,6 @@
             }
             
             saveCart(); updateCartUI(); showToast(`Agregado al carrito`);
-            if (!document.getElementById('quickview-modal').classList.contains('hidden')) {
-                 closeModal('quickview-modal');
-            }
         }
 
         window.changeQty = (key, d) => {
@@ -691,14 +730,29 @@
 
         function updateCartUI() {
             const count = Object.values(cart).reduce((a,b) => a+b.qty, 0);
-            const els = ['sidebar-cart-count', 'mobile-cart-badge', 'floating-cart-btn'];
-            els.forEach(id => {
-                const el = document.getElementById(id);
-                if(el) {
-                    if(count > 0) { el.textContent = count; el.classList.remove('hidden'); if(id.includes('btn')) el.classList.add('flex'); }
-                    else { el.classList.add('hidden'); if(id.includes('btn')) el.classList.remove('flex'); }
-                }
-            });
+            const els = ['sidebar-cart-count', 'mobile-cart-badge', 'floating-cart-count']; // floating-cart-count es el badge del botón flotante
+            
+            // Lógica para el botón flotante (RECOMENDACIÓN 1)
+            const floatingBtn = document.getElementById('floating-cart-btn');
+            const mobileBadge = document.getElementById('mobile-cart-badge');
+
+            if(count > 0) {
+                floatingBtn.classList.remove('hidden');
+                floatingBtn.classList.add('flex'); // Mostrar el botón flotante
+
+                els.forEach(id => {
+                    const el = document.getElementById(id);
+                    if(el) { el.textContent = count; el.classList.remove('hidden'); }
+                });
+            } else {
+                floatingBtn.classList.remove('flex');
+                floatingBtn.classList.add('hidden'); // Ocultar el botón flotante
+
+                els.forEach(id => {
+                    const el = document.getElementById(id);
+                    if(el) { el.classList.add('hidden'); }
+                });
+            }
         }
 
         function renderCartItems() {
@@ -712,12 +766,12 @@
                 <div class="flex justify-between items-center bg-stone-50 p-3 rounded-lg mb-2">
                     <div class="flex gap-3 items-center overflow-hidden">
                          <div class="w-10 h-10 bg-white rounded border flex-shrink-0 flex items-center justify-center"><img src="${i.imageUrl||''}" class="max-w-full max-h-full object-contain"></div>
-                         <div class="truncate"><div class="font-bold text-xs truncate" title="${i.nombre}">${i.nombre}</div><div class="text-xs text-stone-500">$${i.precio}</div></div>
+                         <div class="truncate"><div class="font-bold text-xs truncate" title="${i.nombre}">${i.nombre}</div><div class="text-xs text-stone-500">${formatCurrency(i.precio)}</div></div>
                     </div>
                     <div class="flex items-center bg-white rounded border h-7"><button onclick="changeQty('${key}', -1)" class="px-2 text-stone-400 hover:text-red-500">-</button><span class="text-xs font-bold px-1">${i.qty}</span><button onclick="changeQty('${key}', 1)" class="px-2 text-stone-400 hover:text-green-500">+</button></div>
                 </div>`;
             });
-            document.getElementById('cart-total-price').textContent = `$${tot.toLocaleString('es-AR')}`;
+            document.getElementById('cart-total-price').textContent = formatCurrency(tot); // Usando formatCurrency
             
             const btn = document.getElementById('btn-checkout');
             if(tot===0) { 
@@ -729,16 +783,16 @@
         }
         
         window.openCartModal = () => { renderCartItems(); document.getElementById('cart-modal').classList.remove('hidden'); document.getElementById('cart-modal').classList.add('flex'); };
-        window.closeModal = (id) => { document.getElementById(id).classList.add('hidden'); document.getElementById(id).classList.remove('flex'); };
         window.goToCheckout = () => { closeModal('cart-modal'); document.getElementById('checkout-modal').classList.remove('hidden'); document.getElementById('checkout-modal').classList.add('flex'); };
         
         window.finalizeOrder = () => {
             const name = document.getElementById('customer-name').value;
-            if(!name) return alert("Falta tu nombre");
+            // Usar un modal o toast personalizado en lugar de alert()
+            if(!name) return showToast("⚠️ Por favor, ingresa tu nombre");
             let msg = `Hola! Soy *${name}*. Pedido:\n`;
             let tot = 0;
             Object.values(cart).forEach(i => { tot+=i.precio*i.qty; msg+=`${i.qty}x ${i.nombre}\n`; });
-            msg += `\nTotal: $${tot.toLocaleString('es-AR')}`;
+            msg += `\nTotal: ${formatCurrency(tot)}`;
             cart = {}; saveCart(); updateCartUI(); closeModal('checkout-modal'); navigate('home');
             window.open(`https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`);
         };
