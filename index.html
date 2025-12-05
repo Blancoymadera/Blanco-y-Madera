@@ -97,7 +97,7 @@
                             </div>
                             <div class="col-span-1 md:col-span-1">
                                 <label class="block text-sm font-semibold text-stone-700 mb-1">Buscar</label>
-                                <input type="text" id="search-box" placeholder="Nombre..." class="w-full rounded-lg border-stone-300 p-2 shadow-sm">
+                                <input type="text" id="search-box" placeholder="Nombre..." class="w-full rounded-lg border-stone-300 shadow-sm p-2">
                             </div>
                             <div class="md:self-end">
                                 <button id="reset-button" class="w-full bg-stone-500 text-white font-bold py-2.5 rounded-lg hover:bg-stone-600">Mostrar Todos</button>
@@ -218,6 +218,18 @@
         </div>
     </div>
 
+    <!-- MODAL DE CONFIRMACIÓN CUSTOM (FIX PARA ELIMINAR PENDIENTE) -->
+    <div id="confirmation-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 items-center justify-center">
+        <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-xs mx-4">
+            <h3 id="conf-title" class="text-xl font-bold mb-4 text-stone-800">Confirmar Acción</h3>
+            <p id="conf-message" class="mb-6 text-stone-600">¿Estás seguro que deseas realizar esta acción?</p>
+            <div class="flex justify-end space-x-3">
+                <button onclick="closeConfirmationModal()" class="bg-stone-300 text-stone-800 font-bold py-2 px-4 rounded-lg hover:bg-stone-400">Cancelar</button>
+                <button id="conf-confirm-btn" class="bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-red-700">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- NAV MÓVIL -->
     <div class="mobile-nav bg-white shadow-2xl p-3 border-t border-stone-200 flex justify-around">
         <button onclick="showView('catalog')" class="flex flex-col items-center text-amber-800 font-bold"><span class="text-2xl">🛒</span><span class="text-xs">Catálogo</span></button>
@@ -244,7 +256,10 @@
         let cart = {};
         let categories = new Set();
         const STORAGE_KEY = 'bm_cart_v2';
-
+        
+        // Función de formato de moneda (usada en todo el script)
+        function formatCurrency(v) { return new Intl.NumberFormat('es-AR', {style:'currency', currency: 'ARS', minimumFractionDigits:0}).format(v); }
+        
         // --- FUNCIONES GLOBALES DE MODALES ---
         window.openQuickView = function(id) {
             const product = productData.find(p => p.id === id);
@@ -275,6 +290,27 @@
         window.closeProductModal = () => document.getElementById('product-quickview-modal').style.display = 'none';
         window.openManualSaleModal = () => document.getElementById('manual-sale-modal').style.display = 'flex';
         window.closeManualSaleModal = () => document.getElementById('manual-sale-modal').style.display = 'none';
+
+        // --- FUNCIONES DEL MODAL DE CONFIRMACIÓN CUSTOM (FIX DEL BUG) ---
+        let confirmationCallback = null;
+
+        window.openConfirmationModal = (title, message, callback) => {
+            document.getElementById('conf-title').textContent = title;
+            document.getElementById('conf-message').textContent = message;
+            confirmationCallback = callback;
+            document.getElementById('conf-confirm-btn').onclick = () => {
+                closeConfirmationModal();
+                if (confirmationCallback) {
+                    confirmationCallback();
+                }
+            };
+            document.getElementById('confirmation-modal').style.display = 'flex';
+        };
+
+        window.closeConfirmationModal = () => {
+            document.getElementById('confirmation-modal').style.display = 'none';
+            confirmationCallback = null;
+        };
 
         // --- CARGA MASIVA LÓGICA ---
         window.openBulkUploadModal = () => {
@@ -503,7 +539,7 @@
             for(const id in cart) {
                 const item = cart[id];
                 subtotal += item.precio * item.cantidad; count += item.cantidad;
-                list.innerHTML += `<div class="bg-white p-2 rounded border flex justify-between items-center mb-2"><div><div class="font-bold text-sm">${item.nombre}</div><div class="text-xs text-stone-500">$${item.precio} x ${item.cantidad}</div></div><div class="flex items-center gap-2"><span class="font-bold">$${item.precio*item.cantidad}</span><button onclick="changeQuantity('${id}', -1)" class="px-2 bg-stone-200 rounded text-stone-700">-</button><button onclick="changeQuantity('${id}', 1)" class="px-2 bg-amber-500 text-white rounded">+</button></div></div>`;
+                list.innerHTML += `<div class="bg-white p-2 rounded border flex justify-between items-center mb-2"><div><div class="font-bold text-sm">${item.nombre}</div><div class="text-xs text-stone-500">${formatCurrency(item.precio)} x ${item.cantidad}</div></div><div class="flex items-center gap-2"><span class="font-bold">${formatCurrency(item.precio*item.cantidad)}</span><button onclick="changeQuantity('${id}', -1)" class="px-2 bg-stone-200 rounded text-stone-700">-</button><button onclick="changeQuantity('${id}', 1)" class="px-2 bg-amber-500 text-white rounded">+</button></div></div>`;
             }
             const disc = parseFloat(discountSelect.value) || 0;
             const discountAmount = subtotal * disc;
@@ -527,7 +563,6 @@
             if (emptyEl) emptyEl.style.display = count ? 'none' : 'block';
         }
 
-        function formatCurrency(v) { return new Intl.NumberFormat('es-AR', {style:'currency', currency: 'ARS', minimumFractionDigits:0}).format(v); }
         function saveCart() { localStorage.setItem(STORAGE_KEY, JSON.stringify(cart)); }
         function loadCart() { const s = localStorage.getItem(STORAGE_KEY); if(s) cart = JSON.parse(s); renderCart(); }
         function showToast(msg) { 
@@ -539,7 +574,7 @@
         // Función para la edición de stock (simulada)
         window.editStock = async (id, currentStock) => {
             const product = productData.find(p => p.id === id);
-            // Usamos un modal de confirmación simple, ya que `prompt` puede ser problemático en ciertos entornos.
+            // Usamos openConfirmationModal para cualquier confirmación, aunque aquí usamos prompt() para la entrada de datos.
             const newStock = window.prompt(`Stock actual de ${product.nombre}: ${currentStock}.\nIngresa el nuevo stock:`);
             if (newStock === null || isNaN(parseInt(newStock))) return;
             
@@ -590,7 +625,7 @@
                     return;
                 }
 
-                // Definir la nueva cabecera del CSV (sin Producto, Cantidad, Precio Unitario individual)
+                // Definir la cabecera del CSV
                 let csvContent = '\uFEFF' + "Fecha,Cliente,WhatsApp,Método Pago,Descuento (%),Total Final,Items Vendidos\n";
                 
                 let salesCount = 0;
@@ -615,7 +650,7 @@
                         const qty = item.cantidad || 0;
                         const price = item.precio_unitario || 0;
                         // Formato: "Nombre Producto (x Cantidad) @ Precio Unitario"
-                        return `${product} (x${qty}) @ $${price}`;
+                        return `${product} (x${qty}) @ ${formatCurrency(price)}`;
                     }).join(' | '); // Separar ítems con un pipe
 
                     // Creación de la fila CSV (una fila por venta)
@@ -748,47 +783,58 @@
         };
         
         document.getElementById('confirm-sale-button').onclick = async () => {
-             // Usar window.alert en lugar de alert()
+             // Reemplazamos window.confirm por el modal personalizado para confirmar la venta.
              if(Object.keys(cart).length === 0) return window.alert("Carrito vacío");
-             // Usar modal en lugar de confirm()
-             if(!window.confirm("Confirmar venta y descontar stock?")) return;
              
-             const client = document.getElementById('client-name').value || 'Cliente';
-             const whatsapp = document.getElementById('whatsapp-number').value;
-             const pay = document.getElementById('payment-method').value;
-             const disc = parseFloat(document.getElementById('discount-select').value);
-             
-             let total = 0;
-             const items = [];
-             const batch = writeBatch(db);
-             
-             for(let id in cart) {
-                 const item = cart[id];
-                 const p = productData.find(x => x.id === id);
-                 if(p) {
-                     const newStock = p.stock - item.cantidad;
-                     // Usar window.alert en lugar de alert()
-                     if(newStock < 0) { window.alert(`No hay stock suficiente de ${p.nombre}`); return; }
-                     batch.update(doc(db, "products", id), {stock: newStock});
-                     items.push({nombre: item.nombre, cantidad: item.cantidad, precio_unitario: item.precio});
-                     total += item.precio * item.cantidad;
+             openConfirmationModal(
+                 "Confirmar Venta",
+                 "¿Confirmas esta venta y deseas descontar el stock de los productos?",
+                 async () => {
+                     const client = document.getElementById('client-name').value || 'Cliente';
+                     const whatsapp = document.getElementById('whatsapp-number').value;
+                     const pay = document.getElementById('payment-method').value;
+                     const disc = parseFloat(document.getElementById('discount-select').value);
+                     
+                     let total = 0;
+                     const items = [];
+                     const batch = writeBatch(db);
+                     let stockError = false;
+                     
+                     for(let id in cart) {
+                         const item = cart[id];
+                         const p = productData.find(x => x.id === id);
+                         if(p) {
+                             const newStock = p.stock - item.cantidad;
+                             // Usar window.alert en lugar de alert()
+                             if(newStock < 0) { 
+                                 window.alert(`No hay stock suficiente de ${p.nombre}`); 
+                                 stockError = true;
+                                 break; 
+                             }
+                             batch.update(doc(db, "products", id), {stock: newStock});
+                             items.push({nombre: item.nombre, cantidad: item.cantidad, precio_unitario: item.precio});
+                             total += item.precio * item.cantidad;
+                         }
+                     }
+
+                     if(stockError) return;
+                     
+                     await batch.commit();
+                     
+                     await addDoc(collection(db, "ventas"), {
+                         fecha_venta: new Date().toLocaleDateString(),
+                         cliente_nombre: client,
+                         cliente_whatsapp: whatsapp,
+                         metodo_pago: pay,
+                         total_final: total * (1-disc),
+                         descuento_aplicado: disc,
+                         items: items
+                     });
+                     
+                     showToast("Venta exitosa!");
+                     cart = {}; saveCart(); renderCart();
                  }
-             }
-             
-             await batch.commit();
-             
-             await addDoc(collection(db, "ventas"), {
-                 fecha_venta: new Date().toLocaleDateString(),
-                 cliente_nombre: client,
-                 cliente_whatsapp: whatsapp,
-                 metodo_pago: pay,
-                 total_final: total * (1-disc),
-                 descuento_aplicado: disc,
-                 items: items
-             });
-             
-             showToast("Venta exitosa!");
-             cart = {}; saveCart(); renderCart();
+             );
         };
 
         const pendingList = document.getElementById('pending-list');
@@ -800,13 +846,48 @@
                 const div = document.createElement('div');
                 div.className = 'bg-stone-50 p-2 border rounded mb-2 flex justify-between text-sm';
                 div.innerHTML = `<span>${o.cliente_nombre} (${formatCurrency(o.total_estimado)})</span>`;
-                const btn = document.createElement('button'); btn.className = 'text-blue-600 font-bold'; btn.textContent = 'Cargar';
-                // No usar confirm/alert, pero manteniendo la estructura
-                btn.onclick = () => { if(window.confirm('Cargar este pedido?')) { cart = o.cart; document.getElementById('client-name').value = o.cliente_nombre; saveCart(); renderCart(); } };
-                const del = document.createElement('button'); del.className = 'text-red-600 ml-2'; del.textContent = '🗑️';
-                // No usar confirm/alert, pero manteniendo la estructura
-                del.onclick = () => { if(window.confirm('Eliminar este pedido?')) deleteDoc(doc(db, "pending_orders", d.id)); };
-                div.appendChild(btn); div.appendChild(del); pendingList.appendChild(div);
+                
+                const btnContainer = document.createElement('div');
+                btnContainer.className = 'flex gap-2';
+                
+                // Botón Cargar - Usamos modal de confirmación
+                const loadBtn = document.createElement('button'); 
+                loadBtn.className = 'text-blue-600 font-bold hover:underline'; 
+                loadBtn.textContent = 'Cargar';
+                loadBtn.onclick = () => {
+                    openConfirmationModal(
+                        "Cargar Pedido Pendiente",
+                        `¿Deseas reemplazar la cotización actual con el pedido de ${o.cliente_nombre}?`,
+                        () => {
+                            cart = o.cart; 
+                            document.getElementById('client-name').value = o.cliente_nombre; 
+                            saveCart(); 
+                            renderCart();
+                            showToast("Pedido cargado");
+                        }
+                    );
+                };
+
+                // Botón Eliminar - Usamos modal de confirmación (FIX PRINCIPAL)
+                const del = document.createElement('button'); 
+                del.className = 'text-red-600 hover:text-red-800'; 
+                del.textContent = '🗑️';
+                del.onclick = () => {
+                    openConfirmationModal(
+                        "Eliminar Pendiente",
+                        `¿Estás seguro de eliminar el pedido pendiente de ${o.cliente_nombre}? Esta acción no se puede deshacer.`,
+                        () => {
+                            deleteDoc(doc(db, "pending_orders", d.id));
+                            showToast("Pedido eliminado");
+                        }
+                    );
+                };
+                
+                btnContainer.appendChild(loadBtn);
+                btnContainer.appendChild(del);
+                
+                div.appendChild(btnContainer); 
+                pendingList.appendChild(div);
             });
         });
 
