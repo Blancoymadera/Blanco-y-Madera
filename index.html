@@ -45,12 +45,17 @@
             /* IMPORTANTE: Permite desplazamiento vertical y evita que el deslizamiento 
                se "coma" el scroll de la página principal en táctil. */
             touch-action: pan-y; 
-            /* Altura Máxima que permite el scroll. */
-            max-height: 240px; 
+            /* Aumento la altura máxima para que quepan más ítems y el scroll sea más cómodo. */
+            max-height: 280px; 
             overflow-y: auto;
         }
 
         @media (max-width: 768px) {
+             /* FIX PRINCIPAL: Aumentar el padding inferior de la sección principal para compensar el .mobile-nav */
+             main.container {
+                padding-bottom: 5.5rem !important; /* 5.5rem levanta el contenido sobre la barra de navegación */
+             }
+             
              #toast-container { bottom: 80px; left: 50%; transform: translateX(-50%); right: auto; }
              .mobile-filters-hidden { display: none !important; }
              .mobile-nav { position: fixed; bottom: 0; left: 0; width: 100%; z-index: 50; }
@@ -169,7 +174,6 @@
         <!-- PEDIDOS PENDIENTES -->
         <div class="bg-white p-6 rounded-xl shadow-lg no-print mt-6">
             <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2">⏳ Pedidos Pendientes</h2>
-            <!-- Eliminamos las clases max-h-60 overflow-y-auto de aquí, ya que se controlan por el CSS #pending-list -->
             <div id="pending-list" class="space-y-2"></div>
         </div>
     </main>
@@ -762,7 +766,7 @@
             summaryLines.push('--------------------------');
 
             summaryLines.push('');
-            summaryLines.push("¡Muchas gracias por confiar en Blanco & Madera!");
+            sumaryLines.push("¡Muchas gracias por confiar en Blanco & Madera!");
             // FIN DEL MENSAJE 
 
             const whatsappText = encodeURIComponent(summaryLines.join('\n'));
