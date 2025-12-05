@@ -97,7 +97,7 @@
                             </div>
                             <div class="col-span-1 md:col-span-1">
                                 <label class="block text-sm font-semibold text-stone-700 mb-1">Buscar</label>
-                                <input type="text" id="search-box" placeholder="Nombre..." class="w-full rounded-lg border-stone-300 shadow-sm p-2">
+                                <input type="text" id="search-box" placeholder="Nombre..." class="w-full rounded-lg border-stone-300 p-2 shadow-sm">
                             </div>
                             <div class="md:self-end">
                                 <button id="reset-button" class="w-full bg-stone-500 text-white font-bold py-2.5 rounded-lg hover:bg-stone-600">Mostrar Todos</button>
@@ -573,7 +573,7 @@
         document.getElementById('clear-cart-button').onclick = () => { cart={}; saveCart(); renderCart(); };
         document.getElementById('print-button').onclick = () => window.print();
         
-        // Función agregada para la descarga de ventas (FIXED)
+        // Función corregida para la descarga de ventas (Vuelve al formato de una fila por VENTA COMPLETA)
         window.downloadSalesReport = async () => {
             showToast("Cargando reporte de ventas...");
             console.log("--- INICIANDO DESCARGA DE REPORTE ---");
@@ -590,8 +590,8 @@
                     return;
                 }
 
-                // FIX: Añadir BOM (\uFEFF) para forzar la codificación UTF-8 en Excel
-                let csvContent = '\uFEFF' + "Fecha,Cliente,WhatsApp,Método Pago,Descuento (%),Total Final,Producto,Cantidad,Precio Unitario\n";
+                // Definir la nueva cabecera del CSV (sin Producto, Cantidad, Precio Unitario individual)
+                let csvContent = '\uFEFF' + "Fecha,Cliente,WhatsApp,Método Pago,Descuento (%),Total Final,Items Vendidos\n";
                 
                 let salesCount = 0;
 
@@ -608,30 +608,23 @@
                     const discount = sale.descuento_aplicado !== undefined ? (sale.descuento_aplicado * 100).toFixed(0) + '%' : '0%';
                     const total = sale.total_final || 0;
                     
-                    // Iteramos sobre los items para tener una fila por producto vendido
+                    // Procesar los ítems en un formato de texto único para una columna
                     const items = Array.isArray(sale.items) ? sale.items : [];
+                    let itemsString = items.map(item => {
+                        const product = item.nombre || 'N/A';
+                        const qty = item.cantidad || 0;
+                        const price = item.precio_unitario || 0;
+                        // Formato: "Nombre Producto (x Cantidad) @ Precio Unitario"
+                        return `${product} (x${qty}) @ $${price}`;
+                    }).join(' | '); // Separar ítems con un pipe
 
-                    if (items.length === 0) {
-                        // Fila para ventas sin items (debería ser raro, pero por seguridad)
-                         const rowData = [date, client, whatsapp, method, discount, total, 'N/A', 0, 0];
-                         const row = rowData.map(item => `"${String(item).replace(/"/g, '""')}"`).join(',');
-                         csvContent += row + '\n';
-                    } else {
-                        items.forEach(item => {
-                            const product = item.nombre || '';
-                            const qty = item.cantidad || 0;
-                            const price = item.precio_unitario || 0;
-                            
-                            // Creación de la fila CSV
-                            // Nota: Los campos de cabecera solo se llenan en la primera fila de items por venta para no duplicar datos, 
-                            // pero se mantiene el total final en cada fila de item para simplificar el análisis en Excel.
-                            const rowData = [date, client, whatsapp, method, discount, total, product, qty, price];
-                            
-                            // Envolver cada item en comillas y escapar comillas internas para CSV seguro
-                            const row = rowData.map(item => `"${String(item).replace(/"/g, '""')}"`).join(',');
-                            csvContent += row + '\n';
-                        });
-                    }
+                    // Creación de la fila CSV (una fila por venta)
+                    const rowData = [date, client, whatsapp, method, discount, total, itemsString];
+                    
+                    // Envolver cada item en comillas y escapar comillas internas para CSV seguro
+                    const row = rowData.map(item => `"${String(item).replace(/"/g, '""')}"`).join(',');
+                    csvContent += row + '\n';
+                    
                 });
                 
                 if (salesCount === 0) {
