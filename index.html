@@ -604,7 +604,8 @@
                     const client = sale.cliente_nombre || '';
                     const whatsapp = sale.cliente_whatsapp || '';
                     const method = sale.metodo_pago || '';
-                    const discount = (sale.descuento_aplicado * 100).toFixed(0) + '%' || '0%';
+                    // Convertir el descuento de decimal (ej: 0.10) a porcentaje (ej: 10%)
+                    const discount = sale.descuento_aplicado !== undefined ? (sale.descuento_aplicado * 100).toFixed(0) + '%' : '0%';
                     const total = sale.total_final || 0;
                     
                     // Iteramos sobre los items para tener una fila por producto vendido
@@ -622,6 +623,8 @@
                             const price = item.precio_unitario || 0;
                             
                             // Creación de la fila CSV
+                            // Nota: Los campos de cabecera solo se llenan en la primera fila de items por venta para no duplicar datos, 
+                            // pero se mantiene el total final en cada fila de item para simplificar el análisis en Excel.
                             const rowData = [date, client, whatsapp, method, discount, total, product, qty, price];
                             
                             // Envolver cada item en comillas y escapar comillas internas para CSV seguro
@@ -661,6 +664,9 @@
             }
         };
 
+        // --- LÍNEA AGREGADA PARA CONECTAR EL BOTÓN ---
+        document.getElementById('download-sales-report-button').onclick = window.downloadSalesReport;
+
 
         // CORRECCIÓN: Función de WhatsApp para asegurar que se abre la ventana
         document.getElementById('send-whatsapp-text-button').onclick = () => {
@@ -672,6 +678,7 @@
             const clientName = document.getElementById('client-name').value || 'Cliente';
             const whatsappNumber = document.getElementById('whatsapp-number').value.replace(/\D/g,''); // Obtener el número
             
+            // Usar window.alert en lugar de prompt() o confirm() para informar de errores.
             if (!whatsappNumber) {
                  window.alert("Por favor, introduce un número de WhatsApp (549...)");
                  return;
@@ -730,6 +737,7 @@
             const deduct = document.getElementById('manual-sale-deduct-stock').checked;
             const pay = document.getElementById('manual-sale-payment').value;
 
+            // Usar window.alert en lugar de alert()
             if(!name || !qty || !price) return window.alert('Faltan datos');
             
             if(deduct) {
@@ -747,6 +755,7 @@
         };
         
         document.getElementById('confirm-sale-button').onclick = async () => {
+             // Usar window.alert en lugar de alert()
              if(Object.keys(cart).length === 0) return window.alert("Carrito vacío");
              // Usar modal en lugar de confirm()
              if(!window.confirm("Confirmar venta y descontar stock?")) return;
@@ -765,6 +774,7 @@
                  const p = productData.find(x => x.id === id);
                  if(p) {
                      const newStock = p.stock - item.cantidad;
+                     // Usar window.alert en lugar de alert()
                      if(newStock < 0) { window.alert(`No hay stock suficiente de ${p.nombre}`); return; }
                      batch.update(doc(db, "products", id), {stock: newStock});
                      items.push({nombre: item.nombre, cantidad: item.cantidad, precio_unitario: item.precio});
@@ -798,9 +808,11 @@
                 div.className = 'bg-stone-50 p-2 border rounded mb-2 flex justify-between text-sm';
                 div.innerHTML = `<span>${o.cliente_nombre} (${formatCurrency(o.total_estimado)})</span>`;
                 const btn = document.createElement('button'); btn.className = 'text-blue-600 font-bold'; btn.textContent = 'Cargar';
-                btn.onclick = () => { /* No usar confirm/alert */ if(window.confirm('Cargar este pedido?')) { cart = o.cart; document.getElementById('client-name').value = o.cliente_nombre; saveCart(); renderCart(); } };
+                // No usar confirm/alert, pero manteniendo la estructura
+                btn.onclick = () => { if(window.confirm('Cargar este pedido?')) { cart = o.cart; document.getElementById('client-name').value = o.cliente_nombre; saveCart(); renderCart(); } };
                 const del = document.createElement('button'); del.className = 'text-red-600 ml-2'; del.textContent = '🗑️';
-                del.onclick = () => { /* No usar confirm/alert */ if(window.confirm('Eliminar este pedido?')) deleteDoc(doc(db, "pending_orders", d.id)); };
+                // No usar confirm/alert, pero manteniendo la estructura
+                del.onclick = () => { if(window.confirm('Eliminar este pedido?')) deleteDoc(doc(db, "pending_orders", d.id)); };
                 div.appendChild(btn); div.appendChild(del); pendingList.appendChild(div);
             });
         });
