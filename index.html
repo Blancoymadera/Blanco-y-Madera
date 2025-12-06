@@ -7,76 +7,35 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #fefce8;
-        }
-        .item-card {
-            transition: transform 0.1s ease-out;
-            cursor: pointer; 
-            pointer-events: auto; 
-            /* Para móvil: padding extra para que el contenido no pegue al borde */
-            padding-right: 1rem; 
-        }
-        .item-card:hover {
-            background-color: #fffaf0;
-        }
-        .amber-gradient {
-            background-image: linear-gradient(to right, #d4a753, #b18b45);
-        }
-        /* Toast */
-        #toast-container {
-            position: fixed; bottom: 20px; right: 20px; z-index: 60; pointer-events: none;
-        }
-        .toast {
-            background-color: rgba(0, 0, 0, 0.8); color: white; padding: 10px 20px;
-            border-radius: 25px; margin-bottom: 10px; opacity: 0;
-            transition: opacity 0.3s; transform: translateY(20px);
-        }
+        body { font-family: 'Inter', sans-serif; background-color: #fefce8; }
+        .item-card { transition: transform 0.1s ease-out; cursor: pointer; pointer-events: auto; padding-right: 1rem; }
+        .item-card:hover { background-color: #fffaf0; }
+        .amber-gradient { background-image: linear-gradient(to right, #d4a753, #b18b45); }
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 80; pointer-events: none; }
+        .toast { background-color: rgba(0, 0, 0, 0.9); color: white; padding: 12px 24px; border-radius: 25px; margin-bottom: 10px; opacity: 0; transition: opacity 0.3s; transform: translateY(20px); font-weight: bold; }
         .toast.show { opacity: 1; transform: translateY(0); }
+        .loading-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.8); display: flex; justify-content: center; align-items: center; z-index: 10; }
         
-        .loading-overlay {
-            position: absolute; inset: 0; background: rgba(255,255,255,0.8);
-            display: flex; justify-content: center; align-items: center; z-index: 10;
-        }
-        
-        /* FIX: Estilo para mejorar el scroll en la lista de pendientes en móvil */
+        /* FIX DE SCROLL */
         #pending-list {
-            /* IMPORTANTE: Permite desplazamiento vertical y evita que el deslizamiento 
-               se "coma" el scroll de la página principal en táctil. */
-            touch-action: pan-y; 
-            /* Aumento la altura máxima para que quepan más ítems y el scroll sea más cómodo. */
-            max-height: 280px; 
+            overscroll-behavior: contain; 
+            touch-action: pan-y;
+            max-height: 350px; /* Altura aumentada */
             overflow-y: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            background-color: #fafaf9;
         }
 
         @media (max-width: 768px) {
-             /* FIX PRINCIPAL: Aumentar el padding inferior de la sección principal para compensar el .mobile-nav */
-             main.container {
-                padding-bottom: 5.5rem !important; /* 5.5rem levanta el contenido sobre la barra de navegación */
-             }
-             
-             #toast-container { bottom: 80px; left: 50%; transform: translateX(-50%); right: auto; }
+             main.container { padding-bottom: 8rem !important; }
+             #toast-container { bottom: 90px; left: 50%; transform: translateX(-50%); right: auto; width: 90%; text-align: center; }
              .mobile-filters-hidden { display: none !important; }
              .mobile-nav { position: fixed; bottom: 0; left: 0; width: 100%; z-index: 50; }
-             /* Ajuste crítico para que el botón de carrito NO cause scroll horizontal */
-             .item-card {
-                padding-right: 0.5rem !important; /* Reducimos el padding derecho total */
-             }
-             .item-card > div:last-child {
-                flex-shrink: 0; /* Aseguramos que el contenedor del botón no se comprima */
-             }
-             /* Habilitar line-clamp en móvil (necesario para el nombre de 2 líneas) */
-             .line-clamp-2 {
-                 overflow: hidden;
-                 display: -webkit-box;
-                 -webkit-box-orient: vertical;
-                 -webkit-line-clamp: 2;
-             }
-             /* Ajuste de altura para que el scroll del catálogo no sea interrumpido por el nav inferior */
-             #product-list {
-                 height: calc(100vh - 280px) !important; /* Altura calculada para evitar colisión con nav y header */
-             }
+             .item-card { padding-right: 0.5rem !important; }
+             .item-card > div:last-child { flex-shrink: 0; }
+             .line-clamp-2 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+             #product-list { height: calc(100vh - 320px) !important; }
         }
         @media (min-width: 769px) { .mobile-nav { display: none; } }
         @media print { .no-print { display: none !important; } body { background-color: #fff !important; } }
@@ -92,7 +51,7 @@
         </div>
     </header>
 
-    <main class="container mx-auto p-4 sm:p-6 lg:p-8 pt-0"> 
+    <main class="container mx-auto p-4 sm:p-6 lg:p-8 pt-0 pb-32 md:pb-8"> 
         <div class="py-4 text-center">
             <h1 class="text-4xl font-extrabold text-amber-800">PANEL DE VENTAS</h1>
             <div id="connection-status" class="text-xs text-stone-400 mt-1">Conectando...</div>
@@ -106,9 +65,7 @@
                 <div id="catalog-panel" class="bg-white p-6 rounded-xl shadow-lg relative min-h-[400px]">
                     <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">Stock Disponible</h2>
                     
-                    <!-- FILTROS -->
                     <div class="bg-white rounded-xl mb-4 no-print border-b pb-4 border-stone-100">
-                        <!-- MODIFICACIÓN: Se elimina el filtro de orden. -->
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                             <div>
                                 <label class="block text-sm font-semibold text-stone-700 mb-1">Categoría</label>
@@ -136,13 +93,8 @@
                     <h2 class="text-xl font-semibold mb-4 text-stone-700 border-b pb-2">Herramientas de Gestión</h2>
                     <div class="flex flex-col space-y-3">
                         <button id="download-sales-report-button" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-blue-700">⬇️ Descargar Historial de Ventas</button>
-                        <button onclick="openManualSaleModal()" class="w-full bg-red-500 text-white font-bold py-3 rounded-lg shadow-md hover:bg-red-600">➕ Registrar Venta Manual</button>
-                        
-                        <!-- BOTÓN DE CARGA MASIVA -->
-                        <button onclick="openBulkUploadModal()" class="w-full bg-amber-700 text-white font-bold py-3 rounded-lg shadow-md hover:bg-amber-800 border-2 border-amber-600 mt-4">
-                             ⏫ Cargar/Actualizar Productos Masivamente
-                        </button>
-                        
+                        <button id="btn-open-manual" class="w-full bg-red-500 text-white font-bold py-3 rounded-lg shadow-md hover:bg-red-600">➕ Registrar Venta Manual</button>
+                        <button id="btn-open-bulk" class="w-full bg-amber-700 text-white font-bold py-3 rounded-lg shadow-md hover:bg-amber-800 border-2 border-amber-600 mt-4">⏫ Cargar/Actualizar Productos Masivamente</button>
                     </div>
                 </div>
             </div>
@@ -171,59 +123,49 @@
                 </div>
             </div>
         </div>
-        <!-- PEDIDOS PENDIENTES -->
+        
+        <!-- PEDIDOS PENDIENTES (Lugar corregido para evitar rebote) -->
         <div class="bg-white p-6 rounded-xl shadow-lg no-print mt-6">
             <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2">⏳ Pedidos Pendientes</h2>
-            <div id="pending-list" class="space-y-2"></div>
+            <div id="pending-list"></div>
         </div>
     </main>
 
-    <!-- MODAL CARGA MASIVA (NUEVO) -->
-    <div id="bulk-upload-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 items-center justify-center">
+    <!-- MODALES -->
+    <div id="bulk-upload-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-[70] items-center justify-center">
         <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-2xl mx-4">
-            <h3 class="text-2xl font-bold mb-4 text-amber-700 border-b pb-2">⏫ Carga Masiva de Productos</h3>
-            <p class="mb-4 text-sm text-stone-600">Pega los datos de tu Excel o lista aquí. Separa cada producto por una nueva línea.</p>
-            
+            <h3 class="text-2xl font-bold mb-4 text-amber-700 border-b pb-2">⏫ Carga Masiva</h3>
+            <p class="mb-4 text-sm text-stone-600">Pega los datos de tu Excel o lista aquí.</p>
             <div class="bg-stone-100 p-3 rounded-lg mb-4 text-xs font-mono">
-                <p class="font-bold text-stone-700 mb-1">Formato requerido (separado por comas):</p>
-                <p class="text-stone-500">Nombre,Categoría,Precio,Stock,URL_Imagen</p>
-                <p class="text-stone-500 mt-2">Ejemplo: Vela Lavanda,VELAS,5600,10,https://img.link</p>
+                <p class="font-bold text-stone-700 mb-1">Formato: Nombre,Categoría,Precio,Stock,URL_Imagen</p>
+                <p class="text-stone-500">Ej: Vela Lavanda,VELAS,5600,10,https://img.link</p>
             </div>
-
-            <textarea id="bulk-data-textarea" rows="10" placeholder="Pega aquí la lista de productos..." class="w-full border border-stone-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-amber-400 outline-none"></textarea>
-            
-            <p id="bulk-error-message" class="text-red-600 text-sm mt-2 hidden">Error en el formato de una línea.</p>
-
+            <textarea id="bulk-data-textarea" rows="10" placeholder="Pegar datos..." class="w-full border p-3 text-sm rounded-lg"></textarea>
+            <p id="bulk-error-message" class="text-red-600 text-sm mt-2 hidden">Error en el formato.</p>
             <div class="flex justify-between space-x-3 mt-4">
-                <button onclick="closeBulkUploadModal()" class="w-1/2 bg-stone-300 text-stone-800 font-bold py-3 rounded-lg hover:bg-stone-400 transition">Cancelar</button>
-                <button onclick="handleBulkUpload()" class="w-1/2 bg-amber-600 text-white font-bold py-3 rounded-lg shadow-xl hover:bg-amber-700 transition">
-                    Procesar y Subir
-                </button>
+                <button id="btn-close-bulk" class="w-1/2 bg-stone-300 font-bold py-3 rounded-lg">Cancelar</button>
+                <button id="btn-process-bulk" class="w-1/2 bg-amber-600 text-white font-bold py-3 rounded-lg">Procesar</button>
             </div>
         </div>
     </div>
     
-    <!-- MODAL VISTA RÁPIDA -->
-    <div id="product-quickview-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 items-center justify-center">
+    <div id="product-quickview-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-[70] items-center justify-center">
         <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-xl mx-4 relative">
-            <button onclick="closeProductModal()" class="absolute top-4 right-4 text-stone-500 hover:text-red-600 text-3xl">&times;</button>
+            <button id="btn-close-modal" class="absolute top-4 right-4 text-stone-500 hover:text-red-600 text-3xl">&times;</button>
             <h3 id="modal-product-name" class="text-2xl font-bold text-amber-800 pr-8 mb-4"></h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="bg-stone-100 rounded-lg flex items-center justify-center p-2 h-[300px]">
-                    <img id="modal-product-image" src="" class="max-h-full max-w-full object-contain shadow-sm">
-                </div>
+                <div class="bg-stone-100 rounded-lg flex items-center justify-center p-2 h-[300px]"><img id="modal-product-image" src="" class="max-h-full max-w-full object-contain"></div>
                 <div class="flex flex-col justify-center">
-                    <p class="text-sm font-semibold text-stone-500">Categoría:</p><p id="modal-product-category" class="text-lg font-medium text-stone-800 mb-4"></p>
+                    <p class="text-sm font-semibold text-stone-500">Categoría:</p><p id="modal-product-category" class="text-lg font-medium mb-4"></p>
                     <p class="text-sm font-semibold text-stone-500">Precio:</p><p id="modal-product-price" class="text-3xl font-extrabold text-amber-800 mb-4"></p>
-                    <p id="modal-product-stock" class="text-lg font-bold text-stone-700 mb-6"></p>
-                    <button id="modal-add-to-cart-button" class="w-full amber-gradient text-white font-bold py-3 rounded-lg shadow-lg hover:opacity-90">🛒 Agregar a Cotización</button>
+                    <p id="modal-product-stock" class="text-lg font-bold mb-6"></p>
+                    <button id="modal-add-to-cart-button" class="w-full amber-gradient text-white font-bold py-3 rounded-lg shadow-lg">🛒 Agregar</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL VENTA MANUAL -->
-    <div id="manual-sale-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 items-center justify-center">
+    <div id="manual-sale-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-[70] items-center justify-center">
         <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-md mx-4">
             <h3 class="text-xl font-bold mb-4 text-red-700 border-b pb-2">➕ Venta Manual</h3>
             <div class="space-y-4">
@@ -232,27 +174,26 @@
                 <input type="text" id="manual-sale-client-name" value="Venta Externa" class="w-full border p-2 rounded">
                 <select id="manual-sale-payment" class="w-full border p-2 rounded"><option value="Efectivo">Efectivo</option><option value="Transferencia">Transferencia</option><option value="Tarjeta">Tarjeta</option><option value="Otro">Otro</option></select>
                 <div class="flex items-center"><input type="checkbox" id="manual-sale-deduct-stock" checked class="mr-2"> <label>Descontar Stock</label></div>
-                <div class="flex gap-2"><button onclick="closeManualSaleModal()" class="flex-1 bg-gray-300 py-2 rounded font-bold">Cancelar</button><button onclick="handleManualSale()" class="flex-1 bg-red-600 text-white font-bold py-2 rounded-lg">Registrar</button></div>
+                <div class="flex gap-2"><button id="btn-close-manual" class="flex-1 bg-gray-300 py-2 rounded font-bold">Cancelar</button><button id="btn-save-manual" class="flex-1 bg-red-600 text-white font-bold py-2 rounded-lg">Registrar</button></div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL DE CONFIRMACIÓN CUSTOM (FIX PARA ELIMINAR PENDIENTE) -->
-    <div id="confirmation-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 items-center justify-center">
-        <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-xs mx-4">
-            <h3 id="conf-title" class="text-xl font-bold mb-4 text-stone-800">Confirmar Acción</h3>
-            <p id="conf-message" class="mb-6 text-stone-600">¿Estás seguro que deseas realizar esta acción?</p>
+    <!-- MODAL CONFIRMACIÓN (Z-INDEX 80 PARA ESTAR ENCIMA DE TODO) -->
+    <div id="confirmation-modal" class="fixed inset-0 bg-black bg-opacity-60 hidden z-[80] items-center justify-center">
+        <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-xs mx-4 animate-bounce-in">
+            <h3 id="conf-title" class="text-xl font-bold mb-4 text-stone-800">Confirmar</h3>
+            <p id="conf-message" class="mb-6 text-stone-600 font-medium"></p>
             <div class="flex justify-end space-x-3">
-                <button onclick="closeConfirmationModal()" class="bg-stone-300 text-stone-800 font-bold py-2 px-4 rounded-lg hover:bg-stone-400">Cancelar</button>
-                <button id="conf-confirm-btn" class="bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-red-700">Confirmar</button>
+                <button id="conf-cancel-btn" class="bg-stone-300 text-stone-800 font-bold py-3 px-6 rounded-lg active:scale-95 transition">Cancelar</button>
+                <button id="conf-confirm-btn" class="bg-red-600 text-white font-bold py-3 px-6 rounded-lg shadow-md active:scale-95 transition">Confirmar</button>
             </div>
         </div>
     </div>
 
-    <!-- NAV MÓVIL -->
     <div class="mobile-nav bg-white shadow-2xl p-3 border-t border-stone-200 flex justify-around">
-        <button onclick="showView('catalog')" class="flex flex-col items-center text-amber-800 font-bold"><span class="text-2xl">🛒</span><span class="text-xs">Catálogo</span></button>
-        <button onclick="showView('cart')" class="flex flex-col items-center text-stone-500 font-bold"><span class="text-2xl">📝</span><span class="text-xs">Cotización</span></button>
+        <button id="nav-catalog" class="flex flex-col items-center text-amber-800 font-bold"><span class="text-2xl">🛒</span><span class="text-xs">Catálogo</span></button>
+        <button id="nav-cart" class="flex flex-col items-center text-stone-500 font-bold"><span class="text-2xl">📝</span><span class="text-xs">Cotización</span></button>
     </div>
 
     <script type="module">
@@ -271,523 +212,109 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         
+        // Estado local
         let productData = [];
         let cart = {};
         let categories = new Set();
+        let allPendingOrders = {}; // Cache local para los pendientes
         const STORAGE_KEY = 'bm_cart_v2';
-        
-        // Función de formato de moneda (usada en todo el script)
-        function formatCurrency(v) { return new Intl.NumberFormat('es-AR', {style:'currency', currency: 'ARS', minimumFractionDigits:0}).format(v); }
-        
-        // --- FUNCIONES GLOBALES DE MODALES ---
-        window.openQuickView = function(id) {
-            const product = productData.find(p => p.id === id);
-            if (!product) return;
-            const modal = document.getElementById('product-quickview-modal');
-            document.getElementById('modal-product-name').textContent = product.nombre;
-            document.getElementById('modal-product-category').textContent = product.categoria;
-            document.getElementById('modal-product-price').textContent = formatCurrency(product.precio);
-            
-            // Lógica para obtener la imagen principal del array 'images' (SIN cache buster aquí para no romper el token de Firebase Storage)
-            let modalImgUrl = product.imageUrl || product.ImageUrl || (product.images && product.images.length > 0 ? product.images[0] : null);
-
-            document.getElementById('modal-product-image').src = modalImgUrl || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ccc' stroke-width='1'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' ry='2'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3Cpolyline points='21 15 16 10 5 21'/%3E%3C/svg%3E";
-            
-            const stockEl = document.getElementById('modal-product-stock');
-            const addBtn = document.getElementById('modal-add-to-cart-button');
-            
-            if (product.stock <= 0) {
-                stockEl.innerHTML = '<span class="text-red-600">❌ Sin Stock</span>';
-                addBtn.disabled = true; addBtn.classList.add('opacity-50');
-            } else {
-                stockEl.innerHTML = `<span class="text-green-600">✅ ${product.stock} unidades</span>`;
-                addBtn.disabled = false; addBtn.classList.remove('opacity-50');
-            }
-            addBtn.onclick = () => { addToCart(id); closeProductModal(); };
-            modal.style.display = 'flex';
-        };
-        window.closeProductModal = () => document.getElementById('product-quickview-modal').style.display = 'none';
-        window.openManualSaleModal = () => document.getElementById('manual-sale-modal').style.display = 'flex';
-        window.closeManualSaleModal = () => document.getElementById('manual-sale-modal').style.display = 'none';
-
-        // --- FUNCIONES DEL MODAL DE CONFIRMACIÓN CUSTOM (FIX DEL BUG) ---
         let confirmationCallback = null;
 
-        window.openConfirmationModal = (title, message, callback) => {
-            document.getElementById('conf-title').textContent = title;
-            document.getElementById('conf-message').textContent = message;
-            confirmationCallback = callback;
-            document.getElementById('conf-confirm-btn').onclick = () => {
-                closeConfirmationModal();
-                if (confirmationCallback) {
-                    confirmationCallback();
-                }
-            };
-            document.getElementById('confirmation-modal').style.display = 'flex';
-        };
-
-        window.closeConfirmationModal = () => {
-            document.getElementById('confirmation-modal').style.display = 'none';
-            confirmationCallback = null;
-        };
-
-        // --- CARGA MASIVA LÓGICA ---
-        window.openBulkUploadModal = () => {
-            document.getElementById('bulk-data-textarea').value = '';
-            document.getElementById('bulk-error-message').classList.add('hidden');
-            document.getElementById('bulk-upload-modal').style.display = 'flex';
-        };
-
-        window.closeBulkUploadModal = () => {
-            document.getElementById('bulk-upload-modal').style.display = 'none';
-        };
-
-        window.handleBulkUpload = async () => {
-            const dataText = document.getElementById('bulk-data-textarea').value.trim();
-            const errorEl = document.getElementById('bulk-error-message');
-            errorEl.classList.add('hidden');
-            if (!dataText) return;
-
-            // La clave aquí es dividir por saltos de línea primero, y luego cada línea por comas.
-            // Esto asegura que las líneas con comas extra (como la que causaba el error) se manejen correctamente.
-            const lines = dataText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-            const batch = writeBatch(db);
-            let errorsFound = false;
-            let updatesCount = 0;
-            let addsCount = 0;
-
-            for (let i = 0; i < lines.length; i++) {
-                // Nombre,Categoría,Precio,Stock,URL_Imagen
-                // Usamos una expresión regular para dividir, pero no dentro de comillas si las comas están dentro del nombre (aunque el formato no las contempla)
-                const parts = lines[i].split(',').map(p => p.trim());
-                
-                // Validamos que al menos tengamos 4 partes obligatorias y un máximo de 5
-                if (parts.length < 4 || parts.length > 5 || isNaN(parseFloat(parts[2])) || isNaN(parseInt(parts[3]))) {
-                    errorsFound = true;
-                    errorEl.textContent = `Error en la Línea ${i + 1}: El formato debe ser Nombre,Categoría,Precio,Stock[,URL_Imagen]. Precio o Stock inválidos.`;
-                    errorEl.classList.remove('hidden');
-                    return;
-                }
-
-                const [nombre, categoria, precioStr, stockStr, imageUrl] = parts;
-                const precio = parseFloat(precioStr);
-                const stock = parseInt(stockStr);
-
-                const existingProduct = productData.find(p => (p.nombre || '').toLowerCase() === nombre.toLowerCase());
-
-                const newProductData = {
-                    nombre: nombre,
-                    categoria: categoria,
-                    precio: precio,
-                    stock: stock,
-                };
-                
-                // Si existe imageUrl y empieza por http, la agregamos al array 'images'
-                if (imageUrl && imageUrl.startsWith('http')) {
-                    newProductData.images = [imageUrl]; 
-                }
-
-                if (existingProduct) {
-                    const docRef = doc(db, "products", existingProduct.id);
-                    batch.update(docRef, newProductData);
-                    updatesCount++;
-                } else {
-                    const docRef = doc(collection(db, "products"));
-                    batch.set(docRef, { 
-                        ...newProductData,
-                        id: docRef.id
-                    });
-                    addsCount++;
-                }
-            }
-
-            try {
-                await batch.commit();
-                showToast(`✅ Proceso finalizado: Agregados ${addsCount}, Actualizados ${updatesCount}.`);
-                closeBulkUploadModal();
-            } catch (e) {
-                errorEl.textContent = `Error crítico al subir a Firebase: ${e.message}`;
-                errorEl.classList.remove('hidden');
-            }
-        };
-
-        // --- LÓGICA DE CARRITO Y VENTAS ---
-
-        window.addToCart = function(id) {
-            const product = productData.find(p => p.id === id);
-            if (!product) return;
-            if (!cart[id]) cart[id] = { ...product, cantidad: 0 };
-            if (cart[id].cantidad + 1 > product.stock) return showToast(`⚠️ Stock máximo alcanzado`);
-            cart[id].cantidad++; saveCart(); renderCart(); showToast(`🛒 ${product.nombre} agregado`);
-        };
-
-        window.changeQuantity = function(id, delta) {
-            if (!cart[id]) return;
-            const newQty = cart[id].cantidad + delta;
-            const product = productData.find(p => p.id === id);
-            if (newQty > product.stock) return showToast(`⚠️ No hay más stock`);
-            if (newQty <= 0) delete cart[id]; else cart[id].cantidad = newQty;
-            saveCart(); renderCart();
-        };
-
-        function renderProductList(data) {
-            const list = document.getElementById('product-list');
-            list.innerHTML = '';
-            if (data.length === 0) return list.innerHTML = '<p class="text-center text-stone-500">Sin resultados.</p>';
-            data.forEach(p => {
-                const item = document.createElement('div');
-                const isNoStock = p.stock <= 0;
-                const opacity = isNoStock ? 'opacity-60' : '';
-                
-                // === AJUSTE PRINCIPAL: Obtener la imagen del array 'images' y aplicar Cache Buster correctamente ===
-                let imgUrl = (p.images && p.images.length > 0 ? p.images[0] : p.imageUrl || p.ImageUrl);
-                
-                // Aplicar cache-buster SÓLO si la URL no contiene el token de Firebase Storage
-                if (imgUrl && imgUrl.startsWith('http') && !imgUrl.includes('token=')) {
-                    // Si no hay token, es probable que sea una URL de Google Storage simple, añadimos el cache-buster
-                    // Aseguramos que solo tengamos el URL base antes de añadir el parámetro
-                    imgUrl = `${imgUrl.split('?')[0]}?v=${p.id}`; 
-                }
-                const imgHtml = imgUrl ? `<img src="${imgUrl}" class="w-10 h-10 rounded object-cover bg-stone-200">` : `<div class="w-10 h-10 rounded bg-stone-200 flex items-center justify-center text-lg">🖼️</div>`;
-                // === FIN AJUSTE PRINCIPAL ===
-
-                
-                // Determina las clases para el badge de stock
-                const stockBadge = p.stock > 3 ? 'bg-green-600' : (p.stock > 0 ? 'bg-amber-500' : 'bg-red-600');
-                const stockText = p.stock > 0 ? `${p.stock}` : '0'; // Solo la cantidad
-
-                // INICIO MODIFICACIÓN V5: Nombre y Stock en la misma línea
-                item.className = `bg-white p-3 rounded-xl border border-stone-100 flex items-center justify-between item-card ${opacity}`;
-                item.onclick = (e) => { 
-                    if (e.target.closest('.cart-btn') || e.target.closest('.stock-edit-btn')) return; // Evita abrir modal si toca botones
-                    openQuickView(p.id); 
-                };
-
-                item.innerHTML = `
-                    <!-- IZQUIERDA: IMAGEN + NOMBRE + STOCK (Ahora en la misma línea) -->
-                    <div class="flex items-start gap-2 flex-grow min-w-0 pr-1">
-                        <!-- IMAGEN (W-10) -->
-                        <div class="flex-shrink-0">${imgHtml}</div>
-                        
-                        <!-- NOMBRE Y STOCK BADGE (flex-grow para que ocupe el espacio disponible) -->
-                        <div class="min-w-0 flex-grow pr-1 flex flex-col">
-                            <!-- Contenedor del nombre y stock para que estén alineados en la parte superior -->
-                            <div class="flex items-start gap-2 w-full">
-                                <!-- Nombre con truncate de 2 líneas -->
-                                <p class="font-bold text-stone-800 leading-snug line-clamp-2 text-sm flex-grow min-w-0">${p.nombre}</p> 
-                                
-                                <!-- STOCK Badge (alineado arriba, se vuelve clickeable para editar) -->
-                                <span class="${stockBadge} text-white px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0 mt-0.5 cursor-pointer" onclick="event.stopPropagation(); editStock('${p.id}', ${p.stock})">
-                                    ${stockText} 
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- DERECHA: PRECIO Y BOTÓN (compacto vertical) -->
-                    <div class="flex flex-col items-end gap-1 flex-shrink-0 pl-1">
-                        <!-- Precio reducido a text-sm -->
-                        <span class="font-extrabold text-amber-800 text-sm flex-shrink-0">${formatCurrency(p.precio)}</span>
-                        
-                        <!-- Botón Carrito reducido a w-8 h-8 -->
-                        <button class="cart-btn rounded-full shadow-md text-white ${isNoStock?'bg-stone-400':'amber-gradient hover:opacity-90'} w-8 h-8 flex items-center justify-center flex-shrink-0 text-sm" ${isNoStock?'disabled':''} onclick="addToCart('${p.id}')">
-                            🛒
-                        </button>
-                    </div>
-                `;
-                list.appendChild(item);
-            });
-        }
-        // FIN MODIFICACIÓN V5
-
-        const q = collection(db, "products");
-        onSnapshot(q, (snapshot) => {
-            productData = []; categories = new Set();
-            // Mapeo inicial de productos y categorías
-            snapshot.forEach(doc => {
-                const d = doc.data(); d.id = doc.id; productData.push(d);
-                if(d.categoria) categories.add(d.categoria);
-            });
-            document.getElementById('catalog-loading').style.display = 'none';
-            document.getElementById('connection-status').textContent = "🟢 Conectado";
-            document.getElementById('connection-status').classList.add('text-green-600');
-            
-            // Llenar el filtro de categorías
-            const catSelect = document.getElementById('category-filter');
-            const currentCat = catSelect.value;
-            catSelect.innerHTML = '<option value="all">Todas</option>';
-            Array.from(categories).sort().forEach(c => catSelect.innerHTML += `<option value="${c}">${c}</option>`);
-            catSelect.value = currentCat;
-            
-            updateDashboard();
-        }, (err) => {
-            console.error("Error al obtener productos:", err);
-            document.getElementById('connection-status').textContent = "🔴 Error de conexión";
-        });
-
-        // Modificación de updateDashboard para aplicar SIEMPRE orden alfabético por nombre
-        function updateDashboard() {
-            const cat = document.getElementById('category-filter').value;
-            const search = document.getElementById('search-box').value.toLowerCase();
-            
-            // 1. Filtrado
-            let filtered = productData.filter(p => (cat === 'all' || p.categoria === cat) && (p.nombre||'').toLowerCase().includes(search));
-
-            // 2. Ordenamiento: SIEMPRE por Nombre (A-Z)
-            filtered.sort((a, b) => {
-                const nameA = (a.nombre || '').toLowerCase();
-                const nameB = (b.nombre || '').toLowerCase();
-                if (nameA < nameB) return -1;
-                if (nameA > nameB) return 1;
-                return 0;
-            });
-
-            // 3. Renderizado
-            renderProductList(filtered); 
-            renderCart();
-        }
-
-        function renderCart() {
-            const list = document.getElementById('cart-list'); 
-            const totalEl = document.getElementById('cart-total');
-            const emptyEl = document.getElementById('empty-cart-message');
-            const discountSelect = document.getElementById('discount-select');
-
-            list.innerHTML = ''; 
-            let subtotal = 0, count = 0;
-            for(const id in cart) {
-                const item = cart[id];
-                subtotal += item.precio * item.cantidad; count += item.cantidad;
-                list.innerHTML += `<div class="bg-white p-2 rounded border flex justify-between items-center mb-2"><div><div class="font-bold text-sm">${item.nombre}</div><div class="text-xs text-stone-500">${formatCurrency(item.precio)} x ${item.cantidad}</div></div><div class="flex items-center gap-2"><span class="font-bold">${formatCurrency(item.precio*item.cantidad)}</span><button onclick="changeQuantity('${id}', -1)" class="px-2 bg-stone-200 rounded text-stone-700">-</button><button onclick="changeQuantity('${id}', 1)" class="px-2 bg-amber-500 text-white rounded">+</button></div></div>`;
-            }
-            const disc = parseFloat(discountSelect.value) || 0;
-            const discountAmount = subtotal * disc;
-            const total = subtotal * (1 - disc);
-
-            
-            // Renderizar resumen del descuento
-            if (count > 0) {
-                 const summaryDiv = document.createElement('div');
-                 summaryDiv.className = 'mt-3 pt-2 border-t border-stone-200';
-                 if (disc > 0) {
-                     summaryDiv.innerHTML += `<div class="flex justify-between text-sm text-stone-500"><span>Subtotal:</span><span>${formatCurrency(subtotal)}</span></div>`;
-                     summaryDiv.innerHTML += `<div class="flex justify-between font-bold text-red-600 mb-2"><span>Descuento (${(disc * 100).toFixed(0)}%):</span><span>-${formatCurrency(discountAmount)}</span></div>`;
-                 }
-                 list.appendChild(summaryDiv);
-            }
-            
-            document.getElementById('cart-total').textContent = formatCurrency(total);
-            
-            // Manejo de Carrito Vacío
-            if (emptyEl) emptyEl.style.display = count ? 'none' : 'block';
-        }
-
-        function saveCart() { localStorage.setItem(STORAGE_KEY, JSON.stringify(cart)); }
-        function loadCart() { const s = localStorage.getItem(STORAGE_KEY); if(s) cart = JSON.parse(s); renderCart(); }
-        function showToast(msg) { 
+        // --- HELPERS ---
+        const formatCurrency = (v) => new Intl.NumberFormat('es-AR', {style:'currency', currency: 'ARS', minimumFractionDigits:0}).format(v);
+        const showToast = (msg) => { 
             const t = document.createElement('div'); t.className='toast show'; t.textContent=msg; 
             document.getElementById('toast-container').appendChild(t);
             setTimeout(()=>t.remove(), 2000);
-        }
-        
-        // Función para la edición de stock (simulada)
-        window.editStock = async (id, currentStock) => {
-            const product = productData.find(p => p.id === id);
-            // Usamos openConfirmationModal para cualquier confirmación, aunque aquí usamos prompt() para la entrada de datos.
-            const newStock = window.prompt(`Stock actual de ${product.nombre}: ${currentStock}.\nIngresa el nuevo stock:`);
-            if (newStock === null || isNaN(parseInt(newStock))) return;
-            
-            const stockValue = parseInt(newStock);
-            if (stockValue < 0) { 
-                window.alert("El stock no puede ser negativo."); 
-                return; 
-            }
-
-            try {
-                // Actualizar en Firebase
-                await updateDoc(doc(db, "products", id), { stock: stockValue });
-                showToast("Stock actualizado ✅");
-            } catch (error) {
-                console.error("Error al actualizar stock:", error);
-                window.alert("Hubo un error al guardar el stock.");
-            }
         };
 
+        // --- GESTIÓN DE MODALES ---
+        const openModal = (id) => document.getElementById(id).style.display = 'flex';
+        const closeModal = (id) => document.getElementById(id).style.display = 'none';
 
-        document.getElementById('category-filter').onchange = updateDashboard;
-        document.getElementById('search-box').oninput = updateDashboard;
-        // El filtro de orden ya no existe, por lo que quitamos el evento onchange: document.getElementById('sort-filter').onchange = updateDashboard;
-        document.getElementById('reset-button').onclick = () => { 
-            document.getElementById('category-filter').value='all'; 
-            document.getElementById('search-box').value=''; 
-            // document.getElementById('sort-filter').value='default'; // Se eliminó
-            updateDashboard(); 
+        // Modal Confirmación
+        const openConfirmationModal = (title, message, callback) => {
+            document.getElementById('conf-title').textContent = title;
+            document.getElementById('conf-message').textContent = message;
+            confirmationCallback = callback;
+            openModal('confirmation-modal');
         };
-        document.getElementById('discount-select').onchange = renderCart;
-        document.getElementById('clear-cart-button').onclick = () => { cart={}; saveCart(); renderCart(); };
-        document.getElementById('print-button').onclick = () => window.print();
-        
-        // Función corregida para la descarga de ventas (Vuelve al formato de una fila por VENTA COMPLETA)
-        window.downloadSalesReport = async () => {
-            showToast("Cargando reporte de ventas...");
-            console.log("--- INICIANDO DESCARGA DE REPORTE ---");
+
+        // Listener botones Confirmación
+        document.getElementById('conf-cancel-btn').onclick = () => closeModal('confirmation-modal');
+        document.getElementById('conf-confirm-btn').onclick = () => {
+            closeModal('confirmation-modal');
+            if (confirmationCallback) confirmationCallback();
+        };
+
+        // Listeners Modales Estáticos
+        document.getElementById('btn-open-manual').onclick = () => openModal('manual-sale-modal');
+        document.getElementById('btn-close-manual').onclick = () => closeModal('manual-sale-modal');
+        document.getElementById('btn-open-bulk').onclick = () => { document.getElementById('bulk-data-textarea').value=''; openModal('bulk-upload-modal'); };
+        document.getElementById('btn-close-bulk').onclick = () => closeModal('bulk-upload-modal');
+        document.getElementById('btn-close-modal').onclick = () => closeModal('product-quickview-modal'); // Cierre modal producto
+
+        // --- PENDIENTES (DELEGACIÓN DE EVENTOS) ---
+        // Esta es la clave para que funcionen los botones dinámicos en cualquier entorno
+        document.getElementById('pending-list').addEventListener('click', (e) => {
+            const btn = e.target.closest('button');
+            if (!btn) return;
             
-            try {
-                console.log("Intentando obtener datos de 'ventas'...");
-                const salesSnapshot = await getDocs(collection(db, "ventas"));
-                
-                console.log(`Datos obtenidos: ${salesSnapshot.docs.length} documentos.`);
-                
-                if (salesSnapshot.empty) {
-                    showToast("⚠️ No hay ventas registradas para descargar.");
-                    console.log("Finalizado: Snapshot vacío.");
-                    return;
-                }
+            const action = btn.dataset.action;
+            const id = btn.dataset.id;
+            const order = allPendingOrders[id];
 
-                // Definir la cabecera del CSV
-                let csvContent = '\uFEFF' + "Fecha,Cliente,WhatsApp,Método Pago,Descuento (%),Total Final,Items Vendidos\n";
-                
-                let salesCount = 0;
+            if (!order) return;
 
-                salesSnapshot.forEach((doc) => {
-                    salesCount++;
-                    const sale = doc.data();
-                    
-                    // Manejo seguro de campos que podrían ser opcionales o faltar
-                    const date = sale.fecha_venta || '';
-                    const client = sale.cliente_nombre || '';
-                    const whatsapp = sale.cliente_whatsapp || '';
-                    const method = sale.metodo_pago || '';
-                    // Convertir el descuento de decimal (ej: 0.10) a porcentaje (ej: 10%)
-                    const discount = sale.descuento_aplicado !== undefined ? (sale.descuento_aplicado * 100).toFixed(0) + '%' : '0%';
-                    const total = sale.total_final || 0;
-                    
-                    // Procesar los ítems en un formato de texto único para una columna
-                    const items = Array.isArray(sale.items) ? sale.items : [];
-                    let itemsString = items.map(item => {
-                        const product = item.nombre || 'N/A';
-                        const qty = item.cantidad || 0;
-                        const price = item.precio_unitario || 0;
-                        // Formato: "Nombre Producto (x Cantidad) @ Precio Unitario"
-                        return `${product} (x${qty}) @ ${formatCurrency(price)}`;
-                    }).join(' | '); // Separar ítems con un pipe
-
-                    // Creación de la fila CSV (una fila por venta)
-                    const rowData = [date, client, whatsapp, method, discount, total, itemsString];
-                    
-                    // Envolver cada item en comillas y escapar comillas internas para CSV seguro
-                    const row = rowData.map(item => `"${String(item).replace(/"/g, '""')}"`).join(',');
-                    csvContent += row + '\n';
-                    
+            if (action === 'load') {
+                openConfirmationModal("Cargar Pedido", `¿Cargar pedido de ${order.cliente_nombre}?`, () => {
+                    cart = order.cart;
+                    document.getElementById('client-name').value = order.cliente_nombre;
+                    saveCart(); renderCart(); showToast("Pedido cargado");
                 });
-                
-                if (salesCount === 0) {
-                    showToast("⚠️ No se encontraron ventas para descargar.");
-                    console.log("Finalizado: salesCount 0.");
-                    return;
-                }
-                
-                console.log(`CSV generado con éxito, ${salesCount} ventas procesadas.`);
-
-                // Crear el Blob y el enlace de descarga
-                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.setAttribute('href', url);
-                const timestamp = new Date().toISOString().slice(0, 10);
-                link.setAttribute('download', `reporte_ventas_${timestamp}.csv`);
-                
-                // Simular el clic en el enlace y removerlo
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                
-                showToast("✅ Reporte descargado.");
-                console.log("--- DESCARGA DE REPORTE FINALIZADA CON ÉXITO ---");
-
-            } catch (error) {
-                console.error("Error al descargar el reporte:", error);
-                showToast("❌ Error al obtener datos de ventas. Revisa la Consola.");
+            } else if (action === 'delete') {
+                openConfirmationModal("Eliminar", `¿Borrar pendiente de ${order.cliente_nombre}?`, async () => {
+                    await deleteDoc(doc(db, "pending_orders", id));
+                    showToast("Eliminado");
+                });
             }
+        });
+
+        // --- LÓGICA DE NEGOCIO ---
+        
+        // Carga Masiva
+        document.getElementById('btn-process-bulk').onclick = async () => {
+            const dataText = document.getElementById('bulk-data-textarea').value.trim();
+            if (!dataText) return;
+            const lines = dataText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            const batch = writeBatch(db);
+            let adds=0, updates=0;
+
+            for(let l of lines) {
+                const p = l.split(',').map(s=>s.trim());
+                if(p.length < 4) continue;
+                const [nom, cat, pr, st, img] = p;
+                const existing = productData.find(x => x.nombre.toLowerCase() === nom.toLowerCase());
+                const d = { nombre:nom, categoria:cat, precio:parseFloat(pr), stock:parseInt(st) };
+                if(img && img.startsWith('http')) d.images = [img];
+                
+                if(existing) { batch.update(doc(db, "products", existing.id), d); updates++; }
+                else { const ref = doc(collection(db, "products")); batch.set(ref, {...d, id:ref.id}); adds++; }
+            }
+            try { await batch.commit(); showToast(`✅ ${adds} nuevos, ${updates} act.`); closeModal('bulk-upload-modal'); }
+            catch(e) { alert("Error: "+e.message); }
         };
 
-        // --- LÍNEA AGREGADA PARA CONECTAR EL BOTÓN ---
-        document.getElementById('download-sales-report-button').onclick = window.downloadSalesReport;
-
-
-        // CORRECCIÓN: Función de WhatsApp para asegurar que se abre la ventana
-        document.getElementById('send-whatsapp-text-button').onclick = () => {
-            if (Object.keys(cart).length === 0) {
-                 showToast("⚠️ El carrito está vacío.");
-                 return;
-            }
-
-            const clientName = document.getElementById('client-name').value || 'Cliente';
-            const whatsappNumber = document.getElementById('whatsapp-number').value.replace(/\D/g,''); // Obtener el número
-            
-            // Usar window.alert en lugar de prompt() o confirm() para informar de errores.
-            if (!whatsappNumber) {
-                 window.alert("Por favor, introduce un número de WhatsApp (549...)");
-                 return;
-            }
-            
-            let subtotal = 0;
-            const items = [];
-            for(let id in cart) { 
-                let i = cart[id]; 
-                subtotal += i.precio * i.cantidad;
-                items.push({ nombre: i.nombre, cantidad: i.cantidad, subtotal: i.precio * i.cantidad });
-            }
-            const disc = parseFloat(document.getElementById('discount-select').value);
-            const totalWithDiscount = subtotal * (1 - disc);
-            const formattedDate = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
-
-            // INICIO DEL MENSAJE 
-            const summaryLines = [
-                `Hola, ${clientName}!`,
-                '',
-                `Te envío el detalle de tu compra en Blanco & Madera el ${formattedDate}`,
-                ''
-            ];
-
-            items.forEach((item) => {
-                // Formato: • Apagavela Filomena x 1: $ 2.900
-                summaryLines.push(` • ${item.nombre} x ${item.cantidad}: ${formatCurrency(item.subtotal)}`);
-            });
-
-            summaryLines.push('');
-            summaryLines.push('--------------------------');
-            summaryLines.push(`TOTAL FINAL: ${formatCurrency(totalWithDiscount)}`); 
-            summaryLines.push('--------------------------');
-            
-            // Alias
-            summaryLines.push(`Para abonar con Transferencia, usa el siguiente alias:`);
-            summaryLines.push(`*sofiricca*`);
-            summaryLines.push('--------------------------');
-
-            summaryLines.push('');
-            sumaryLines.push("¡Muchas gracias por confiar en Blanco & Madera!");
-            // FIN DEL MENSAJE 
-
-            const whatsappText = encodeURIComponent(summaryLines.join('\n'));
-            
-            // CORRECCIÓN CLAVE: Abrir la ventana con el número y el texto
-            window.open(`https://wa.me/${whatsappNumber}?text=${whatsappText}`, '_blank');
-        };
-        // FIN CORRECCIÓN
-
-        window.handleManualSale = async () => {
+        // Venta Manual
+        document.getElementById('btn-save-manual').onclick = async () => {
             const name = document.getElementById('manual-sale-product-name').value;
             const qty = parseInt(document.getElementById('manual-sale-quantity').value);
             const price = parseFloat(document.getElementById('manual-sale-price').value);
             const client = document.getElementById('manual-sale-client-name').value;
-            const deduct = document.getElementById('manual-sale-deduct-stock').checked;
-            const pay = document.getElementById('manual-sale-payment').value;
-
-            // Usar window.alert en lugar de alert()
-            if(!name || !qty || !price) return window.alert('Faltan datos');
             
-            if(deduct) {
+            if(!name || !qty || !price) return alert("Faltan datos");
+
+            if(document.getElementById('manual-sale-deduct-stock').checked) {
                 const p = productData.find(x => x.nombre.toLowerCase() === name.toLowerCase());
                 if(p) await updateDoc(doc(db, "products", p.id), {stock: p.stock - qty});
             }
@@ -795,132 +322,218 @@
                 fecha_venta: new Date().toLocaleDateString(), 
                 cliente_nombre: client, 
                 items: [{nombre: name, cantidad: qty, precio: price}], 
-                total_final: price * qty,
-                metodo_pago: pay
+                total_final: price * qty, 
+                metodo_pago: document.getElementById('manual-sale-payment').value 
             });
-            showToast("Venta registrada"); closeManualSaleModal();
-        };
-        
-        document.getElementById('confirm-sale-button').onclick = async () => {
-             // Reemplazamos window.confirm por el modal personalizado para confirmar la venta.
-             if(Object.keys(cart).length === 0) return window.alert("Carrito vacío");
-             
-             openConfirmationModal(
-                 "Confirmar Venta",
-                 "¿Confirmas esta venta y deseas descontar el stock de los productos?",
-                 async () => {
-                     const client = document.getElementById('client-name').value || 'Cliente';
-                     const whatsapp = document.getElementById('whatsapp-number').value;
-                     const pay = document.getElementById('payment-method').value;
-                     const disc = parseFloat(document.getElementById('discount-select').value);
-                     
-                     let total = 0;
-                     const items = [];
-                     const batch = writeBatch(db);
-                     let stockError = false;
-                     
-                     for(let id in cart) {
-                         const item = cart[id];
-                         const p = productData.find(x => x.id === id);
-                         if(p) {
-                             const newStock = p.stock - item.cantidad;
-                             // Usar window.alert en lugar de alert()
-                             if(newStock < 0) { 
-                                 window.alert(`No hay stock suficiente de ${p.nombre}`); 
-                                 stockError = true;
-                                 break; 
-                             }
-                             batch.update(doc(db, "products", id), {stock: newStock});
-                             items.push({nombre: item.nombre, cantidad: item.cantidad, precio_unitario: item.precio});
-                             total += item.precio * item.cantidad;
-                         }
-                     }
-
-                     if(stockError) return;
-                     
-                     await batch.commit();
-                     
-                     await addDoc(collection(db, "ventas"), {
-                         fecha_venta: new Date().toLocaleDateString(),
-                         cliente_nombre: client,
-                         cliente_whatsapp: whatsapp,
-                         metodo_pago: pay,
-                         total_final: total * (1-disc),
-                         descuento_aplicado: disc,
-                         items: items
-                     });
-                     
-                     showToast("Venta exitosa!");
-                     cart = {}; saveCart(); renderCart();
-                 }
-             );
+            showToast("Venta registrada"); closeModal('manual-sale-modal');
         };
 
-        const pendingList = document.getElementById('pending-list');
-        onSnapshot(collection(db, "pending_orders"), (snap) => {
-            pendingList.innerHTML = '';
-            if(snap.empty) pendingList.innerHTML = '<p class="text-stone-500 text-center">Sin pendientes.</p>';
-            snap.forEach(d => {
-                const o = d.data();
+        // Carrito Functions (Exposed for HTML onclicks in product list)
+        window.addToCart = (id) => {
+            const p = productData.find(x => x.id === id);
+            if(!p) return;
+            if(!cart[id]) cart[id] = {...p, cantidad:0};
+            if(cart[id].cantidad + 1 > p.stock) return showToast("Stock insuficiente");
+            cart[id].cantidad++; saveCart(); renderCart(); showToast("Agregado");
+        };
+
+        window.changeQuantity = (id, d) => {
+            if(!cart[id]) return;
+            const n = cart[id].cantidad + d;
+            const p = productData.find(x => x.id === id);
+            if(n > p.stock) return showToast("Sin stock extra");
+            if(n <= 0) delete cart[id]; else cart[id].cantidad = n;
+            saveCart(); renderCart();
+        };
+
+        window.editStock = async (id, cur) => {
+            const p = productData.find(x => x.id === id);
+            const n = prompt(`Stock de ${p.nombre}:`, cur);
+            if(n !== null && !isNaN(parseInt(n))) {
+                await updateDoc(doc(db, "products", id), {stock: parseInt(n)});
+                showToast("Stock actualizado");
+            }
+        };
+
+        // Renderizado
+        function renderProductList(data) {
+            const l = document.getElementById('product-list');
+            l.innerHTML = '';
+            if(data.length===0) return l.innerHTML='<p class="text-center p-4">Sin resultados</p>';
+            
+            data.forEach(p => {
                 const div = document.createElement('div');
-                div.className = 'bg-stone-50 p-2 border rounded mb-2 flex justify-between text-sm';
-                div.innerHTML = `<span>${o.cliente_nombre} (${formatCurrency(o.total_estimado)})</span>`;
+                const isNoStock = p.stock <= 0;
+                let img = p.imageUrl || p.ImageUrl;
+                if(p.images?.length) img = p.images[0];
+                if(img && img.startsWith('http') && !img.includes('token=')) img += `?v=${p.id}`;
                 
-                const btnContainer = document.createElement('div');
-                btnContainer.className = 'flex gap-2';
-                
-                // Botón Cargar - Usamos modal de confirmación
-                const loadBtn = document.createElement('button'); 
-                loadBtn.className = 'text-blue-600 font-bold hover:underline'; 
-                loadBtn.textContent = 'Cargar';
-                loadBtn.onclick = () => {
-                    openConfirmationModal(
-                        "Cargar Pedido Pendiente",
-                        `¿Deseas reemplazar la cotización actual con el pedido de ${o.cliente_nombre}?`,
-                        () => {
-                            cart = o.cart; 
-                            document.getElementById('client-name').value = o.cliente_nombre; 
-                            saveCart(); 
-                            renderCart();
-                            showToast("Pedido cargado");
-                        }
-                    );
+                div.className = `bg-white p-3 rounded-xl border border-stone-100 flex items-center justify-between item-card ${isNoStock?'opacity-60':''}`;
+                div.onclick = (e) => {
+                    if(e.target.closest('button') || e.target.closest('.stock-badge')) return;
+                    // Open Quick View Logic (Inline here for simplicity)
+                    document.getElementById('modal-product-name').textContent = p.nombre;
+                    document.getElementById('modal-product-category').textContent = p.categoria;
+                    document.getElementById('modal-product-price').textContent = formatCurrency(p.precio);
+                    document.getElementById('modal-product-stock').textContent = `${p.stock} u.`;
+                    document.getElementById('modal-product-image').src = img || '';
+                    const btn = document.getElementById('modal-add-to-cart-button');
+                    btn.disabled = isNoStock;
+                    btn.onclick = () => { window.addToCart(p.id); closeModal('product-quickview-modal'); };
+                    openModal('product-quickview-modal');
                 };
 
-                // Botón Eliminar - Usamos modal de confirmación (FIX PRINCIPAL)
-                const del = document.createElement('button'); 
-                del.className = 'text-red-600 hover:text-red-800'; 
-                del.textContent = '🗑️';
-                del.onclick = () => {
-                    openConfirmationModal(
-                        "Eliminar Pendiente",
-                        `¿Estás seguro de eliminar el pedido pendiente de ${o.cliente_nombre}? Esta acción no se puede deshacer.`,
-                        () => {
-                            deleteDoc(doc(db, "pending_orders", d.id));
-                            showToast("Pedido eliminado");
-                        }
-                    );
-                };
-                
-                btnContainer.appendChild(loadBtn);
-                btnContainer.appendChild(del);
-                
-                div.appendChild(btnContainer); 
-                pendingList.appendChild(div);
+                div.innerHTML = `
+                    <div class="flex items-start gap-2 flex-grow min-w-0 pr-1">
+                        <div class="flex-shrink-0 w-10 h-10 bg-stone-200 rounded overflow-hidden">
+                            ${img ? `<img src="${img}" class="w-full h-full object-cover">` : ''}
+                        </div>
+                        <div class="min-w-0 flex-grow pr-1 flex flex-col">
+                            <div class="flex items-start gap-2 w-full">
+                                <p class="font-bold text-stone-800 leading-snug line-clamp-2 text-sm flex-grow">${p.nombre}</p> 
+                                <span class="stock-badge ${p.stock>3?'bg-green-600':(p.stock>0?'bg-amber-500':'bg-red-600')} text-white px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0 mt-0.5" onclick="event.stopPropagation(); window.editStock('${p.id}', ${p.stock})">${p.stock}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-end gap-1 flex-shrink-0 pl-1">
+                        <span class="font-extrabold text-amber-800 text-sm flex-shrink-0">${formatCurrency(p.precio)}</span>
+                        <button class="rounded-full shadow-md text-white ${isNoStock?'bg-stone-400':'amber-gradient'} w-8 h-8 flex items-center justify-center text-sm" ${isNoStock?'disabled':''} onclick="window.addToCart('${p.id}')">🛒</button>
+                    </div>
+                `;
+                l.appendChild(div);
             });
-        });
+        }
+
+        function renderCart() {
+            const l = document.getElementById('cart-list'); l.innerHTML = '';
+            let total = 0, count = 0;
+            for(let id in cart) {
+                const i = cart[id];
+                total += i.precio * i.cantidad; count += i.cantidad;
+                l.innerHTML += `<div class="bg-white p-2 rounded border flex justify-between items-center mb-2"><div><div class="font-bold text-sm">${i.nombre}</div><div class="text-xs text-stone-500">${formatCurrency(i.precio)} x ${i.cantidad}</div></div><div class="flex items-center gap-2"><span class="font-bold">${formatCurrency(i.precio*i.cantidad)}</span><button onclick="window.changeQuantity('${id}', -1)" class="px-2 bg-stone-200 rounded">-</button><button onclick="window.changeQuantity('${id}', 1)" class="px-2 bg-amber-500 text-white rounded">+</button></div></div>`;
+            }
+            const disc = parseFloat(document.getElementById('discount-select').value);
+            document.getElementById('cart-total').textContent = formatCurrency(total * (1-disc));
+            document.getElementById('empty-cart-message').style.display = count ? 'none' : 'block';
+        }
+
+        // --- LISTENERS GENERALES ---
+        document.getElementById('download-sales-report-button').onclick = async () => {
+             showToast("Descargando...");
+             const s = await getDocs(collection(db, "ventas"));
+             let csv = '\uFEFFFecha,Cliente,Total,Items\n';
+             s.forEach(d => {
+                 const v = d.data();
+                 const i = (v.items||[]).map(x=>`${x.nombre}(${x.cantidad})`).join('|');
+                 csv += `"${v.fecha_venta}","${v.cliente_nombre}","${v.total_final}","${i}"\n`;
+             });
+             const a = document.createElement('a');
+             a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+             a.download = `ventas.csv`; a.click();
+        };
+
+        document.getElementById('confirm-sale-button').onclick = () => {
+            if(Object.keys(cart).length === 0) return alert("Vacío");
+            openConfirmationModal("Confirmar Venta", "¿Registrar venta?", async () => {
+                const b = writeBatch(db);
+                let items = [], total = 0;
+                for(let id in cart) {
+                    const p = productData.find(x => x.id===id);
+                    if(!p || p.stock < cart[id].cantidad) return alert("Stock insuficiente: "+cart[id].nombre);
+                    b.update(doc(db, "products", id), {stock: p.stock - cart[id].cantidad});
+                    items.push({nombre:cart[id].nombre, cantidad:cart[id].cantidad, precio:cart[id].precio});
+                    total += cart[id].precio * cart[id].cantidad;
+                }
+                await b.commit();
+                const disc = parseFloat(document.getElementById('discount-select').value);
+                await addDoc(collection(db, "ventas"), { 
+                    fecha_venta: new Date().toLocaleDateString(), 
+                    cliente_nombre: document.getElementById('client-name').value, 
+                    total_final: total*(1-disc), 
+                    items: items,
+                    metodo_pago: document.getElementById('payment-method').value
+                });
+                showToast("Venta Exitosa"); cart={}; saveCart(); renderCart();
+            });
+        };
 
         document.getElementById('save-pending-button').onclick = async () => {
-            if(Object.keys(cart).length === 0) return showToast("Carrito vacío");
-            const client = document.getElementById('client-name').value || 'Sin nombre';
-            const disc = parseFloat(document.getElementById('discount-select').value);
+            if(Object.keys(cart).length === 0) return alert("Vacío");
             let total = 0; for(let k in cart) total += cart[k].precio * cart[k].cantidad;
-            await addDoc(collection(db, "pending_orders"), { timestamp: new Date(), cliente_nombre: client, cart: cart, total_estimado: total * (1-disc) });
-            showToast("Guardado en pendientes"); cart = {}; saveCart(); renderCart();
+            await addDoc(collection(db, "pending_orders"), {
+                cliente_nombre: document.getElementById('client-name').value || 'Sin Nombre',
+                total_estimado: total,
+                cart: cart,
+                timestamp: new Date()
+            });
+            showToast("Guardado en pendientes"); cart={}; saveCart(); renderCart();
         };
+        
+        // Navigation Handlers
+        const showView = (v) => {
+             document.getElementById('catalog-panel').style.display = v==='catalog' ? 'block' : 'none';
+             document.getElementById('cart-panel').style.display = v==='cart' ? 'flex' : 'none'; // Flex para el carrito
+        };
+        document.getElementById('nav-catalog').onclick = () => showView('catalog');
+        document.getElementById('nav-cart').onclick = () => showView('cart');
+        
+        // Update Dashboard Filters
+        const updateDash = () => {
+             const cat = document.getElementById('category-filter').value;
+             const q = document.getElementById('search-box').value.toLowerCase();
+             const filtered = productData.filter(p => (cat==='all' || p.categoria===cat) && p.nombre.toLowerCase().includes(q));
+             filtered.sort((a,b) => a.nombre.localeCompare(b.nombre));
+             renderProductList(filtered);
+        };
+        document.getElementById('category-filter').onchange = updateDash;
+        document.getElementById('search-box').oninput = updateDash;
+        document.getElementById('reset-button').onclick = () => { document.getElementById('category-filter').value='all'; document.getElementById('search-box').value=''; updateDash(); };
+        document.getElementById('discount-select').onchange = renderCart;
+        document.getElementById('clear-cart-button').onclick = () => { cart={}; saveCart(); renderCart(); };
 
-        window.showView = (v) => { const isCat = v === 'catalog'; document.getElementById('catalog-panel').style.display = isCat ? 'block' : 'none'; document.getElementById('cart-panel').style.display = isCat ? 'none' : 'flex'; };
-        loadCart();
+        // INIT
+        function saveCart() { localStorage.setItem(STORAGE_KEY, JSON.stringify(cart)); }
+        const s = localStorage.getItem(STORAGE_KEY); if(s) cart = JSON.parse(s); renderCart();
+
+        onSnapshot(collection(db, "products"), (snap) => {
+            productData = []; categories = new Set();
+            snap.forEach(d => { 
+                const p = d.data(); p.id = d.id; productData.push(p); 
+                if(p.categoria) categories.add(p.categoria);
+            });
+            document.getElementById('catalog-loading').style.display = 'none';
+            document.getElementById('connection-status').textContent = "🟢";
+            
+            const sel = document.getElementById('category-filter');
+            const cur = sel.value;
+            sel.innerHTML = '<option value="all">Todas</option>';
+            Array.from(categories).sort().forEach(c => sel.innerHTML += `<option value="${c}">${c}</option>`);
+            sel.value = cur;
+            updateDash();
+        });
+
+        const pl = document.getElementById('pending-list');
+        onSnapshot(collection(db, "pending_orders"), (snap) => {
+            pl.innerHTML = '';
+            allPendingOrders = {}; 
+            if(snap.empty) { pl.innerHTML = '<p class="text-stone-400 text-center p-2 text-sm">Sin pendientes</p>'; return; }
+            
+            snap.forEach(d => {
+                const o = d.data();
+                allPendingOrders[d.id] = o;
+                const div = document.createElement('div');
+                div.className = 'bg-white p-3 border rounded-lg mb-2 flex justify-between items-center text-sm shadow-sm';
+                // Generamos botones con data-attributes para la delegación
+                div.innerHTML = `
+                    <span class="font-bold text-stone-700 truncate mr-2 flex-1">${o.cliente_nombre} <span class="font-normal text-stone-500">(${formatCurrency(o.total_estimado)})</span></span>
+                    <div class="flex gap-3">
+                        <button class="text-blue-600 font-bold p-2 bg-blue-50 rounded" data-action="load" data-id="${d.id}">Cargar</button>
+                        <button class="text-red-600 p-2 bg-red-50 rounded" data-action="delete" data-id="${d.id}">🗑️</button>
+                    </div>
+                `;
+                pl.appendChild(div);
+            });
+        });
     </script>
 </body>
 </html>
