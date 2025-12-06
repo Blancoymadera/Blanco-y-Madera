@@ -432,6 +432,52 @@
              a.download = `ventas.csv`; a.click();
         };
 
+        // --- WHATSAPP HANDLER (FIX) ---
+        document.getElementById('send-whatsapp-text-button').onclick = () => {
+            if(Object.keys(cart).length === 0) return showToast("El carrito está vacío");
+
+            const client = document.getElementById('client-name').value.trim() || "Cliente";
+            const phone = document.getElementById('whatsapp-number').value.replace(/\D/g, ''); // Solo números
+            
+            // Fecha en formato: 3 de diciembre de 2025
+            const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+            const dateStr = new Date().toLocaleDateString('es-AR', dateOptions);
+
+            let msg = `Hola, ${client}!\n\n`;
+            msg += `Te envío el detalle de tu compra en Blanco & Madera el ${dateStr}\n\n`;
+            
+            let total = 0;
+            for(let id in cart) {
+                const i = cart[id];
+                const subtotal = i.precio * i.cantidad;
+                total += subtotal;
+                // Formato: • Producto x 1: $ 2.900
+                msg += ` • ${i.nombre} x ${i.cantidad}: ${formatCurrency(subtotal)}\n`;
+            }
+
+            const disc = parseFloat(document.getElementById('discount-select').value);
+            const totalFinal = total * (1 - disc);
+
+            msg += `\n--------------------------\n`;
+            // Si hay descuento, es útil mostrarlo para que la suma cierre, 
+            // aunque el formato pedido solo muestra el final. Agrego la línea si hay descuento.
+            if (disc > 0) {
+                 msg += `Subtotal: ${formatCurrency(total)}\n`;
+                 msg += `Descuento (${disc * 100}%): -${formatCurrency(total * disc)}\n`;
+            }
+            msg += `TOTAL FINAL: ${formatCurrency(totalFinal)}\n`;
+            msg += `--------------------------\n`;
+            msg += `  Para abonar con Transferencia, usa el siguiente alias:\nsofiricca\n`;
+            msg += `--------------------------\n\n`;
+            msg += `¡Muchas gracias por confiar en Blanco & Madera!`;
+
+            const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+            window.open(url, '_blank');
+        };
+
+        // --- PRINT BUTTON HANDLER ---
+        document.getElementById('print-button').onclick = () => window.print();
+
         document.getElementById('confirm-sale-button').onclick = () => {
             if(Object.keys(cart).length === 0) return alert("Vacío");
             openConfirmationModal("Confirmar Venta", "¿Registrar venta?", async () => {
