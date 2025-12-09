@@ -20,7 +20,7 @@
         #pending-list {
             overscroll-behavior: contain; 
             touch-action: pan-y;
-            max-height: 350px; /* Altura aumentada */
+            max-height: 350px; 
             overflow-y: auto;
             border: 1px solid #e5e7eb;
             border-radius: 0.5rem;
@@ -36,6 +36,9 @@
              .item-card > div:last-child { flex-shrink: 0; }
              .line-clamp-2 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
              #product-list { height: calc(100vh - 320px) !important; }
+             
+             /* CORRECCIÓN CRÍTICA DE ALTURA: Dar más espacio al carrito */
+             #cart-panel { height: calc(100vh - 70px); }
         }
         @media (min-width: 769px) { .mobile-nav { display: none; } }
         @media print { .no-print { display: none !important; } body { background-color: #fff !important; } }
@@ -99,32 +102,38 @@
                 </div>
             </div>
             
-            <!-- PANEL DERECHO: CARRITO -->
-            <div id="cart-panel" class="hidden md:flex flex-col bg-white p-6 rounded-xl shadow-lg">
-                <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">Cotización</h2>
-                <div class="mb-4 no-print"><input type="text" id="client-name" placeholder="Cliente" class="w-full rounded-lg border-stone-300 p-2 shadow-sm"></div>
-                <div class="mb-4 no-print"><input type="tel" id="whatsapp-number" placeholder="WhatsApp (549...)" class="w-full rounded-lg border-stone-300 p-2 shadow-sm"></div>
-                <div class="mb-4 no-print"><select id="payment-method" class="w-full rounded-lg border-stone-300 p-2 shadow-sm"><option value="Efectivo">Efectivo</option><option value="Transferencia">Transferencia</option><option value="Tarjeta">Tarjeta</option><option value="Otro">Otro</option></select></div>
+            <!-- PANEL DERECHO: CARRITO (MODIFICADO PARA MÓVIL) -->
+            <div id="cart-panel" class="hidden md:flex flex-col bg-white p-4 md:p-6 rounded-xl shadow-lg md:h-auto relative">
+                <h2 class="text-xl font-semibold mb-2 md:mb-4 text-amber-800 border-b pb-2 border-stone-200">Cotización</h2>
                 
-                <div class="flex-grow relative">
-                    <div id="cart-list" class="absolute inset-0 overflow-y-auto pr-4 space-y-2"></div>
+                <!-- Inputs más compactos en móvil (mb-2 en vez de mb-4) -->
+                <div class="mb-2 md:mb-4 no-print"><input type="text" id="client-name" placeholder="Cliente" class="w-full rounded-lg border-stone-300 p-2 shadow-sm"></div>
+                <div class="mb-2 md:mb-4 no-print"><input type="tel" id="whatsapp-number" placeholder="WhatsApp (549...)" class="w-full rounded-lg border-stone-300 p-2 shadow-sm"></div>
+                <div class="mb-2 md:mb-4 no-print"><select id="payment-method" class="w-full rounded-lg border-stone-300 p-2 shadow-sm"><option value="Efectivo">Efectivo</option><option value="Transferencia">Transferencia</option><option value="Tarjeta">Tarjeta</option><option value="Otro">Otro</option></select></div>
+                
+                <!-- LISTA: Se eliminó absolute inset-0 para usar flex estándar y evitar colapso -->
+                <div class="flex-1 overflow-y-auto min-h-[180px] border border-stone-100 rounded-lg bg-stone-50 p-2 mb-2">
+                    <div id="cart-list" class="space-y-2"></div>
                     <p id="empty-cart-message" class="text-stone-500 text-center mt-8 pointer-events-none">Carrito vacío.</p>
                 </div>
 
-                <div class="mt-4 pt-4 border-t-2 border-amber-500/50">
-                    <div class="mb-4 no-print"><label class="block text-sm font-bold mb-1">Descuento:</label><select id="discount-select" class="w-full rounded-lg border-stone-300 p-2"><option value="0">0%</option><option value="0.05">5%</option><option value="0.10">10%</option><option value="0.15">15%</option><option value="0.20">20%</option></select></div>
-                    <div class="flex justify-between items-center mb-4"><span class="text-2xl font-bold">TOTAL:</span><span id="cart-total" class="text-4xl font-extrabold text-amber-800">$0</span></div>
-                    <div class="space-y-3 no-print">
+                <div class="mt-2 pt-2 md:mt-4 md:pt-4 border-t-2 border-amber-500/50 flex-shrink-0">
+                    <div class="mb-2 md:mb-4 no-print flex items-center gap-2">
+                        <label class="text-sm font-bold whitespace-nowrap">Descuento:</label>
+                        <select id="discount-select" class="w-full rounded-lg border-stone-300 p-2"><option value="0">0%</option><option value="0.05">5%</option><option value="0.10">10%</option><option value="0.15">15%</option><option value="0.20">20%</option></select>
+                    </div>
+                    <div class="flex justify-between items-center mb-2 md:mb-4"><span class="text-xl md:text-2xl font-bold">TOTAL:</span><span id="cart-total" class="text-3xl md:text-4xl font-extrabold text-amber-800">$0</span></div>
+                    <div class="space-y-2 md:space-y-3 no-print">
                         <button id="save-pending-button" class="w-full bg-stone-700 text-white font-bold py-3 rounded-lg shadow-xl hover:bg-stone-800">💾 Guardar Pendiente</button>
                         <button id="confirm-sale-button" class="w-full bg-red-700 text-white font-bold py-3 rounded-lg shadow-xl hover:bg-red-800">❌ Registrar Venta</button>
-                        <div class="grid grid-cols-2 gap-3 mt-2"><button id="send-whatsapp-text-button" class="bg-green-600 text-white font-bold py-2 rounded-lg shadow-md">💬 WhatsApp</button><button id="share-image-button" class="bg-amber-500 text-white font-bold py-2 rounded-lg shadow-md">🖼️ Imagen</button></div>
-                        <div class="grid grid-cols-2 gap-3 mt-2"><button id="print-button" class="bg-stone-500 text-white font-bold py-2 rounded-lg shadow-md">🖨️ Imprimir</button><button id="clear-cart-button" class="bg-red-500/50 text-white font-bold py-2 rounded-lg shadow-md">🗑️ Vaciar</button></div>
+                        <div class="grid grid-cols-2 gap-2 md:gap-3 mt-2"><button id="send-whatsapp-text-button" class="bg-green-600 text-white font-bold py-2 rounded-lg shadow-md">💬 WhatsApp</button><button id="share-image-button" class="bg-amber-500 text-white font-bold py-2 rounded-lg shadow-md">🖼️ Imagen</button></div>
+                        <div class="grid grid-cols-2 gap-2 md:gap-3 mt-2"><button id="print-button" class="bg-stone-500 text-white font-bold py-2 rounded-lg shadow-md">🖨️ Imprimir</button><button id="clear-cart-button" class="bg-red-500/50 text-white font-bold py-2 rounded-lg shadow-md">🗑️ Vaciar</button></div>
                     </div>
                 </div>
             </div>
         </div>
         
-        <!-- PEDIDOS PENDIENTES (Lugar corregido para evitar rebote) -->
+        <!-- PEDIDOS PENDIENTES -->
         <div class="bg-white p-6 rounded-xl shadow-lg no-print mt-6">
             <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2">⏳ Pedidos Pendientes</h2>
             <div id="pending-list"></div>
@@ -179,7 +188,7 @@
         </div>
     </div>
 
-    <!-- MODAL CONFIRMACIÓN (Z-INDEX 80 PARA ESTAR ENCIMA DE TODO) -->
+    <!-- MODAL CONFIRMACIÓN -->
     <div id="confirmation-modal" class="fixed inset-0 bg-black bg-opacity-60 hidden z-[80] items-center justify-center">
         <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-xs mx-4 animate-bounce-in">
             <h3 id="conf-title" class="text-xl font-bold mb-4 text-stone-800">Confirmar</h3>
@@ -216,7 +225,7 @@
         let productData = [];
         let cart = {};
         let categories = new Set();
-        let allPendingOrders = {}; // Cache local para los pendientes
+        let allPendingOrders = {}; 
         const STORAGE_KEY = 'bm_cart_v2';
         let confirmationCallback = null;
 
@@ -240,22 +249,19 @@
             openModal('confirmation-modal');
         };
 
-        // Listener botones Confirmación
         document.getElementById('conf-cancel-btn').onclick = () => closeModal('confirmation-modal');
         document.getElementById('conf-confirm-btn').onclick = () => {
             closeModal('confirmation-modal');
             if (confirmationCallback) confirmationCallback();
         };
 
-        // Listeners Modales Estáticos
         document.getElementById('btn-open-manual').onclick = () => openModal('manual-sale-modal');
         document.getElementById('btn-close-manual').onclick = () => closeModal('manual-sale-modal');
         document.getElementById('btn-open-bulk').onclick = () => { document.getElementById('bulk-data-textarea').value=''; openModal('bulk-upload-modal'); };
         document.getElementById('btn-close-bulk').onclick = () => closeModal('bulk-upload-modal');
-        document.getElementById('btn-close-modal').onclick = () => closeModal('product-quickview-modal'); // Cierre modal producto
+        document.getElementById('btn-close-modal').onclick = () => closeModal('product-quickview-modal');
 
-        // --- PENDIENTES (DELEGACIÓN DE EVENTOS) ---
-        // Esta es la clave para que funcionen los botones dinámicos en cualquier entorno
+        // --- PENDIENTES ---
         document.getElementById('pending-list').addEventListener('click', (e) => {
             const btn = e.target.closest('button');
             if (!btn) return;
@@ -281,8 +287,6 @@
         });
 
         // --- LÓGICA DE NEGOCIO ---
-        
-        // Carga Masiva
         document.getElementById('btn-process-bulk').onclick = async () => {
             const dataText = document.getElementById('bulk-data-textarea').value.trim();
             if (!dataText) return;
@@ -305,7 +309,6 @@
             catch(e) { alert("Error: "+e.message); }
         };
 
-        // Venta Manual
         document.getElementById('btn-save-manual').onclick = async () => {
             const name = document.getElementById('manual-sale-product-name').value;
             const qty = parseInt(document.getElementById('manual-sale-quantity').value);
@@ -328,7 +331,6 @@
             showToast("Venta registrada"); closeModal('manual-sale-modal');
         };
 
-        // Carrito Functions (Exposed for HTML onclicks in product list)
         window.addToCart = (id) => {
             const p = productData.find(x => x.id === id);
             if(!p) return;
@@ -355,7 +357,6 @@
             }
         };
 
-        // Renderizado
         function renderProductList(data) {
             const l = document.getElementById('product-list');
             l.innerHTML = '';
@@ -371,7 +372,6 @@
                 div.className = `bg-white p-3 rounded-xl border border-stone-100 flex items-center justify-between item-card ${isNoStock?'opacity-60':''}`;
                 div.onclick = (e) => {
                     if(e.target.closest('button') || e.target.closest('.stock-badge')) return;
-                    // Open Quick View Logic (Inline here for simplicity)
                     document.getElementById('modal-product-name').textContent = p.nombre;
                     document.getElementById('modal-product-category').textContent = p.categoria;
                     document.getElementById('modal-product-price').textContent = formatCurrency(p.precio);
@@ -410,25 +410,26 @@
             for(let id in cart) {
                 const i = cart[id];
                 total += i.precio * i.cantidad; count += i.cantidad;
+                
+                // CORRECCIÓN CRÍTICA DE DISEÑO MÓVIL (FLEX-1 + MIN-W-0)
                 l.innerHTML += `
-    <div class="bg-white p-2 rounded border flex justify-between items-center mb-2">
-        <div class="flex-1 min-w-0 pr-2">
-            <div class="font-bold text-sm truncate text-stone-800">${i.nombre}</div>
-            <div class="text-xs text-stone-500">${formatCurrency(i.precio)} x ${i.cantidad}</div>
-        </div>
-        <div class="flex-shrink-0 flex items-center gap-2">
-            <span class="font-bold text-stone-800">${formatCurrency(i.precio*i.cantidad)}</span>
-            <button onclick="window.changeQuantity('${id}', -1)" class="px-2 bg-stone-200 text-stone-600 rounded font-bold hover:bg-stone-300">-</button>
-            <button onclick="window.changeQuantity('${id}', 1)" class="px-2 bg-amber-500 text-white rounded font-bold hover:bg-amber-600">+</button>
-        </div>
-    </div>`;
+                    <div class="bg-white p-2 rounded border flex justify-between items-center mb-2">
+                        <div class="flex-1 min-w-0 pr-2">
+                            <div class="font-bold text-sm truncate text-stone-800">${i.nombre}</div>
+                            <div class="text-xs text-stone-500">${formatCurrency(i.precio)} x ${i.cantidad}</div>
+                        </div>
+                        <div class="flex-shrink-0 flex items-center gap-2">
+                            <span class="font-bold text-stone-800">${formatCurrency(i.precio*i.cantidad)}</span>
+                            <button onclick="window.changeQuantity('${id}', -1)" class="px-2 bg-stone-200 text-stone-600 rounded font-bold hover:bg-stone-300">-</button>
+                            <button onclick="window.changeQuantity('${id}', 1)" class="px-2 bg-amber-500 text-white rounded font-bold hover:bg-amber-600">+</button>
+                        </div>
+                    </div>`;
             }
             const disc = parseFloat(document.getElementById('discount-select').value);
             document.getElementById('cart-total').textContent = formatCurrency(total * (1-disc));
             document.getElementById('empty-cart-message').style.display = count ? 'none' : 'block';
         }
 
-        // --- LISTENERS GENERALES ---
         document.getElementById('download-sales-report-button').onclick = async () => {
              showToast("Descargando...");
              const s = await getDocs(collection(db, "ventas"));
@@ -443,26 +444,19 @@
              a.download = `ventas.csv`; a.click();
         };
 
-        // --- WHATSAPP HANDLER (FIX) ---
         document.getElementById('send-whatsapp-text-button').onclick = () => {
             if(Object.keys(cart).length === 0) return showToast("El carrito está vacío");
 
             const client = document.getElementById('client-name').value.trim() || "Cliente";
-            const phone = document.getElementById('whatsapp-number').value.replace(/\D/g, ''); // Solo números
-            
-            // Fecha en formato: 3 de diciembre de 2025
-            const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
-            const dateStr = new Date().toLocaleDateString('es-AR', dateOptions);
+            const phone = document.getElementById('whatsapp-number').value.replace(/\D/g, '');
+            const dateStr = new Date().toLocaleDateString('es-AR', { year: 'numeric', month: 'long', day: 'numeric' });
 
-            let msg = `Hola, ${client}!\n\n`;
-            msg += `Te envío el detalle de tu compra en Blanco & Madera el ${dateStr}\n\n`;
-            
+            let msg = `Hola, ${client}!\n\nTe envío el detalle de tu compra en Blanco & Madera el ${dateStr}\n\n`;
             let total = 0;
             for(let id in cart) {
                 const i = cart[id];
                 const subtotal = i.precio * i.cantidad;
                 total += subtotal;
-                // Formato: • Producto x 1: $ 2.900
                 msg += ` • ${i.nombre} x ${i.cantidad}: ${formatCurrency(subtotal)}\n`;
             }
 
@@ -470,8 +464,6 @@
             const totalFinal = total * (1 - disc);
 
             msg += `\n--------------------------\n`;
-            // Si hay descuento, es útil mostrarlo para que la suma cierre, 
-            // aunque el formato pedido solo muestra el final. Agrego la línea si hay descuento.
             if (disc > 0) {
                  msg += `Subtotal: ${formatCurrency(total)}\n`;
                  msg += `Descuento (${disc * 100}%): -${formatCurrency(total * disc)}\n`;
@@ -479,14 +471,12 @@
             msg += `TOTAL FINAL: ${formatCurrency(totalFinal)}\n`;
             msg += `--------------------------\n`;
             msg += `  Para abonar con Transferencia, usa el siguiente alias:\nsofiricca\n`;
-            msg += `--------------------------\n\n`;
-            msg += `¡Muchas gracias por confiar en Blanco & Madera!`;
+            msg += `--------------------------\n\n¡Muchas gracias por confiar en Blanco & Madera!`;
 
             const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
             window.open(url, '_blank');
         };
 
-        // --- PRINT BUTTON HANDLER ---
         document.getElementById('print-button').onclick = () => window.print();
 
         document.getElementById('confirm-sale-button').onclick = () => {
@@ -526,40 +516,33 @@
             showToast("Guardado en pendientes"); cart={}; saveCart(); renderCart();
         };
         
-        // Navigation Handlers
-const showView = (v) => {
-    // Tailwind usa 768px como breakpoint para 'md'
-    const isMobile = window.innerWidth < 768;
-    const catalogPanel = document.getElementById('catalog-panel');
-    const cartPanel = document.getElementById('cart-panel');
+        // --- NAVEGACIÓN MÓVIL CORREGIDA ---
+        const showView = (v) => {
+             const isMobile = window.innerWidth < 769; // Coincide con CSS
+             const catalogPanel = document.getElementById('catalog-panel');
+             const cartPanel = document.getElementById('cart-panel');
 
-    if (isMobile) {
-        // Lógica de navegación para Móvil (Ocultar uno, mostrar el otro)
-        if (v === 'catalog') {
-            catalogPanel.style.display = 'block';
-            cartPanel.classList.add('hidden'); // Ocultar carrito
-            cartPanel.style.display = 'none';
-        } else { // v === 'cart'
-            catalogPanel.style.display = 'none';
-            cartPanel.classList.remove('hidden'); // Quitar 'hidden' para que funcione el 'display: flex'
-            cartPanel.style.display = 'flex';
-        }
-    } else {
-        // Lógica para Escritorio (Resetear estilos para mantener ambos paneles visibles)
-        
-        // El catálogo debe ser visible en el layout de grid
-        catalogPanel.style.display = 'block'; 
-        
-        // Quitar 'hidden' y el estilo 'display' forzado, para que 'md:flex' de Tailwind actúe
-        cartPanel.classList.remove('hidden');
-        cartPanel.style.display = ''; 
-    }
-};
+             if (isMobile) {
+                 if (v === 'cart') {
+                     catalogPanel.style.display = 'none';
+                     cartPanel.classList.remove('hidden');
+                     cartPanel.style.display = 'flex';
+                 } else {
+                     catalogPanel.style.display = 'block';
+                     cartPanel.classList.add('hidden');
+                     cartPanel.style.display = 'none';
+                 }
+             } else {
+                 // Escritorio: Reiniciar
+                 catalogPanel.style.display = 'block';
+                 cartPanel.classList.remove('hidden');
+                 cartPanel.style.display = 'flex'; // Mantener el flex de escritorio
+             }
+        };
 
-document.getElementById('nav-catalog').onclick = () => showView('catalog');
-document.getElementById('nav-cart').onclick = () => showView('cart');
+        document.getElementById('nav-catalog').onclick = () => showView('catalog');
+        document.getElementById('nav-cart').onclick = () => showView('cart');
         
-        // Update Dashboard Filters
         const updateDash = () => {
              const cat = document.getElementById('category-filter').value;
              const q = document.getElementById('search-box').value.toLowerCase();
@@ -573,7 +556,6 @@ document.getElementById('nav-cart').onclick = () => showView('cart');
         document.getElementById('discount-select').onchange = renderCart;
         document.getElementById('clear-cart-button').onclick = () => { cart={}; saveCart(); renderCart(); };
 
-        // INIT
         function saveCart() { localStorage.setItem(STORAGE_KEY, JSON.stringify(cart)); }
         const s = localStorage.getItem(STORAGE_KEY); if(s) cart = JSON.parse(s); renderCart();
 
@@ -605,7 +587,6 @@ document.getElementById('nav-cart').onclick = () => showView('cart');
                 allPendingOrders[d.id] = o;
                 const div = document.createElement('div');
                 div.className = 'bg-white p-3 border rounded-lg mb-2 flex justify-between items-center text-sm shadow-sm';
-                // Generamos botones con data-attributes para la delegación
                 div.innerHTML = `
                     <span class="font-bold text-stone-700 truncate mr-2 flex-1">${o.cliente_nombre} <span class="font-normal text-stone-500">(${formatCurrency(o.total_estimado)})</span></span>
                     <div class="flex gap-3">
