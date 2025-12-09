@@ -517,19 +517,34 @@
         
         // Navigation Handlers
 const showView = (v) => {
-     document.getElementById('catalog-panel').style.display = v==='catalog' ? 'block' : 'none';
-     
-     // FIX: Gestionar la clase 'hidden' y el display para el panel de carrito en móvil
-     if (v === 'cart') {
-         // Mostrar el carrito: quitar 'hidden' y asegurar 'flex'
-         document.getElementById('cart-panel').classList.remove('hidden');
-         document.getElementById('cart-panel').style.display = 'flex'; 
-     } else {
-         // Ocultar el carrito en móvil: añadir 'hidden'
-         document.getElementById('cart-panel').classList.add('hidden');
-         document.getElementById('cart-panel').style.display = 'none';
-     }
+    // Tailwind usa 768px como breakpoint para 'md'
+    const isMobile = window.innerWidth < 768;
+    const catalogPanel = document.getElementById('catalog-panel');
+    const cartPanel = document.getElementById('cart-panel');
+
+    if (isMobile) {
+        // Lógica de navegación para Móvil (Ocultar uno, mostrar el otro)
+        if (v === 'catalog') {
+            catalogPanel.style.display = 'block';
+            cartPanel.classList.add('hidden'); // Ocultar carrito
+            cartPanel.style.display = 'none';
+        } else { // v === 'cart'
+            catalogPanel.style.display = 'none';
+            cartPanel.classList.remove('hidden'); // Quitar 'hidden' para que funcione el 'display: flex'
+            cartPanel.style.display = 'flex';
+        }
+    } else {
+        // Lógica para Escritorio (Resetear estilos para mantener ambos paneles visibles)
+        
+        // El catálogo debe ser visible en el layout de grid
+        catalogPanel.style.display = 'block'; 
+        
+        // Quitar 'hidden' y el estilo 'display' forzado, para que 'md:flex' de Tailwind actúe
+        cartPanel.classList.remove('hidden');
+        cartPanel.style.display = ''; 
+    }
 };
+
 document.getElementById('nav-catalog').onclick = () => showView('catalog');
 document.getElementById('nav-cart').onclick = () => showView('cart');
         
