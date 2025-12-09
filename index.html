@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Catálogo Vendedor - Blanco & Madera</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Librería para Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #fefce8; }
@@ -95,7 +97,7 @@
                 <div class="bg-white p-6 rounded-xl shadow-lg no-print">
                     <h2 class="text-xl font-semibold mb-4 text-stone-700 border-b pb-2">Herramientas de Gestión</h2>
                     <div class="flex flex-col space-y-3">
-                        <button id="download-sales-report-button" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-blue-700">⬇️ Descargar Historial de Ventas</button>
+                        <button id="download-sales-report-button" class="w-full bg-green-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-green-700 border border-green-700">📊 Descargar Excel de Ventas</button>
                         <button id="btn-open-manual" class="w-full bg-red-500 text-white font-bold py-3 rounded-lg shadow-md hover:bg-red-600">➕ Registrar Venta Manual</button>
                         <button id="btn-open-bulk" class="w-full bg-amber-700 text-white font-bold py-3 rounded-lg shadow-md hover:bg-amber-800 border-2 border-amber-600 mt-4">⏫ Cargar/Actualizar Productos Masivamente</button>
                     </div>
@@ -236,6 +238,15 @@
             document.getElementById('toast-container').appendChild(t);
             setTimeout(()=>t.remove(), 2000);
         };
+        
+        // Generador de fecha formato DD/MM/AAAA
+        const getFormattedDate = () => {
+            const now = new Date();
+            const dia = String(now.getDate()).padStart(2, '0');
+            const mes = String(now.getMonth() + 1).padStart(2, '0');
+            const anio = now.getFullYear();
+            return `${dia}/${mes}/${anio}`;
+        };
 
         // --- GESTIÓN DE MODALES ---
         const openModal = (id) => document.getElementById(id).style.display = 'flex';
@@ -322,7 +333,8 @@
                 if(p) await updateDoc(doc(db, "products", p.id), {stock: p.stock - qty});
             }
             await addDoc(collection(db, "ventas"), { 
-                fecha_venta: new Date().toLocaleDateString(), 
+                fecha_venta: getFormattedDate(), 
+                timestamp: new Date(), // Para ordenamiento
                 cliente_nombre: client, 
                 items: [{nombre: name, cantidad: qty, precio: price}], 
                 total_final: price * qty, 
@@ -430,18 +442,53 @@
             document.getElementById('empty-cart-message').style.display = count ? 'none' : 'block';
         }
 
+        // --- EXPORTAR A EXCEL (.xlsx) ---
         document.getElementById('download-sales-report-button').onclick = async () => {
-             showToast("Descargando...");
+             showToast("Generando Excel...");
              const s = await getDocs(collection(db, "ventas"));
-             let csv = '\uFEFFFecha,Cliente,Total,Items\n';
-             s.forEach(d => {
-                 const v = d.data();
-                 const i = (v.items||[]).map(x=>`${x.nombre}(${x.cantidad})`).join('|');
-                 csv += `"${v.fecha_venta}","${v.cliente_nombre}","${v.total_final}","${i}"\n`;
+             
+             let data = [];
+             s.forEach(doc => {
+                 const v = doc.data();
+                 
+                 // Lógica de Ordenamiento
+                 let dateObj = new Date(0);
+                 if (v.timestamp && v.timestamp.toDate) {
+                     dateObj = v.timestamp.toDate(); // Timestamp de Firestore
+                 } else if (v.timestamp) {
+                     dateObj = new Date(v.timestamp); // Fecha JS guardada
+                 } else if (typeof v.fecha_venta === 'string') {
+                     // Intentar parsear formato string antiguo DD/MM/AAAA
+                     const parts = v.fecha_venta.split('/');
+                     if(parts.length === 3) dateObj = new Date(parts[2], parts[1]-1, parts[0]);
+                 }
+
+                 const i = (v.items||[]).map(x=>`${x.nombre} (${x.cantidad})`).join(', ');
+                 
+                 data.push({
+                     Fecha: v.fecha_venta,
+                     Cliente: v.cliente_nombre,
+                     Total: v.total_final,
+                     Metodo_Pago: v.metodo_pago || '-',
+                     Items: i,
+                     _sortDate: dateObj // Campo auxiliar oculto
+                 });
              });
-             const a = document.createElement('a');
-             a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-             a.download = `ventas.csv`; a.click();
+
+             // Ordenar: Más recientes primero
+             data.sort((a, b) => b._sortDate - a._sortDate);
+
+             // Limpiar campo auxiliar
+             const finalData = data.map(({_sortDate, ...rest}) => rest);
+
+             // Crear Libro Excel
+             const ws = XLSX.utils.json_to_sheet(finalData);
+             const wb = XLSX.utils.book_new();
+             XLSX.utils.book_append_sheet(wb, ws, "Ventas");
+             
+             // Descargar
+             XLSX.writeFile(wb, "Historial_Ventas.xlsx");
+             showToast("Descarga iniciada");
         };
 
         document.getElementById('send-whatsapp-text-button').onclick = () => {
@@ -494,7 +541,8 @@
                 await b.commit();
                 const disc = parseFloat(document.getElementById('discount-select').value);
                 await addDoc(collection(db, "ventas"), { 
-                    fecha_venta: new Date().toLocaleDateString(), 
+                    fecha_venta: getFormattedDate(), // Fecha formateada
+                    timestamp: new Date(), // Timestamp para ordenar
                     cliente_nombre: document.getElementById('client-name').value, 
                     total_final: total*(1-disc), 
                     items: items,
