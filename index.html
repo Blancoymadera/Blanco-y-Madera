@@ -100,7 +100,7 @@
             </div>
             
             <!-- PANEL DERECHO: CARRITO -->
-            <div id="cart-panel" class="md:flex flex-col bg-white p-6 rounded-xl shadow-lg" style="display: none;">
+            <div id="cart-panel" class="hidden md:flex flex-col bg-white p-6 rounded-xl shadow-lg">
                 <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">Cotización</h2>
                 <div class="mb-4 no-print"><input type="text" id="client-name" placeholder="Cliente" class="w-full rounded-lg border-stone-300 p-2 shadow-sm"></div>
                 <div class="mb-4 no-print"><input type="tel" id="whatsapp-number" placeholder="WhatsApp (549...)" class="w-full rounded-lg border-stone-300 p-2 shadow-sm"></div>
@@ -516,12 +516,22 @@
         };
         
         // Navigation Handlers
-        const showView = (v) => {
-             document.getElementById('catalog-panel').style.display = v==='catalog' ? 'block' : 'none';
-             document.getElementById('cart-panel').style.display = v==='cart' ? 'flex' : 'none'; // Flex para el carrito
-        };
-        document.getElementById('nav-catalog').onclick = () => showView('catalog');
-        document.getElementById('nav-cart').onclick = () => showView('cart');
+const showView = (v) => {
+     document.getElementById('catalog-panel').style.display = v==='catalog' ? 'block' : 'none';
+     
+     // FIX: Gestionar la clase 'hidden' y el display para el panel de carrito en móvil
+     if (v === 'cart') {
+         // Mostrar el carrito: quitar 'hidden' y asegurar 'flex'
+         document.getElementById('cart-panel').classList.remove('hidden');
+         document.getElementById('cart-panel').style.display = 'flex'; 
+     } else {
+         // Ocultar el carrito en móvil: añadir 'hidden'
+         document.getElementById('cart-panel').classList.add('hidden');
+         document.getElementById('cart-panel').style.display = 'none';
+     }
+};
+document.getElementById('nav-catalog').onclick = () => showView('catalog');
+document.getElementById('nav-cart').onclick = () => showView('cart');
         
         // Update Dashboard Filters
         const updateDash = () => {
