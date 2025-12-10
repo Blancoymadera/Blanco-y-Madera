@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Catálogo Vendedor - Blanco & Madera</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Librería para Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
@@ -65,7 +64,6 @@
         <div id="toast-container"></div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- PANEL IZQUIERDO: LISTADO -->
             <div class="space-y-6">
                 <div id="catalog-panel" class="bg-white p-6 rounded-xl shadow-lg relative min-h-[400px]">
                     <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">Stock Disponible</h2>
@@ -93,27 +91,24 @@
                     <div id="product-list" class="overflow-y-auto h-[60vh] md:h-[70vh] pr-4 space-y-2"></div>
                 </div>
 
-                <!-- PANEL GESTION -->
                 <div class="bg-white p-6 rounded-xl shadow-lg no-print">
                     <h2 class="text-xl font-semibold mb-4 text-stone-700 border-b pb-2">Herramientas de Gestión</h2>
                     <div class="flex flex-col space-y-3">
                         <button id="download-sales-report-button" class="w-full bg-green-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-green-700 border border-green-700">📊 Descargar Excel de Ventas</button>
+                        <button id="download-stock-report-button" class="w-full bg-amber-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-amber-700 border border-amber-700">📦 Descargar Excel de Stock</button>
                         <button id="btn-open-manual" class="w-full bg-red-500 text-white font-bold py-3 rounded-lg shadow-md hover:bg-red-600">➕ Registrar Venta Manual</button>
                         <button id="btn-open-bulk" class="w-full bg-amber-700 text-white font-bold py-3 rounded-lg shadow-md hover:bg-amber-800 border-2 border-amber-600 mt-4">⏫ Cargar/Actualizar Productos Masivamente</button>
                     </div>
                 </div>
             </div>
             
-            <!-- PANEL DERECHO: CARRITO (MODIFICADO PARA MÓVIL) -->
             <div id="cart-panel" class="hidden md:flex flex-col bg-white p-4 md:p-6 rounded-xl shadow-lg md:h-auto relative">
                 <h2 class="text-xl font-semibold mb-2 md:mb-4 text-amber-800 border-b pb-2 border-stone-200">Cotización</h2>
                 
-                <!-- Inputs más compactos en móvil (mb-2 en vez de mb-4) -->
                 <div class="mb-2 md:mb-4 no-print"><input type="text" id="client-name" placeholder="Cliente" class="w-full rounded-lg border-stone-300 p-2 shadow-sm"></div>
                 <div class="mb-2 md:mb-4 no-print"><input type="tel" id="whatsapp-number" placeholder="WhatsApp (549...)" class="w-full rounded-lg border-stone-300 p-2 shadow-sm"></div>
                 <div class="mb-2 md:mb-4 no-print"><select id="payment-method" class="w-full rounded-lg border-stone-300 p-2 shadow-sm"><option value="Efectivo">Efectivo</option><option value="Transferencia">Transferencia</option><option value="Tarjeta">Tarjeta</option><option value="Otro">Otro</option></select></div>
                 
-                <!-- LISTA: Se eliminó absolute inset-0 para usar flex estándar y evitar colapso -->
                 <div class="flex-1 overflow-y-auto min-h-[180px] border border-stone-100 rounded-lg bg-stone-50 p-2 mb-2">
                     <div id="cart-list" class="space-y-2"></div>
                     <p id="empty-cart-message" class="text-stone-500 text-center mt-8 pointer-events-none">Carrito vacío.</p>
@@ -135,14 +130,12 @@
             </div>
         </div>
         
-        <!-- PEDIDOS PENDIENTES -->
         <div class="bg-white p-6 rounded-xl shadow-lg no-print mt-6">
             <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2">⏳ Pedidos Pendientes</h2>
             <div id="pending-list"></div>
         </div>
     </main>
 
-    <!-- MODALES -->
     <div id="bulk-upload-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-[70] items-center justify-center">
         <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-2xl mx-4">
             <h3 class="text-2xl font-bold mb-4 text-amber-700 border-b pb-2">⏫ Carga Masiva</h3>
@@ -190,7 +183,6 @@
         </div>
     </div>
 
-    <!-- MODAL CONFIRMACIÓN -->
     <div id="confirmation-modal" class="fixed inset-0 bg-black bg-opacity-60 hidden z-[80] items-center justify-center">
         <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-xs mx-4 animate-bounce-in">
             <h3 id="conf-title" class="text-xl font-bold mb-4 text-stone-800">Confirmar</h3>
@@ -490,6 +482,31 @@
              XLSX.writeFile(wb, "Historial_Ventas.xlsx");
              showToast("Descarga iniciada");
         };
+
+        // --- EXPORTAR A EXCEL DE STOCK (NUEVA FUNCIÓN) ---
+        document.getElementById('download-stock-report-button').onclick = () => {
+             showToast("Generando Excel de Stock...");
+             
+             // 1. Mapear los datos de productData (cargados desde Firestore)
+             const data = productData.map(p => ({
+                 ID: p.id,
+                 Nombre: p.nombre,
+                 Categoría: p.categoria,
+                 Precio: p.precio,
+                 Stock: p.stock,
+                 URL_Imagen: p.images && p.images.length > 0 ? p.images[0] : (p.imageUrl || p.ImageUrl || '-')
+             }));
+
+             // 2. Crear Libro Excel
+             const ws = XLSX.utils.json_to_sheet(data);
+             const wb = XLSX.utils.book_new();
+             XLSX.utils.book_append_sheet(wb, ws, "Stock");
+             
+             // 3. Descargar
+             XLSX.writeFile(wb, "Reporte_Stock.xlsx");
+             showToast("Descarga iniciada");
+        };
+        // --- FIN EXPORTAR A EXCEL DE STOCK ---
 
         document.getElementById('send-whatsapp-text-button').onclick = () => {
             if(Object.keys(cart).length === 0) return showToast("El carrito está vacío");
