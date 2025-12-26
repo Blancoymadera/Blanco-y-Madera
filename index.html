@@ -17,7 +17,6 @@
         .toast.show { opacity: 1; transform: translateY(0); }
         .loading-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.8); display: flex; justify-content: center; align-items: center; z-index: 10; }
         
-        /* FIX DE SCROLL */
         #pending-list {
             overscroll-behavior: contain; 
             touch-action: pan-y;
@@ -37,8 +36,6 @@
              .item-card > div:last-child { flex-shrink: 0; }
              .line-clamp-2 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
              #product-list { height: calc(100vh - 320px) !important; }
-             
-             /* CORRECCIÓN CRÍTICA DE ALTURA: Dar más espacio al carrito */
              #cart-panel { height: calc(100vh - 70px); }
         }
         @media (min-width: 769px) { .mobile-nav { display: none; } }
@@ -115,9 +112,8 @@
                 </div>
 
                 <div class="mt-2 pt-2 md:mt-4 md:pt-4 border-t-2 border-amber-500/50 flex-shrink-0">
-                    <div class="mb-2 md:mb-4 no-print flex items-center gap-2">
-                        <label class="text-sm font-bold whitespace-nowrap">Descuento:</label>
-                        <select id="discount-select" class="w-full rounded-lg border-stone-300 p-2"><option value="0">0%</option><option value="0.05">5%</option><option value="0.10">10%</option><option value="0.15">15%</option><option value="0.20">20%</option></select>
+                    <div class="mb-2 md:mb-4 no-print bg-amber-50 p-2 rounded-lg border border-amber-200">
+                        <p class="text-[10px] font-bold text-amber-800 uppercase text-center">Descuentos aplicados por producto</p>
                     </div>
                     <div class="flex justify-between items-center mb-2 md:mb-4"><span class="text-xl md:text-2xl font-bold">TOTAL:</span><span id="cart-total" class="text-3xl md:text-4xl font-extrabold text-amber-800">$0</span></div>
                     <div class="space-y-2 md:space-y-3 no-print">
@@ -215,7 +211,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         
-        // Estado local
         let productData = [];
         let cart = {};
         let categories = new Set();
@@ -223,7 +218,6 @@
         const STORAGE_KEY = 'bm_cart_v2';
         let confirmationCallback = null;
 
-        // --- HELPERS ---
         const formatCurrency = (v) => new Intl.NumberFormat('es-AR', {style:'currency', currency: 'ARS', minimumFractionDigits:0}).format(v);
         const showToast = (msg) => { 
             const t = document.createElement('div'); t.className='toast show'; t.textContent=msg; 
@@ -231,7 +225,6 @@
             setTimeout(()=>t.remove(), 2000);
         };
         
-        // Generador de fecha formato DD/MM/AAAA
         const getFormattedDate = () => {
             const now = new Date();
             const dia = String(now.getDate()).padStart(2, '0');
@@ -240,11 +233,9 @@
             return `${dia}/${mes}/${anio}`;
         };
 
-        // --- GESTIÓN DE MODALES ---
         const openModal = (id) => document.getElementById(id).style.display = 'flex';
         const closeModal = (id) => document.getElementById(id).style.display = 'none';
 
-        // Modal Confirmación
         const openConfirmationModal = (title, message, callback) => {
             document.getElementById('conf-title').textContent = title;
             document.getElementById('conf-message').textContent = message;
@@ -264,7 +255,6 @@
         document.getElementById('btn-close-bulk').onclick = () => closeModal('bulk-upload-modal');
         document.getElementById('btn-close-modal').onclick = () => closeModal('product-quickview-modal');
 
-        // --- PENDIENTES ---
         document.getElementById('pending-list').addEventListener('click', (e) => {
             const btn = e.target.closest('button');
             if (!btn) return;
@@ -289,7 +279,6 @@
             }
         });
 
-        // --- LÓGICA DE NEGOCIO ---
         document.getElementById('btn-process-bulk').onclick = async () => {
             const dataText = document.getElementById('bulk-data-textarea').value.trim();
             if (!dataText) return;
@@ -326,7 +315,7 @@
             }
             await addDoc(collection(db, "ventas"), { 
                 fecha_venta: getFormattedDate(), 
-                timestamp: new Date(), // Para ordenamiento
+                timestamp: new Date(), 
                 cliente_nombre: client, 
                 items: [{nombre: name, cantidad: qty, precio: price}], 
                 total_final: price * qty, 
@@ -338,7 +327,7 @@
         window.addToCart = (id) => {
             const p = productData.find(x => x.id === id);
             if(!p) return;
-            if(!cart[id]) cart[id] = {...p, cantidad:0};
+            if(!cart[id]) cart[id] = {...p, cantidad:0, discount: 0};
             if(cart[id].cantidad + 1 > p.stock) return showToast("Stock insuficiente");
             cart[id].cantidad++; saveCart(); renderCart(); showToast("Agregado");
         };
@@ -410,31 +399,58 @@
 
         function renderCart() {
             const l = document.getElementById('cart-list'); l.innerHTML = '';
-            let total = 0, count = 0;
+            let totalFinal = 0, count = 0;
+            
             for(let id in cart) {
                 const i = cart[id];
-                total += i.precio * i.cantidad; count += i.cantidad;
+                if (i.discount === undefined) i.discount = 0;
                 
-                // CORRECCIÓN CRÍTICA DE DISEÑO MÓVIL (FLEX-1 + MIN-W-0)
+                const precioConDesc = i.precio * (1 - i.discount);
+                const subtotal = precioConDesc * i.cantidad;
+                
+                totalFinal += subtotal;
+                count += i.cantidad;
+                
                 l.innerHTML += `
-                    <div class="bg-white p-2 rounded border flex justify-between items-center mb-2">
-                        <div class="flex-1 min-w-0 pr-2">
-                            <div class="font-bold text-sm truncate text-stone-800">${i.nombre}</div>
-                            <div class="text-xs text-stone-500">${formatCurrency(i.precio)} x ${i.cantidad}</div>
+                    <div class="bg-white p-2 rounded border flex flex-col mb-2 gap-2">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1 min-w-0 pr-2">
+                                <div class="font-bold text-sm truncate text-stone-800">${i.nombre}</div>
+                                <div class="text-xs text-stone-500">${formatCurrency(i.precio)} c/u</div>
+                            </div>
+                            <div class="flex-shrink-0 flex items-center gap-2">
+                                <button onclick="window.changeQuantity('${id}', -1)" class="px-2 bg-stone-200 text-stone-600 rounded font-bold">-</button>
+                                <span class="font-bold text-sm">${i.cantidad}</span>
+                                <button onclick="window.changeQuantity('${id}', 1)" class="px-2 bg-amber-500 text-white rounded font-bold">+</button>
+                            </div>
                         </div>
-                        <div class="flex-shrink-0 flex items-center gap-2">
-                            <span class="font-bold text-stone-800">${formatCurrency(i.precio*i.cantidad)}</span>
-                            <button onclick="window.changeQuantity('${id}', -1)" class="px-2 bg-stone-200 text-stone-600 rounded font-bold hover:bg-stone-300">-</button>
-                            <button onclick="window.changeQuantity('${id}', 1)" class="px-2 bg-amber-500 text-white rounded font-bold hover:bg-amber-600">+</button>
+                        <div class="flex justify-between items-center pt-1 border-t border-stone-100">
+                            <div class="flex items-center gap-1">
+                                <span class="text-[10px] font-bold text-stone-400">DESC:</span>
+                                <select onchange="window.setItemDiscount('${id}', this.value)" class="text-[10px] border rounded p-0.5 bg-stone-50">
+                                    <option value="0" ${i.discount == 0 ? 'selected' : ''}>0%</option>
+                                    <option value="0.05" ${i.discount == 0.05 ? 'selected' : ''}>5%</option>
+                                    <option value="0.10" ${i.discount == 0.10 ? 'selected' : ''}>10%</option>
+                                    <option value="0.15" ${i.discount == 0.15 ? 'selected' : ''}>15%</option>
+                                    <option value="0.20" ${i.discount == 0.20 ? 'selected' : ''}>20%</option>
+                                </select>
+                            </div>
+                            <span class="font-bold text-amber-800 text-sm">${formatCurrency(subtotal)}</span>
                         </div>
                     </div>`;
             }
-            const disc = parseFloat(document.getElementById('discount-select').value);
-            document.getElementById('cart-total').textContent = formatCurrency(total * (1-disc));
+            document.getElementById('cart-total').textContent = formatCurrency(totalFinal);
             document.getElementById('empty-cart-message').style.display = count ? 'none' : 'block';
         }
 
-        // --- EXPORTAR A EXCEL (.xlsx) ---
+        window.setItemDiscount = (id, val) => {
+            if(cart[id]) {
+                cart[id].discount = parseFloat(val);
+                saveCart();
+                renderCart();
+            }
+        };
+
         document.getElementById('download-sales-report-button').onclick = async () => {
              showToast("Generando Excel...");
              const s = await getDocs(collection(db, "ventas"));
@@ -442,15 +458,12 @@
              let data = [];
              s.forEach(doc => {
                  const v = doc.data();
-                 
-                 // Lógica de Ordenamiento
                  let dateObj = new Date(0);
                  if (v.timestamp && v.timestamp.toDate) {
-                     dateObj = v.timestamp.toDate(); // Timestamp de Firestore
+                     dateObj = v.timestamp.toDate();
                  } else if (v.timestamp) {
-                     dateObj = new Date(v.timestamp); // Fecha JS guardada
+                     dateObj = new Date(v.timestamp);
                  } else if (typeof v.fecha_venta === 'string') {
-                     // Intentar parsear formato string antiguo DD/MM/AAAA
                      const parts = v.fecha_venta.split('/');
                      if(parts.length === 3) dateObj = new Date(parts[2], parts[1]-1, parts[0]);
                  }
@@ -463,31 +476,22 @@
                      Total: v.total_final,
                      Metodo_Pago: v.metodo_pago || '-',
                      Items: i,
-                     _sortDate: dateObj // Campo auxiliar oculto
+                     _sortDate: dateObj
                  });
              });
 
-             // Ordenar: Más recientes primero
              data.sort((a, b) => b._sortDate - a._sortDate);
-
-             // Limpiar campo auxiliar
              const finalData = data.map(({_sortDate, ...rest}) => rest);
 
-             // Crear Libro Excel
              const ws = XLSX.utils.json_to_sheet(finalData);
              const wb = XLSX.utils.book_new();
              XLSX.utils.book_append_sheet(wb, ws, "Ventas");
-             
-             // Descargar
              XLSX.writeFile(wb, "Historial_Ventas.xlsx");
              showToast("Descarga iniciada");
         };
 
-        // --- EXPORTAR A EXCEL DE STOCK (NUEVA FUNCIÓN) ---
         document.getElementById('download-stock-report-button').onclick = () => {
              showToast("Generando Excel de Stock...");
-             
-             // 1. Mapear los datos de productData (cargados desde Firestore)
              const data = productData.map(p => ({
                  ID: p.id,
                  Nombre: p.nombre,
@@ -497,16 +501,12 @@
                  URL_Imagen: p.images && p.images.length > 0 ? p.images[0] : (p.imageUrl || p.ImageUrl || '-')
              }));
 
-             // 2. Crear Libro Excel
              const ws = XLSX.utils.json_to_sheet(data);
              const wb = XLSX.utils.book_new();
              XLSX.utils.book_append_sheet(wb, ws, "Stock");
-             
-             // 3. Descargar
              XLSX.writeFile(wb, "Reporte_Stock.xlsx");
              showToast("Descarga iniciada");
         };
-        // --- FIN EXPORTAR A EXCEL DE STOCK ---
 
         document.getElementById('send-whatsapp-text-button').onclick = () => {
             if(Object.keys(cart).length === 0) return showToast("El carrito está vacío");
@@ -516,22 +516,16 @@
             const dateStr = new Date().toLocaleDateString('es-AR', { year: 'numeric', month: 'long', day: 'numeric' });
 
             let msg = `Hola, ${client}!\n\nTe envío el detalle de tu compra en Blanco & Madera el ${dateStr}\n\n`;
-            let total = 0;
+            let totalFinal = 0;
             for(let id in cart) {
                 const i = cart[id];
-                const subtotal = i.precio * i.cantidad;
-                total += subtotal;
-                msg += ` • ${i.nombre} x ${i.cantidad}: ${formatCurrency(subtotal)}\n`;
+                const desc = i.discount || 0;
+                const subtotal = (i.precio * (1 - desc)) * i.cantidad;
+                totalFinal += subtotal;
+                msg += ` • ${i.nombre} x ${i.cantidad}${desc > 0 ? ` (Desc. ${desc*100}%)` : ''}: ${formatCurrency(subtotal)}\n`;
             }
-
-            const disc = parseFloat(document.getElementById('discount-select').value);
-            const totalFinal = total * (1 - disc);
 
             msg += `\n--------------------------\n`;
-            if (disc > 0) {
-                 msg += `Subtotal: ${formatCurrency(total)}\n`;
-                 msg += `Descuento (${disc * 100}%): -${formatCurrency(total * disc)}\n`;
-            }
             msg += `TOTAL FINAL: ${formatCurrency(totalFinal)}\n`;
             msg += `--------------------------\n`;
             msg += `  Para abonar con Transferencia, usa el siguiente alias:\nsofiricca\n`;
@@ -552,16 +546,18 @@
                     const p = productData.find(x => x.id===id);
                     if(!p || p.stock < cart[id].cantidad) return alert("Stock insuficiente: "+cart[id].nombre);
                     b.update(doc(db, "products", id), {stock: p.stock - cart[id].cantidad});
-                    items.push({nombre:cart[id].nombre, cantidad:cart[id].cantidad, precio:cart[id].precio});
-                    total += cart[id].precio * cart[id].cantidad;
+                    
+                    const desc = cart[id].discount || 0;
+                    const precioFinalItem = cart[id].precio * (1 - desc);
+                    items.push({nombre:cart[id].nombre, cantidad:cart[id].cantidad, precio:precioFinalItem});
+                    total += precioFinalItem * cart[id].cantidad;
                 }
                 await b.commit();
-                const disc = parseFloat(document.getElementById('discount-select').value);
                 await addDoc(collection(db, "ventas"), { 
-                    fecha_venta: getFormattedDate(), // Fecha formateada
-                    timestamp: new Date(), // Timestamp para ordenar
+                    fecha_venta: getFormattedDate(), 
+                    timestamp: new Date(), 
                     cliente_nombre: document.getElementById('client-name').value, 
-                    total_final: total*(1-disc), 
+                    total_final: total, 
                     items: items,
                     metodo_pago: document.getElementById('payment-method').value
                 });
@@ -571,7 +567,11 @@
 
         document.getElementById('save-pending-button').onclick = async () => {
             if(Object.keys(cart).length === 0) return alert("Vacío");
-            let total = 0; for(let k in cart) total += cart[k].precio * cart[k].cantidad;
+            let total = 0; 
+            for(let k in cart) {
+                const desc = cart[k].discount || 0;
+                total += (cart[k].precio * (1 - desc)) * cart[k].cantidad;
+            }
             await addDoc(collection(db, "pending_orders"), {
                 cliente_nombre: document.getElementById('client-name').value || 'Sin Nombre',
                 total_estimado: total,
@@ -581,9 +581,8 @@
             showToast("Guardado en pendientes"); cart={}; saveCart(); renderCart();
         };
         
-        // --- NAVEGACIÓN MÓVIL CORREGIDA ---
         const showView = (v) => {
-             const isMobile = window.innerWidth < 769; // Coincide con CSS
+             const isMobile = window.innerWidth < 769;
              const catalogPanel = document.getElementById('catalog-panel');
              const cartPanel = document.getElementById('cart-panel');
 
@@ -598,10 +597,9 @@
                      cartPanel.style.display = 'none';
                  }
              } else {
-                 // Escritorio: Reiniciar
                  catalogPanel.style.display = 'block';
                  cartPanel.classList.remove('hidden');
-                 cartPanel.style.display = 'flex'; // Mantener el flex de escritorio
+                 cartPanel.style.display = 'flex';
              }
         };
 
@@ -618,7 +616,6 @@
         document.getElementById('category-filter').onchange = updateDash;
         document.getElementById('search-box').oninput = updateDash;
         document.getElementById('reset-button').onclick = () => { document.getElementById('category-filter').value='all'; document.getElementById('search-box').value=''; updateDash(); };
-        document.getElementById('discount-select').onchange = renderCart;
         document.getElementById('clear-cart-button').onclick = () => { cart={}; saveCart(); renderCart(); };
 
         function saveCart() { localStorage.setItem(STORAGE_KEY, JSON.stringify(cart)); }
