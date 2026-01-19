@@ -133,7 +133,7 @@
 
             <div class="flex gap-3">
                 <button id="btn-close-increase" class="flex-1 bg-stone-200 font-bold py-2 rounded-lg">Cancelar</button>
-                <button id="btn-confirm-increase" class="flex-1 bg-blue-600 text-white font-bold py-2 rounded-lg shadow-md">Aplicar</button>
+                <button id="btn-confirm-increase" class="flex-1 bg-blue-600 text-white font-bold py-2 rounded-lg shadow-md">Aplicar con Redondeo</button>
             </div>
         </div>
     </div>
@@ -406,7 +406,9 @@
             for (const chunk of chunks) {
                 const batch = writeBatch(db);
                 chunk.forEach(p => {
-                    const newPrice = Math.round(p.precio * (1 + percent / 100));
+                    let rawPrice = p.precio * (1 + percent / 100);
+                    // Redondeo siempre hacia arriba a la centena (Ej: 19430 -> 19500)
+                    const newPrice = Math.ceil(rawPrice / 100) * 100;
                     batch.update(doc(db, "products", p.id), { precio: newPrice });
                 });
                 await batch.commit();
