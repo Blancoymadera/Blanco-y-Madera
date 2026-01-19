@@ -48,11 +48,7 @@
             <div class="space-y-6">
                 <!-- PANEL CATALOGO -->
                 <div id="catalog-panel" class="bg-white p-6 rounded-xl shadow-lg relative min-h-[400px]">
-                    <div class="flex justify-between items-center border-b pb-2 border-stone-200 mb-4">
-                        <h2 class="text-xl font-semibold text-amber-800">Stock Disponible</h2>
-                        <button onclick="window.clearSelection()" id="btn-clear-selection" class="hidden text-xs font-bold text-red-500 hover:underline">Borrar Selección</button>
-                    </div>
-                    
+                    <h2 class="text-xl font-semibold mb-4 text-amber-800 border-b pb-2 border-stone-200">Stock Disponible</h2>
                     <div class="bg-white rounded-xl mb-4 no-print border-b pb-4 border-stone-100">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                             <div>
@@ -78,7 +74,6 @@
                     <div class="flex flex-col space-y-3">
                         <button id="download-sales-report-button" class="w-full bg-green-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-green-700">📊 Excel de Ventas</button>
                         <button id="download-stock-report-button" class="w-full bg-amber-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-amber-700">📦 Excel de Stock</button>
-                        <button id="btn-increase-prices" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow-md hover:bg-blue-700 border border-blue-700 transition-colors">📈 Aumentar Precios (Filtrados)</button>
                         <button id="btn-open-manual" class="w-full bg-red-500 text-white font-bold py-3 rounded-lg shadow-md hover:bg-red-600">➕ Venta Manual</button>
                         <button id="btn-open-bulk" class="w-full bg-amber-700 text-white font-bold py-3 rounded-lg shadow-md hover:bg-amber-800 border-2 border-amber-600 mt-4">⏫ Carga Masiva (CSV)</button>
                     </div>
@@ -119,24 +114,6 @@
             <div id="pending-list"></div>
         </div>
     </main>
-
-    <!-- MODAL AUMENTO PRECIOS -->
-    <div id="increase-price-modal" class="fixed inset-0 bg-black/50 hidden z-[70] items-center justify-center">
-        <div class="bg-white p-6 rounded-xl w-full max-w-sm mx-4 shadow-2xl">
-            <h3 id="increase-modal-title" class="text-xl font-bold mb-4 text-blue-700">📈 Aumentar Precios</h3>
-            <p id="increase-modal-desc" class="text-sm text-stone-600 mb-4"></p>
-            
-            <div class="mb-4">
-                <label class="block text-xs font-bold text-stone-500 uppercase mb-1">Porcentaje %</label>
-                <input type="number" id="increase-percent-input" placeholder="Ej: 10" class="w-full border p-2 rounded-lg text-lg">
-            </div>
-
-            <div class="flex gap-3">
-                <button id="btn-close-increase" class="flex-1 bg-stone-200 font-bold py-2 rounded-lg">Cancelar</button>
-                <button id="btn-confirm-increase" class="flex-1 bg-blue-600 text-white font-bold py-2 rounded-lg shadow-md">Aplicar con Redondeo</button>
-            </div>
-        </div>
-    </div>
 
     <!-- MODAL CARGA MASIVA -->
     <div id="bulk-upload-modal" class="fixed inset-0 bg-black/50 hidden z-[70] items-center justify-center">
@@ -220,7 +197,6 @@
         let cart = {};
         let allPendingOrders = {}; 
         let confirmationCallback = null;
-        let selectedProductIds = new Set();
         const STORAGE_KEY = 'bm_cart_v3';
 
         const formatCurrency = (v) => new Intl.NumberFormat('es-AR', {style:'currency', currency: 'ARS', minimumFractionDigits:0}).format(v);
@@ -231,37 +207,6 @@
 
         const openModal = (id) => document.getElementById(id).style.display = 'flex';
         const closeModal = (id) => document.getElementById(id).style.display = 'none';
-
-        // GESTIÓN DE SELECCIÓN
-        window.toggleSelection = (id, checked) => {
-            if (checked) selectedProductIds.add(id);
-            else selectedProductIds.delete(id);
-            updateSelectionUI();
-        };
-
-        window.clearSelection = () => {
-            selectedProductIds.clear();
-            const checks = document.querySelectorAll('.product-select-checkbox');
-            checks.forEach(c => c.checked = false);
-            updateSelectionUI();
-        };
-
-        function updateSelectionUI() {
-            const btn = document.getElementById('btn-increase-prices');
-            const clearBtn = document.getElementById('btn-clear-selection');
-            
-            if (selectedProductIds.size > 0) {
-                btn.textContent = `📈 Aumentar (${selectedProductIds.size}) Seleccionados`;
-                btn.classList.remove('bg-blue-600', 'hover:bg-blue-700', 'border-blue-700');
-                btn.classList.add('bg-amber-600', 'hover:bg-amber-700', 'border-amber-700');
-                clearBtn.classList.remove('hidden');
-            } else {
-                btn.textContent = `📈 Aumentar Precios (Filtrados)`;
-                btn.classList.add('bg-blue-600', 'hover:bg-blue-700', 'border-blue-700');
-                btn.classList.remove('bg-amber-600', 'hover:bg-amber-700', 'border-amber-700');
-                clearBtn.classList.add('hidden');
-            }
-        }
 
         // FUNCIONES CARRITO
         window.addToCart = (id) => {
@@ -341,81 +286,6 @@
             }
             msg += `\nTOTAL FINAL: ${formatCurrency(total)}\n\nAlias: sofiricca\n¡Gracias!`;
             window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
-        };
-
-        // AUMENTO DE PRECIOS CON MODAL Y SELECCION
-        document.getElementById('btn-increase-prices').onclick = () => {
-            const cat = document.getElementById('category-filter').value;
-            const term = document.getElementById('search-box').value.toLowerCase();
-            const modalTitle = document.getElementById('increase-modal-title');
-            const modalDesc = document.getElementById('increase-modal-desc');
-            const btn = document.getElementById('btn-confirm-increase');
-
-            // Verificar si hay selección manual
-            if (selectedProductIds.size > 0) {
-                modalTitle.textContent = `📈 Aumentar (${selectedProductIds.size}) Seleccionados`;
-                modalDesc.textContent = `Se aplicará el aumento ÚNICAMENTE a los ${selectedProductIds.size} productos que seleccionaste manualmente.`;
-                btn.className = "flex-1 bg-amber-600 text-white font-bold py-2 rounded-lg shadow-md";
-            } else {
-                // Modo filtros (visible)
-                const targets = productData.filter(p => 
-                    (cat === 'all' || p.categoria === cat) && 
-                    p.nombre.toLowerCase().includes(term)
-                );
-
-                if (targets.length === 0) return alert("No hay productos visibles para aumentar. Revisa tus filtros.");
-                
-                modalTitle.textContent = "📈 Aumentar Precios (Filtrados)";
-                modalDesc.innerHTML = `Se aumentarán <b>${targets.length} productos</b> que coinciden con tus filtros actuales.<br>Filtro: ${cat === 'all' ? 'Todo' : cat} ${term ? `+ "${term}"` : ''}`;
-                btn.className = "flex-1 bg-blue-600 text-white font-bold py-2 rounded-lg shadow-md";
-            }
-            
-            document.getElementById('increase-percent-input').value = '';
-            openModal('increase-price-modal');
-        };
-
-        document.getElementById('btn-close-increase').onclick = () => closeModal('increase-price-modal');
-
-        document.getElementById('btn-confirm-increase').onclick = async () => {
-            const cat = document.getElementById('category-filter').value;
-            const term = document.getElementById('search-box').value.toLowerCase();
-            const inputVal = document.getElementById('increase-percent-input').value;
-            const percent = parseFloat(inputVal);
-
-            if (isNaN(percent) || percent <= 0) return alert("Por favor ingresa un porcentaje válido.");
-
-            let targets = [];
-            
-            // PRIORIDAD: Selección manual
-            if (selectedProductIds.size > 0) {
-                targets = productData.filter(p => selectedProductIds.has(p.id));
-            } else {
-                targets = productData.filter(p => 
-                    (cat === 'all' || p.categoria === cat) && 
-                    p.nombre.toLowerCase().includes(term)
-                );
-            }
-
-            showToast(`Actualizando ${targets.length} productos...`);
-            closeModal('increase-price-modal');
-
-            const chunks = [];
-            for (let i = 0; i < targets.length; i += 400) chunks.push(targets.slice(i, i + 400));
-
-            let count = 0;
-            for (const chunk of chunks) {
-                const batch = writeBatch(db);
-                chunk.forEach(p => {
-                    let rawPrice = p.precio * (1 + percent / 100);
-                    // Redondeo siempre hacia arriba a la centena (Ej: 19430 -> 19500)
-                    const newPrice = Math.ceil(rawPrice / 100) * 100;
-                    batch.update(doc(db, "products", p.id), { precio: newPrice });
-                });
-                await batch.commit();
-                count += chunk.length;
-            }
-            showToast(`✅ ${count} precios actualizados.`);
-            window.clearSelection(); // Limpiar selección tras éxito
         };
 
         // EXCELES Y CARGA MASIVA
@@ -620,11 +490,8 @@
             filtered.sort((a,b)=>a.nombre.localeCompare(b.nombre)).forEach(p => {
                 const div = document.createElement('div');
                 div.className = "bg-white p-3 rounded-xl border flex items-center justify-between item-card shadow-sm";
-                
-                const isChecked = selectedProductIds.has(p.id) ? 'checked' : '';
-                
                 div.onclick = (e) => {
-                    if(e.target.closest('button') || e.target.closest('.stock-badge') || e.target.closest('.product-select-checkbox')) return;
+                    if(e.target.closest('button') || e.target.closest('.stock-badge')) return;
                     document.getElementById('modal-product-name').textContent = p.nombre;
                     document.getElementById('modal-product-category').textContent = p.categoria;
                     document.getElementById('modal-product-price').textContent = formatCurrency(p.precio);
@@ -636,10 +503,6 @@
                     openModal('product-quickview-modal');
                 };
                 div.innerHTML = `
-                    <div class="mr-3 flex items-center" onclick="event.stopPropagation()">
-                        <input type="checkbox" class="w-6 h-6 rounded border-stone-300 text-amber-600 focus:ring-amber-500 cursor-pointer product-select-checkbox" 
-                        onchange="window.toggleSelection('${p.id}', this.checked)" ${isChecked}>
-                    </div>
                     <div class="flex items-center gap-3 truncate flex-1 min-w-0">
                         <div class="w-10 h-10 bg-stone-100 rounded flex-shrink-0 overflow-hidden">${p.images?.[0] || p.imageUrl ?`<img src="${p.images?.[0] || p.imageUrl}" class="w-full h-full object-cover">`:''}</div>
                         <div class="truncate flex-1">
