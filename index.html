@@ -197,6 +197,7 @@
         let cart = {};
         let allPendingOrders = {}; 
         let confirmationCallback = null;
+        let selectedProductIds = new Set();
         const STORAGE_KEY = 'bm_cart_v3';
 
         const formatCurrency = (v) => new Intl.NumberFormat('es-AR', {style:'currency', currency: 'ARS', minimumFractionDigits:0}).format(v);
@@ -270,22 +271,33 @@
             document.getElementById('empty-cart-message').style.display = count ? 'none' : 'block';
         }
 
-        // WHATSAPP
+        // WHATSAPP (FORMATO CORREGIDO)
         document.getElementById('send-whatsapp-text-button').onclick = () => {
-            if(Object.keys(cart).length === 0) return;
-            const client = document.getElementById('client-name').value || "Cliente";
+            if(Object.keys(cart).length === 0) return showToast("El carrito está vacío");
+            const client = document.getElementById('client-name').value.trim() || "Cliente";
             const phone = document.getElementById('whatsapp-number').value.replace(/\D/g, '');
-            let msg = `Hola ${client}! Detalle de tu pedido:\n\n`;
+            const dateStr = new Date().toLocaleDateString('es-AR', { year: 'numeric', month: 'long', day: 'numeric' });
+
+            let msg = `Hola, ${client}!\n\nTe envío el detalle de tu compra en Blanco & Madera el ${dateStr}\n\n`;
             let total = 0;
+            
             for(let id in cart) {
                 const i = cart[id];
                 const d = i.discount || 0;
                 const sub = (i.precio * (1 - d)) * i.cantidad;
                 total += sub;
-                msg += `• ${i.nombre} x${i.cantidad}${d>0?` (-${d*100}%)`:''}: ${formatCurrency(sub)}\n`;
+                
+                msg += `• ${i.nombre} x${i.cantidad}${d>0?` (Desc. ${d*100}%)`:''}: ${formatCurrency(sub)}\n`;
             }
-            msg += `\nTOTAL FINAL: ${formatCurrency(total)}\n\nAlias: sofiricca\n¡Gracias!`;
-            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+
+            msg += `\n--------------------------\n`;
+            msg += `TOTAL FINAL: ${formatCurrency(total)}\n`;
+            msg += `--------------------------\n`;
+            msg += `Para abonar con Transferencia, usa el siguiente alias:\nsofiricca\n`;
+            msg += `--------------------------\n\n¡Muchas gracias por confiar en Blanco & Madera!`;
+
+            const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+            window.open(url, '_blank');
         };
 
         // EXCELES Y CARGA MASIVA
@@ -489,7 +501,8 @@
 
             filtered.sort((a,b)=>a.nombre.localeCompare(b.nombre)).forEach(p => {
                 const div = document.createElement('div');
-                div.className = "bg-white p-3 rounded-xl border flex items-center justify-between item-card shadow-sm";
+                const isNoStock = p.stock <= 0;
+                div.className = `bg-white p-3 rounded-xl border flex items-center justify-between item-card shadow-sm ${isNoStock ? 'opacity-60' : ''}`;
                 div.onclick = (e) => {
                     if(e.target.closest('button') || e.target.closest('.stock-badge')) return;
                     document.getElementById('modal-product-name').textContent = p.nombre;
@@ -515,7 +528,7 @@
                     </div>
                     <div class="flex flex-col items-end gap-1 pl-2">
                         <span class="font-bold text-amber-800 text-sm">${formatCurrency(p.precio)}</span>
-                        <button onclick="event.stopPropagation(); window.addToCart('${p.id}')" class="w-8 h-8 amber-gradient text-white rounded-full text-xs shadow hover:scale-105 active:scale-95 transition flex items-center justify-center">🛒</button>
+                        <button onclick="event.stopPropagation(); window.addToCart('${p.id}')" class="w-8 h-8 rounded-full text-xs shadow flex items-center justify-center ${isNoStock ? 'bg-stone-400 text-stone-200 cursor-not-allowed' : 'amber-gradient text-white hover:scale-105 active:scale-95 transition'}" ${isNoStock ? 'disabled' : ''}>🛒</button>
                     </div>`;
                 l.appendChild(div);
             });
